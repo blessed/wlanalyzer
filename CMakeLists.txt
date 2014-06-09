@@ -4,6 +4,8 @@ aux_source_directory(src SRC_LIST)
 file(GLOB HEADERS src/*.h src/*.h)
 file(GLOB SOURCES src/*.cpp src/*.c)
 list(REMOVE_ITEM SOURCES ${CMAKE_CURRENT_SOURCE_DIR}/src/client.cpp)
+find_package(Threads)
 add_executable(${PROJECT_NAME} ${HEADERS} ${SOURCES})
+target_link_libraries( ${PROJECT_NAME} ${CMAKE_THREAD_LIBS_INIT})
 
 add_executable(client src/client.cpp src/server_socket.cpp src/socket.cpp src/common.cpp)

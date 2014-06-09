@@ -94,9 +94,9 @@ long UnixLocalSocket::read(char *data, long max_size)
     if (!isConnected())
         return -1;
 
-    int err = recv(_fd, data, max_size, 0);
-    if (err == -1)
-        return -1;
+    int err = recv(_fd, data, max_size, MSG_DONTWAIT);
+    if (err == -1 && (errno == EWOULDBLOCK || errno == EAGAIN))
+        return 0;
 
     return err;
 }

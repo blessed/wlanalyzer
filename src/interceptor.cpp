@@ -20,10 +20,11 @@
  * OF THIS SOFTWARE.
  */
 
+#include <stdio.h>
 #include <stdlib.h>
-#include <string>
 #include "interceptor.h"
 
+const std::string WldInterceptor::ORIG_WLD_SOCKET = "wayland-0-orig";
 
 WldInterceptor::WldInterceptor()
 {
@@ -33,7 +34,7 @@ WldInterceptor::~WldInterceptor()
 {
 }
 
-WldInterceptor::InterceptorErr WldInterceptor::configure()
+WldInterceptor::InterceptorErr WldInterceptor::swapSockets()
 {
     const char *server_addr;
     const char *runtime_dir;
@@ -51,9 +52,57 @@ WldInterceptor::InterceptorErr WldInterceptor::configure()
     std::string socket_path;
     socket_path = std::string(runtime_dir) + std::string(server_addr);
 
+    std::string orig_socket_path = std::string(runtime_dir) + ORIG_WLD_SOCKET;
+    if (rename(socket_path.c_str(), orig_socket_path.c_str()) == -1)
+    {
+        return ConfigureErr;
+    }
+
+    if (_waylandSocket.connectToServer(orig_socket_path) != ::NoError)
+    {
+        return ConnectToWaylandFail;
+    }
+
+    if (_interceptServerSocket.listen(socket_path) != ::NoError)
+    {
+        return CreateSocketFail;
+    }
+
     return NoError;
 }
 
-int WldInterceptor::start()
+void WldInterceptor::run()
 {
+    if (!_configured)
+    {
+        if (swapSockets() != NoError)
+            return;
+    }
+
+    while (_running)
+    {
+        bool timeout;
+
+        if (_interceptServerSocket.waitForConnection(1000, &timeout))
+        {
+            UnixLocalSocket *incomming = _interceptServerSocket.nextPendingConnection();
+            createConnection(incomming);
+        }
+    }
+}
+
+void WldInterceptor::createConnection(UnixLocalSocket *client)
+{
+    ClientConnection *conn;
+    conn = new ClientConnection(client, &_waylandSocket);
+    if (!conn)
+        return;
+
+    if (!conn->start())
+    {
+        delete conn;
+        return;
+    }
+
+    _connections.push_back(conn);
 }

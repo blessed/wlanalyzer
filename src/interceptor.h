@@ -1,29 +1,46 @@
 #ifndef INTERCEPTOR_H
 #define INTERCEPTOR_H
 
+#include <string>
+#include <pthread.h>
+#include <vector>
+#include "socket.h"
 #include "server_socket.h"
+#include "connection.h"
+#include "thread.h"
 
-class WldInterceptor
+using std::vector;
+
+class WldInterceptor : public Thread
 {
 public:
     enum InterceptorErr
     {
         NoError,
-        ConfigureErr
+        ConfigureErr,
+        CreateSocketFail,
+        ConnectToWaylandFail
     };
 
 public:
     WldInterceptor();
     ~WldInterceptor();
 
-    InterceptorErr configure();
-    int start();
-    int stop();
+    InterceptorErr swapSockets();
+
+protected:
+    virtual void run();
 
 private:
+    void createConnection(UnixLocalSocket *client);
+
+private:
+    static const std::string ORIG_WLD_SOCKET;
+    vector<ClientConnection *> _connections;
+
     bool _configured;
 
-    UnixLocalServer _interceptSocket;
+    UnixLocalServer _interceptServerSocket;
     UnixLocalSocket _waylandSocket;
 };
 

@@ -1,29 +1,14 @@
 #include <iostream>
-
-#include "socket.h"
-#include "server_socket.h"
+#include "interceptor.h"
 
 using namespace std;
 
 int main(int argc, char *argv[])
 {
-    UnixLocalServer server;
-    if (!server.listen("/tmp/wayland-0"))
-    {
-        cout << "There was some error when creating the server" << endl;
-        return -1;
-    }
+    WldInterceptor interceptor;
 
-    bool failed;
-    if (!server.waitForConnection(100, &failed))
-    {
-        if (failed)
-            cout << "Error on timeout" << endl;
-    }
-
-    UnixLocalSocket *client = server.nextPendingConnection();
-    if (client->isConnected())
-        cout << "happily connected" << endl;
+    interceptor.swapSockets();
+    interceptor.start();
 
     return 0;
 }

@@ -28,6 +28,13 @@ public:
     UnixLocalSocketError disconnectFromServer();
 
     void setSocketDescriptor(int fd);
+    int getSocketDescriptor() const
+    {
+        if (isConnected())
+            return _fd;
+
+        return -1;
+    }
 
     bool isConnected() const { return _connected; }
 

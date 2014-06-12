@@ -1,21 +1,26 @@
 
 #include <errno.h>
 #include <unistd.h>
+#include <stdio.h>
 #include <sys/socket.h>
 #include <sys/un.h>
+#include <sys/types.h>
+#include <fcntl.h>
 
+#include "common.h"
 #include "server_socket.h"
 
 using namespace std;
 
-UnixLocalServer::UnixLocalServer() : _fd(-1), _maxPendingConnections(1), _serverName("")
+UnixLocalServer::UnixLocalServer() : _fd(-1), _maxPendingConnections(1), _serverName(""),
+    _listening(false)
 {
 }
 
 UnixLocalServer::~UnixLocalServer()
 {
-    if (isListening())
-        closeServer();
+    Logger::getInstance()->log("called destructor\n");
+    closeServer();
 }
 
 void UnixLocalServer::closeServer()
@@ -28,6 +33,9 @@ void UnixLocalServer::closeServer()
     ::close(_fd);
     unlink(_serverName.c_str());
 
+    Logger::getInstance()->log("server closed\n");
+
+    _listening = false;
     _serverName.clear();
 }
 
@@ -51,14 +59,23 @@ bool UnixLocalServer::listen(const string &name)
     int err = 0;
 
     if (name.empty())
+    {
+        wld_log("empty server name\n");
         return false;
+    }
 
     if (isListening())
+    {
+        wld_log("server is already listening\n");
         return false;
+    }
 
     _fd = ::socket(AF_UNIX, SOCK_STREAM, 0);
     if (_fd == -1)
+    {
+        wld_log("socket() failed\n");
         return false;
+    }
 
     sockaddr_un addr;
     memset(&addr, 0, sizeof(sockaddr_un));
@@ -68,13 +85,21 @@ bool UnixLocalServer::listen(const string &name)
     err = ::bind(_fd, (sockaddr *)&addr, sizeof(sockaddr_un));
     if (err)
     {
+        wld_log("bind() failed\n");
+        perror(NULL);
         ::close(_fd);
         return false;
     }
 
     ::listen(_fd, _maxPendingConnections);
 
+    int val = 1;
+    setsockopt(_fd, SOL_SOCKET, SO_REUSEADDR, &val, sizeof val);
+
+    LOGGER_LOG("listening on %s", name.c_str());
+
     _serverName = name;
+    _listening = true;
 
     return true;
 }
@@ -85,10 +110,15 @@ void UnixLocalServer::onNewConnection()
     sockaddr_un addr;
     socklen_t socklen;
 
+    LOGGER_LOG("new connection");
+    LOGGER_LOG("dupa");
+
     socklen = sizeof(sockaddr_un);
     clientSocket = accept(_fd, (sockaddr *)&addr, &socklen);
     if (clientSocket == -1)
         return;
+
+    LOGGER_LOG("Hm hm");
 
     UnixLocalSocket *localSocket = new UnixLocalSocket;
     localSocket->setSocketDescriptor(clientSocket);
@@ -108,7 +138,10 @@ bool UnixLocalServer::waitForConnection(int ms, bool *timedout)
     while (select(1, &readfds, NULL, NULL, &timeout) == -1)
     {
         if (errno == EINTR)
+        {
+            LOGGER_LOG("EINTR\n");
             continue;
+        }
         else if (errno == ETIMEDOUT)
         {
             *timedout = true;
@@ -120,7 +153,7 @@ bool UnixLocalServer::waitForConnection(int ms, bool *timedout)
 
     *timedout = false;
 
-    if (!_pendingConnections.empty())
+    if (_pendingConnections.empty())
         return false;
 
     return true;
@@ -135,4 +168,9 @@ UnixLocalSocket *UnixLocalServer::nextPendingConnection()
     _pendingConnections.pop();
 
     return socket;
+}
+
+void UnixLocalServer::close()
+{
+    closeServer();
 }

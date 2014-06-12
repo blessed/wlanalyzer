@@ -1,8 +1,28 @@
 #include <unistd.h>
 #include <string.h>
+#include <stdarg.h>
+#include <stdio.h>
 #include <errno.h>
 
-static void debug_print(const char *buf)
+#ifndef DEBUG_BUILD
+void wld_log(const char *format, ...)
+{
+    return;
+}
+#else
+
+void wld_log(const char *format, ...)
+{
+    va_list vargs;
+    va_start(vargs, format);
+
+    vprintf(format, vargs);
+
+    va_end(vargs);
+}
+#endif // DEBUG_BUILD
+
+void debug_print(const char *buf)
 {
     int errno_backup = errno;
     write(2, buf, strlen(buf));

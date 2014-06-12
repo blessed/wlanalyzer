@@ -20,35 +20,64 @@
  * OF THIS SOFTWARE.
  */
 
-#ifndef CONNECTION_H
-#define CONNECTION_H
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <stdarg.h>
+#include "logger.h"
 
-#include <pthread.h>
-#include <queue>
-#include <ev++.h>
-#include "socket.h"
-#include "request.h"
+Logger *Logger::_instance = NULL;
 
-class WlaConnection
+Logger::~Logger()
 {
-public:
-    WlaConnection(UnixLocalSocket *client, UnixLocalSocket *server);
-    virtual ~WlaConnection();
+    if (_instance)
+        delete _instance;
+}
 
-    void close();
+Logger *Logger::getInstance()
+{
+    if (!_instance)
+        _instance = new Logger;
 
-protected:
-    void serverHandler(ev::io &watcher, int revents);
-    void clientHandler(ev::io &watcher, int revents);
+    return _instance;
+}
 
-private:
-    UnixLocalSocket *_clientSocket;
-    UnixLocalSocket *_serverSocket;
-    ev::io _clientWatcher;
-    ev::io _serverWatcher;
+int Logger::log(const char *format, ...)
+{
+    int l;
 
-    std::queue<WlaMessage *> _requests;
-    std::queue<WlaMessage *> _events;
-};
+    va_list vargs;
+    va_start(vargs, format);
+    l = vfprintf(_fd, format, vargs);
+    va_end(vargs);
 
-#endif // CONNECTION_H
+    return l;
+}
+
+Logger::Logger()
+{
+    open();
+}
+
+void Logger::open()
+{
+    const char *env = getenv("WLANALYZER_LOGFILE");
+    if (env)
+    {
+        FILE *file = fopen(env, "w+");
+        if (!file)
+            _fd = stderr;
+        else
+            _fd = file;
+    }
+    else
+        _fd = stderr;
+}
+
+void Logger::close()
+{
+    if (_fd != stderr)
+        fclose(_fd);
+}

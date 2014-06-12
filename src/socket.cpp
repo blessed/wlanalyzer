@@ -3,6 +3,7 @@
 #include <sys/socket.h>
 #include <sys/un.h>
 #include <errno.h>
+#include <fcntl.h>
 #include "socket.h"
 #include "common.h"
 
@@ -63,6 +64,8 @@ UnixLocalSocketError UnixLocalSocket::connectToServer(const std::string &path)
         }
     }
 
+    Logger::getInstance()->log("Connected to %s\n", _path.c_str());
+
     _connected = true;
 
     return NoError;
@@ -80,16 +83,21 @@ UnixLocalSocketError UnixLocalSocket::disconnectFromServer()
     }
 }
 
-void UnixLocalSocket::setSocketDescriptor(int fd)
+void UnixLocalSocket::setSocketDescriptor(int fd, int flags)
 {
     if (isConnected())
         disconnectFromServer();
+
+    if (flags)
+    {
+        fcntl(fd, F_SETFL, flags);
+    }
 
     _fd = fd;
     _connected = true;
 }
 
-long UnixLocalSocket::read(char *data, long max_size)
+long UnixLocalSocket::read(char *data, long max_size) const
 {
     if (!isConnected())
         return -1;
@@ -101,7 +109,7 @@ long UnixLocalSocket::read(char *data, long max_size)
     return err;
 }
 
-bool UnixLocalSocket::write(const char *data, long c)
+bool UnixLocalSocket::write(const char *data, long c) const
 {
     while (c > 0)
     {

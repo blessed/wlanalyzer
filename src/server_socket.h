@@ -21,11 +21,15 @@ public:
         return _serverName;
     }
 
+    int getFd() const { return _fd; }
+
     bool listen(const std::string &name);
-    bool isListening() const { return !_serverName.empty(); }
+    bool isListening() const { return _listening; }
 
     bool waitForConnection(int ms, bool *timedout);
     UnixLocalSocket *nextPendingConnection();
+
+    void close();
 
 private:
     void closeServer();
@@ -37,6 +41,7 @@ private:
     int _fd;
     unsigned int _maxPendingConnections;
     std::string _serverName;
+    bool _listening;
     std::queue<UnixLocalSocket *> _pendingConnections;
 };
 

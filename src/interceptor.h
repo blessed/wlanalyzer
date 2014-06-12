@@ -11,22 +11,22 @@
 
 using std::vector;
 
-class WldInterceptor : public Thread
+class WldInterceptor : protected Thread
 {
 public:
-    enum InterceptorErr
+    enum InterceptErr
     {
         NoError,
-        ConfigureErr,
-        CreateSocketFail,
-        ConnectToWaylandFail
+        ProxySocketErr
     };
 
 public:
     WldInterceptor();
     ~WldInterceptor();
 
-    InterceptorErr swapSockets();
+    bool createProxySocket(const std::string &name);
+    bool runProxy();
+    void stopProxy();
 
 protected:
     virtual void run();
@@ -35,9 +35,7 @@ private:
     void createConnection(UnixLocalSocket *client);
 
 private:
-    static const std::string ORIG_WLD_SOCKET;
-    vector<ClientConnection *> _connections;
-
+    vector<WlaConnection *> _connections;
     bool _configured;
 
     UnixLocalServer _interceptServerSocket;

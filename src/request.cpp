@@ -20,35 +20,31 @@
  * OF THIS SOFTWARE.
  */
 
-#ifndef CONNECTION_H
-#define CONNECTION_H
-
-#include <pthread.h>
-#include <queue>
-#include <ev++.h>
-#include "socket.h"
+#include <string.h>
 #include "request.h"
 
-class WlaConnection
+WlaMessage::WlaMessage(const WlaMessage &copy)
 {
-public:
-    WlaConnection(UnixLocalSocket *client, UnixLocalSocket *server);
-    virtual ~WlaConnection();
+    if (copy._size > 0)
+    {
+        _buf = new char[copy.size()];
+        memcpy(_buf, copy._buf, copy.size());
+        _size = copy._size;
+    }
+}
 
-    void close();
+WlaMessage::~WlaMessage()
+{
+    if (_size)
+    {
+        delete _buf;
+    }
+}
 
-protected:
-    void serverHandler(ev::io &watcher, int revents);
-    void clientHandler(ev::io &watcher, int revents);
+void WlaMessage::setData(char *buf, int size)
+{
+    _buf = buf;
+    _size = size;
 
-private:
-    UnixLocalSocket *_clientSocket;
-    UnixLocalSocket *_serverSocket;
-    ev::io _clientWatcher;
-    ev::io _serverWatcher;
-
-    std::queue<WlaMessage *> _requests;
-    std::queue<WlaMessage *> _events;
-};
-
-#endif // CONNECTION_H
+    gettimeofday(&_timestamp, NULL);
+}

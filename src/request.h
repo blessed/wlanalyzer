@@ -20,35 +20,38 @@
  * OF THIS SOFTWARE.
  */
 
-#ifndef CONNECTION_H
-#define CONNECTION_H
+#ifndef REQUEST_H
+#define REQUEST_H
 
-#include <pthread.h>
-#include <queue>
-#include <ev++.h>
-#include "socket.h"
-#include "request.h"
+#include <sys/time.h>
+#include "common.h"
 
-class WlaConnection
+class WlaMessage
 {
 public:
-    WlaConnection(UnixLocalSocket *client, UnixLocalSocket *server);
-    virtual ~WlaConnection();
 
-    void close();
+    enum WLA_MSG_TYPE
+    {
+        REQUEST_TYPE,
+        EVENT_TYPE
+    };
 
-protected:
-    void serverHandler(ev::io &watcher, int revents);
-    void clientHandler(ev::io &watcher, int revents);
+    WlaMessage(WLA_MSG_TYPE type) : _size(-1), _buf(NULL), _type(type)
+    {
+    }
+
+    WlaMessage(const WlaMessage &copy);
+    ~WlaMessage();
+
+    int size() const { return _size; }
+    void setData(char *buf, int size);
+    const char *data() const { return _buf; }
 
 private:
-    UnixLocalSocket *_clientSocket;
-    UnixLocalSocket *_serverSocket;
-    ev::io _clientWatcher;
-    ev::io _serverWatcher;
-
-    std::queue<WlaMessage *> _requests;
-    std::queue<WlaMessage *> _events;
+    int _size;
+    char *_buf;
+    WLA_MSG_TYPE _type;
+    timeval _timestamp;
 };
 
-#endif // CONNECTION_H
+#endif // REQUEST_H

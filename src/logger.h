@@ -20,35 +20,32 @@
  * OF THIS SOFTWARE.
  */
 
-#ifndef CONNECTION_H
-#define CONNECTION_H
+#ifndef LOGGER_H
+#define LOGGER_H
 
-#include <pthread.h>
-#include <queue>
-#include <ev++.h>
-#include "socket.h"
-#include "request.h"
+#include <stdio.h>
 
-class WlaConnection
+#define LOGGER_LOG(msg, ...) \
+    Logger::getInstance()->log("%s:%d-> " msg "\n", __PRETTY_FUNCTION__, __LINE__, ##__VA_ARGS__);
+
+class Logger
 {
 public:
-    WlaConnection(UnixLocalSocket *client, UnixLocalSocket *server);
-    virtual ~WlaConnection();
+    ~Logger();
 
-    void close();
+    static Logger *getInstance();
 
-protected:
-    void serverHandler(ev::io &watcher, int revents);
-    void clientHandler(ev::io &watcher, int revents);
+    int log(const char *format, ...);
 
 private:
-    UnixLocalSocket *_clientSocket;
-    UnixLocalSocket *_serverSocket;
-    ev::io _clientWatcher;
-    ev::io _serverWatcher;
+    Logger();
 
-    std::queue<WlaMessage *> _requests;
-    std::queue<WlaMessage *> _events;
+    void open();
+    void close();
+
+private:
+    static Logger *_instance;
+    FILE *_fd;
 };
 
-#endif // CONNECTION_H
+#endif // LOGGER_H

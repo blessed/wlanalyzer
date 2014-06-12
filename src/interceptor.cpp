@@ -20,89 +20,104 @@
  * OF THIS SOFTWARE.
  */
 
-#include <stdio.h>
-#include <stdlib.h>
+#include <unistd.h>
+#include "common.h"
 #include "interceptor.h"
-
-const std::string WldInterceptor::ORIG_WLD_SOCKET = "wayland-0-orig";
 
 WldInterceptor::WldInterceptor()
 {
+    _configured = false;
 }
 
 WldInterceptor::~WldInterceptor()
 {
+    if (_interceptServerSocket.isListening())
+        _interceptServerSocket.close();
+
+    WLD_DEBUG_LOG("Called destructor");
 }
 
-WldInterceptor::InterceptorErr WldInterceptor::swapSockets()
+bool WldInterceptor::createProxySocket(const std::string &name)
 {
-    const char *server_addr;
-    const char *runtime_dir;
+    char *runtime_dir;
+
+    if (name.empty())
+    {
+        WLD_DEBUG_LOG("missing proxy socket path");
+        return false;
+    }
 
     runtime_dir = getenv("XDG_RUNTIME_DIR");
     if (!runtime_dir)
     {
-        return ConfigureErr;
+        WLD_DEBUG_LOG("XDG_RUNTIME_DIR is not set");
+        return false;
     }
 
-    server_addr = getenv("WAYLAND_DISPLAY");
-    if (!server_addr)
-        server_addr = "wayland-0";
 
-    std::string socket_path;
-    socket_path = std::string(runtime_dir) + std::string(server_addr);
-
-    std::string orig_socket_path = std::string(runtime_dir) + ORIG_WLD_SOCKET;
-    if (rename(socket_path.c_str(), orig_socket_path.c_str()) == -1)
+    std::string path = std::string(runtime_dir) + "/" + name;
+    if (!access(path.c_str(), F_OK))
     {
-        return ConfigureErr;
+        Logger::getInstance()->log("file %s already exists. Removing\n", path.c_str());
+        unlink(path.c_str());
     }
 
-    if (_waylandSocket.connectToServer(orig_socket_path) != ::NoError)
+    if (!_interceptServerSocket.listen(path))
     {
-        return ConnectToWaylandFail;
+        WLD_DEBUG_LOG("failed to listen on socket %s", path.c_str());
+        return false;
     }
 
-    if (_interceptServerSocket.listen(socket_path) != ::NoError)
-    {
-        return CreateSocketFail;
-    }
+    _configured = true;
 
-    return NoError;
+    return true;
+}
+
+bool WldInterceptor::runProxy()
+{
+    if (!_configured)
+        return false;
+
+    return start();
+}
+
+void WldInterceptor::stopProxy()
+{
+    stop();
 }
 
 void WldInterceptor::run()
 {
-    if (!_configured)
-    {
-        if (swapSockets() != NoError)
-            return;
-    }
-
     while (_running)
     {
         bool timeout;
 
+        Logger::getInstance()->log("tick\n");
+
         if (_interceptServerSocket.waitForConnection(1000, &timeout))
         {
+            WLD_DEBUG_LOG("connection incomming");
             UnixLocalSocket *incomming = _interceptServerSocket.nextPendingConnection();
             createConnection(incomming);
         }
+
+        if (timeout)
+            WLD_DEBUG_LOG("connection timed out");
     }
+
+    LOGGER_LOG("exiting run\n");
 }
 
 void WldInterceptor::createConnection(UnixLocalSocket *client)
 {
-    ClientConnection *conn;
-    conn = new ClientConnection(client, &_waylandSocket);
+    WlaConnection *conn;
+    conn = new WlaConnection(client, &_waylandSocket);
     if (!conn)
         return;
 
-    if (!conn->start())
-    {
-        delete conn;
-        return;
-    }
+    WLD_DEBUG_LOG("created connection");
+
+    LOGGER_LOG("");
 
     _connections.push_back(conn);
 }

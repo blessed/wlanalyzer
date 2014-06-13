@@ -27,159 +27,64 @@
 #include "connection.h"
 #include "common.h"
 
-WlaConnection::WlaConnection(UnixLocalSocket *client, UnixLocalSocket *server)
-{
-    if (!(client && server))
-        return;
-
-    _clientSocket = client;
-    _serverSocket = server;
-
-    _serverWatcher.set<WlaConnection, &WlaConnection::serverHandler>(this);
-    _clientWatcher.set<WlaConnection, &WlaConnection::clientHandler>(this);
-
-    _serverWatcher.start(_serverSocket->getSocketDescriptor(), EV_READ);
-    _clientWatcher.start(_clientSocket->getSocketDescriptor(), EV_READ);
-}
-
 WlaConnection::~WlaConnection()
 {
     close();
 }
 
+WlaError WlaConnection::openConnection(UnixLocalSocket *client, UnixLocalSocket *server)
+{
+    if (!client || !server)
+    {
+        LOGGER_LOG("invalid arguments");
+        return WlaConnectionFailed;
+    }
+
+    if (_connected)
+    {
+        LOGGER_LOG("already connected");
+        return WlaConnectionFailed;
+    }
+
+    _client = client;
+    _server = server;
+
+    _clientWatcher.set<WlaConnection, &WlaConnection::handleConnection>(this);
+    _serverWatcher.set<WlaConnection, &WlaConnection::handleConnection>(this);
+}
+
 void WlaConnection::close()
 {
-    // TODO: stop connection
-    _clientSocket->disconnectFromServer();
-    delete _clientSocket;
+    _client->disconnectFromServer();
+    delete _client;
 
-    _serverSocket->disconnectFromServer();
-    delete _serverSocket;
+    _server->disconnectFromServer();
+    delete _server;
 }
 
-void WlaConnection::serverHandler(ev::io &watcher, int revents)
+void WlaConnection::handleConnection(ev::io &watcher, int revents)
 {
+    UnixLocalSocket *src, *dst;
+
     if (revents & EV_ERROR)
     {
-        LOGGER_LOG("bad event");
+        LOGGER_LOG("connection handle error");
         return;
+    }
+
+    if (watcher.fd == *_client)
+    {
+        src = _client;
+        dst = _server;
+    }
+    else
+    {
+        src = _server;
+        dst = _client;
     }
 
     if (revents & EV_READ)
     {
-        char *buf = new char[64 * 1024];
-//        int len = _serverSocket->read(buf, 64 * 1024);
-//        if (len < 0)
-//        {
-//            LOGGER_LOG("failed to read from server %d", len);
-//            delete buf;
-//            return;
-//        }
-//        else if (len == 0)
-//        {
-//            delete buf;
-//            return;
-//        }
-
-        msghdr *hdr = _serverSocket->readMessage(buf, 64 * 1024);
-        if (!hdr)
-        {
-            delete buf;
-            return;
-        }
-
-        WlaMessage *msg = new WlaMessage(WlaMessage::EVENT_TYPE);
-        msg->setHeader(hdr);
-
-        _events.push(msg);
-
-        _clientWatcher.stop();
-        _clientWatcher.set(EV_READ | EV_WRITE);
-        _clientWatcher.start();
+        WlaBuffer *input = src->read();
     }
-    else if (revents & EV_WRITE)
-    {
-        while (!_requests.empty())
-        {
-            WlaMessage *msg = _requests.front();
-            _requests.pop();
-
-            if (!_serverSocket->writeMessage(msg->getHeader()))
-            {
-                LOGGER_LOG("failed to write to server");
-            }
-
-            delete msg;
-        }
-
-        _serverWatcher.stop();
-        _serverWatcher.set(EV_READ);
-        _serverWatcher.start();
-    }
-}
-
-void WlaConnection::clientHandler(ev::io &watcher, int revents)
-{
-    if (revents & EV_ERROR)
-    {
-        LOGGER_LOG("bad event");
-        return;
-    }
-
-    if (revents & EV_READ)
-    {
-        char *buf = new char[64 * 1024];
-//        int len = _clientSocket->read(buf, 64 * 1024);
-//        if (len < 0)
-//        {
-//            LOGGER_LOG("failed to read from client %d", len);
-//            delete buf;
-//            return;
-//        }
-//        else if (len == 0)
-//        {
-//            delete buf;
-//            return;
-//        }
-
-        msghdr *msg = _clientSocket->readMessage(buf, 64 * 1024);
-        if (!msg)
-        {
-            delete buf;
-            return;
-        }
-
-        WlaMessage *message = new WlaMessage(WlaMessage::REQUEST_TYPE);
-//        message->setData(buf, len);
-        message->setHeader(msg);
-
-        _requests.push(message);
-
-        _serverWatcher.stop();
-        _serverWatcher.set(EV_READ | EV_WRITE);
-        _serverWatcher.start();
-    }
-    else if (revents & EV_WRITE)
-    {
-        while (!_events.empty())
-        {
-            WlaMessage *msg = _events.front();
-            _events.pop();
-
-            if (!_clientSocket->writeMessage(msg->getHeader()))
-            {
-                LOGGER_LOG("failed to write to server");
-            }
-
-            delete msg;
-        }
-
-        _clientWatcher.stop();
-        _clientWatcher.set(EV_READ);
-        _clientWatcher.start();
-    }
-}
-
-void WlaConnection::connectionHandler(ev::io &watcher, int revents)
-{
 }

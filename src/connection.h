@@ -30,29 +30,39 @@
 #include <ev++.h>
 #include "socket.h"
 #include "request.h"
+#include "common.h"
+
+class WlaBuffer
+{
+public:
+    WlaBuffer();
+    ~WlaBuffer();
+
+private:
+    static const int MAX_BUF_SIZE;
+    char buf[MAX_BUF_SIZE];
+
+};
 
 class WlaConnection
 {
 public:
-    WlaConnection(UnixLocalSocket *client, UnixLocalSocket *server);
+    WlaConnection() : _client(NULL), _server(NULL), _connected(false) {}
     virtual ~WlaConnection();
 
+    WlaError openConnection(UnixLocalSocket *client, UnixLocalSocket *server);
     void close();
 
-protected:
-    void serverHandler(ev::io &watcher, int revents);
-    void clientHandler(ev::io &watcher, int revents);
-
-    void connectionHandler(ev::io &watcher, int revents);
+private:
+    void handleConnection(ev::io &watcher, int revents);
 
 private:
-    UnixLocalSocket *_clientSocket;
-    UnixLocalSocket *_serverSocket;
+    UnixLocalSocket *_client;
+    UnixLocalSocket *_server;
     ev::io _clientWatcher;
     ev::io _serverWatcher;
 
-    std::queue<WlaMessage *> _requests;
-    std::queue<WlaMessage *> _events;
+    bool _connected;
 };
 
 #endif // CONNECTION_H

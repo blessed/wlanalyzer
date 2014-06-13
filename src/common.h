@@ -48,4 +48,11 @@ void wld_log(const char *format, ...);
 
 #endif // DEBUG_BUILD
 
+enum WlaError
+{
+    WlaNoError,
+    WlaConnectionFailed,
+    WlaConnectionBroken
+};
+
 #endif // COMMON_H

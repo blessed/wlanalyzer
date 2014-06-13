@@ -108,13 +108,13 @@ void WlaProxyServer::connectClient(ev::io &watcher, int revents)
     UnixLocalSocket *client = new UnixLocalSocket;
     client->setSocketDescriptor(fd);
 
-    WlaConnection *connection = new WlaConnection(client, wayland);
+    WlaConnection *connection = new WlaConnection;
     if (!connection)
     {
         LOGGER_LOG("Failed to create connection between client and compositor");
-        delete connection;
         return;
     }
 
+    connection->openConnection(client, wayland);
     _connections.push_back(connection);
 }

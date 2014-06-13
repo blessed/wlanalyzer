@@ -63,20 +63,19 @@ public:
 
     bool isConnected() const { return _connected; }
     bool operator==(int fd) { return fd == _fd; }
+//    friend bool operator==(int fd, const UnixLocalSocket &sock);
 
     long read(char *data, long max_size) const;
     bool write(const char *data, long c) const;
-
-    msghdr *readMessage(char *buf, int size);
-    int writeMessage(const msghdr *msg);
 
 private:
     void shutdown();
 
 private:
     int _fd;
-    std::string _path;
     bool _connected;
 };
+
+bool operator==(int fd, const UnixLocalSocket &sock);
 
 #endif // SOCKET_H

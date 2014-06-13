@@ -30,7 +30,7 @@
 #include "socket.h"
 #include "common.h"
 
-UnixLocalSocket::UnixLocalSocket() : _fd(-1), _path(""), _connected(false)
+UnixLocalSocket::UnixLocalSocket() : _fd(-1), _connected(false)
 {
 }
 
@@ -62,11 +62,10 @@ UnixLocalSocketError UnixLocalSocket::connectToServer(const std::string &path)
     if (check_error(_fd))
         return SocketResourceError;
 
-    _path = path;
     sockaddr_un address;
     memset(&address, 0, sizeof(sockaddr_un));
     address.sun_family = AF_UNIX;
-    strncpy(address.sun_path, _path.c_str(), _path.size());
+    strncpy(address.sun_path, path.c_str(), path.size());
     err = connect(_fd, (sockaddr *)&address, sizeof(sockaddr_un));
     if (err == -1)
     {
@@ -87,8 +86,7 @@ UnixLocalSocketError UnixLocalSocket::connectToServer(const std::string &path)
         }
     }
 
-    Logger::getInstance()->log("Connected to %s\n", _path.c_str());
-
+    Logger::getInstance()->log("Connected to %s\n", path.c_str());
     _connected = true;
 
     return NoError;
@@ -96,12 +94,11 @@ UnixLocalSocketError UnixLocalSocket::connectToServer(const std::string &path)
 
 UnixLocalSocketError UnixLocalSocket::disconnectFromServer()
 {
-    if (isConnected())
+    if (_connected)
     {
         close(_fd);
         _fd = -1;
 
-        _path.clear();
         _connected = false;
     }
 }
@@ -118,6 +115,11 @@ void UnixLocalSocket::setSocketDescriptor(int fd, int flags)
 
     _fd = fd;
     _connected = true;
+}
+
+bool operator==(int fd, const UnixLocalSocket &sock)
+{
+    return fd == sock.getSocketDescriptor();
 }
 
 long UnixLocalSocket::read(char *data, long max_size) const
@@ -144,53 +146,4 @@ bool UnixLocalSocket::write(const char *data, long c) const
     }
 
     return true;
-}
-
-msghdr *UnixLocalSocket::readMessage(char *buf, int size)
-{
-    if (!buf || (size <= 0))
-        return NULL;
-
-    msghdr *hdr = new msghdr;
-    if (!hdr)
-        return NULL;
-
-    iovec *iov = new iovec;
-    if (!iov)
-    {
-        delete hdr;
-        return NULL;
-    }
-
-    iov->iov_base = buf;
-    iov->iov_len = size;
-
-    hdr->msg_name = NULL;
-    hdr->msg_namelen = 0;
-    hdr->msg_iov = iov;
-    hdr->msg_iovlen = 1;
-
-    char *cbuf = new char[CMSG_SPACE(sizeof(int))];
-    hdr->msg_control = cbuf;
-    hdr->msg_controllen = CMSG_SPACE(sizeof(int));
-
-    int len = recvmsg(_fd, hdr, 0);
-    if (len <= 0)
-    {
-        delete [] cbuf;
-        delete iov;
-        delete hdr;
-
-        return NULL;
-    }
-
-    return hdr;
-}
-
-int UnixLocalSocket::writeMessage(const msghdr *msg)
-{
-    if (!msg)
-        return -1;
-
-    return sendmsg(_fd, msg, 0);
 }

@@ -1,3 +1,26 @@
+/*
+ * The MIT License (MIT)
+ *
+ * Copyright (c) 2014 Samsung Electronics
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in all
+ * copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
+ */
 
 #include <unistd.h>
 #include <sys/socket.h>
@@ -121,4 +144,45 @@ bool UnixLocalSocket::write(const char *data, long c) const
     }
 
     return true;
+}
+
+msghdr *UnixLocalSocket::readMessage(char *buf, int size)
+{
+    if (!buf || (size <= 0))
+        return NULL;
+
+    msghdr *hdr = new msghdr;
+    if (!hdr)
+        return NULL;
+
+    iovec *iov = new iovec;
+    if (!iov)
+    {
+        delete hdr;
+        return NULL;
+    }
+
+    iov->iov_base = buf;
+    iov->iov_len = size;
+
+    hdr->msg_name = NULL;
+    hdr->msg_namelen = 0;
+    hdr->msg_iov = iov;
+    hdr->msg_iovlen = 1;
+
+    char *cbuf = new char[CMSG_SPACE(sizeof(int))];
+    hdr->msg_control = cbuf;
+    hdr->msg_controllen = CMSG_SPACE(sizeof(int));
+
+    int len = recvmsg(_fd, hdr, 0);
+
+    return hdr;
+}
+
+int UnixLocalSocket::writeMessage(const msghdr *msg)
+{
+    if (!msg)
+        return -1;
+
+    return sendmsg(_fd, msg, 0);
 }

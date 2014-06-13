@@ -175,6 +175,14 @@ msghdr *UnixLocalSocket::readMessage(char *buf, int size)
     hdr->msg_controllen = CMSG_SPACE(sizeof(int));
 
     int len = recvmsg(_fd, hdr, 0);
+    if (len <= 0)
+    {
+        delete [] cbuf;
+        delete iov;
+        delete hdr;
+
+        return NULL;
+    }
 
     return hdr;
 }

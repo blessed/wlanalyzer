@@ -43,6 +43,8 @@ protected:
     void serverHandler(ev::io &watcher, int revents);
     void clientHandler(ev::io &watcher, int revents);
 
+    void connectionHandler(ev::io &watcher, int revents);
+
 private:
     UnixLocalSocket *_clientSocket;
     UnixLocalSocket *_serverSocket;

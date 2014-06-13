@@ -44,6 +44,11 @@ WlaMessage::~WlaMessage()
 
     if (_hdr)
     {
+        for (int i = 0; i < _hdr->msg_iovlen; i++)
+        {
+            delete [] (char *)_hdr->msg_iov[i].iov_base;
+        }
+
         delete (cmsghdr *)_hdr->msg_control;
         delete _hdr->msg_iov;
         delete _hdr;

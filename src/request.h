@@ -40,7 +40,7 @@ public:
         EVENT_TYPE
     };
 
-    WlaMessage(WLA_MSG_TYPE type) : _size(-1), _buf(NULL), _type(type)
+    WlaMessage(WLA_MSG_TYPE type) : _size(-1), _buf(NULL), _type(type), _hdr(NULL)
     {
     }
 

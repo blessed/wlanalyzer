@@ -84,7 +84,7 @@ void WlaConnection::serverHandler(ev::io &watcher, int revents)
         msghdr *hdr = _serverSocket->readMessage(buf, 64 * 1024);
         if (!hdr)
         {
-            LOGGER_LOG("failed to read from server");
+            delete buf;
             return;
         }
 
@@ -145,7 +145,7 @@ void WlaConnection::clientHandler(ev::io &watcher, int revents)
         msghdr *msg = _clientSocket->readMessage(buf, 64 * 1024);
         if (!msg)
         {
-            LOGGER_LOG("Failed to read message from client");
+            delete buf;
             return;
         }
 
@@ -178,4 +178,8 @@ void WlaConnection::clientHandler(ev::io &watcher, int revents)
         _clientWatcher.set(EV_READ);
         _clientWatcher.start();
     }
+}
+
+void WlaConnection::connectionHandler(ev::io &watcher, int revents)
+{
 }

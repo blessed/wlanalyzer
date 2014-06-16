@@ -38,6 +38,7 @@ public:
     WlaConnection() {}
     ~WlaConnection();
 
+    // TODO: handle connection close
     void createConnection(UnixLocalSocket client, UnixLocalSocket server);
 
 private:

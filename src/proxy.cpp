@@ -79,9 +79,6 @@ void WlaProxyServer::connectClient(ev::io &watcher, int revents)
         return;
     }
 
-    DEBUG_LOG("burp");
-
-//    UnixLocalSocket *wayland = new UnixLocalSocket;
     UnixLocalSocket wayland;
     std::string waylandPath = std::string(getenv("XDG_RUNTIME_DIR")) +
             "/" + std::string(getenv("WAYLAND_DISPLAY"));
@@ -100,7 +97,6 @@ void WlaProxyServer::connectClient(ev::io &watcher, int revents)
         return;
     }
 
-//    UnixLocalSocket *client = new UnixLocalSocket;
     UnixLocalSocket client;
     client.setSocketDescriptor(fd);
 

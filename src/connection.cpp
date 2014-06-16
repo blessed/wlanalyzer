@@ -77,7 +77,10 @@ void WlaConnection::handleRead(UnixLocalSocket &src, UnixLocalSocket &dst, std::
     WlaMessage *msg = new WlaMessage;
     int len = msg->receiveMessage(src);
     if (len <= 0)
+    {
+        delete msg;
         return;
+    }
 
     msgStack.push(msg);
 

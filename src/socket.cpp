@@ -34,10 +34,20 @@ UnixLocalSocket::UnixLocalSocket() : _fd(-1), _connected(false)
 {
 }
 
+UnixLocalSocket::UnixLocalSocket(const UnixLocalSocket &copy)
+{
+    if (copy.isConnected())
+    {
+        _fd = dup(copy._fd);
+        _connected = copy.isConnected();
+    }
+}
+
 UnixLocalSocket::~UnixLocalSocket()
 {
     if (isConnected())
     {
+        DEBUG_LOG("Closed socket %d", _fd);
         disconnectFromServer();
     }
 }
@@ -117,6 +127,17 @@ void UnixLocalSocket::setSocketDescriptor(int fd, int flags)
     _connected = true;
 }
 
+void UnixLocalSocket::start(int eventMask)
+{
+    ev::io::start(_fd, eventMask);
+}
+
+UnixLocalSocket &UnixLocalSocket::operator=(const UnixLocalSocket &copy)
+{
+    _fd = dup(copy._fd);
+    _connected = copy._connected;
+}
+
 bool operator==(int fd, const UnixLocalSocket &sock)
 {
     return fd == sock.getSocketDescriptor();
@@ -146,4 +167,26 @@ bool UnixLocalSocket::write(const char *data, long c) const
     }
 
     return true;
+}
+
+int UnixLocalSocket::readMsg(msghdr *msg)
+{
+    int len;
+    do
+    {
+        len = recvmsg(_fd, msg, 0);
+    } while (len < 0 && errno == EINTR);
+
+    return len;
+}
+
+int UnixLocalSocket::writeMsg(const msghdr *msg)
+{
+    int len;
+    do
+    {
+        len = sendmsg(_fd, msg, 0);
+    } while (len < 0 && errno == EINTR);
+
+    return len;
 }

@@ -29,6 +29,7 @@
 #include <sys/socket.h>
 #include <sys/un.h>
 #include <string>
+#include <ev++.h>
 
 enum UnixLocalSocketError
 {
@@ -42,10 +43,12 @@ enum UnixLocalSocketError
     NoError
 };
 
-class UnixLocalSocket
+
+class UnixLocalSocket : public ev::io
 {
 public:
     UnixLocalSocket();
+    UnixLocalSocket(const UnixLocalSocket &copy);
     ~UnixLocalSocket();
 
     UnixLocalSocketError connectToServer(const char *path);
@@ -61,12 +64,20 @@ public:
         return -1;
     }
 
+    void start(int eventMask);
+
     bool isConnected() const { return _connected; }
+
+    UnixLocalSocket &operator=(const UnixLocalSocket &copy);
+
     bool operator==(int fd) { return fd == _fd; }
-//    friend bool operator==(int fd, const UnixLocalSocket &sock);
+    friend bool operator==(int fd, const UnixLocalSocket &sock);
 
     long read(char *data, long max_size) const;
     bool write(const char *data, long c) const;
+
+    int readMsg(msghdr *msg);
+    int writeMsg(const msghdr *msg);
 
 private:
     void shutdown();

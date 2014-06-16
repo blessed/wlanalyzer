@@ -22,56 +22,66 @@
  * SOFTWARE.
  */
 
-#include <string.h>
-#include "request.h"
+#include "common.h"
+#include "message.h"
 
-WlaMessage::WlaMessage(const WlaMessage &copy)
+WlaMessage::WlaMessage()
 {
-    if (copy._size > 0)
-    {
-        _buf = new char[copy.size()];
-        memcpy(_buf, copy._buf, copy.size());
-        _size = copy._size;
-    }
+    size = 0;
+
+    iov.iov_base = buf;
+    iov.iov_len = MAX_BUF_SIZE;
+
+    msg.msg_name = NULL;
+    msg.msg_namelen = 0;
+    msg.msg_iov = &iov;
+    msg.msg_iovlen = 1;
+    msg.msg_control = cmsg;
+    msg.msg_controllen = CMSG_LEN(MAX_FDS * sizeof(int));
 }
 
 WlaMessage::~WlaMessage()
 {
-    if (_size)
+}
+
+const msghdr *WlaMessage::getMsg()
+{
+    return &msg;
+}
+
+int WlaMessage::sendMessage(UnixLocalSocket &socket)
+{
+    iov.iov_len = size;
+
+    int len = socket.writeMsg(&msg);
+    if (len < 0)
     {
-        delete _buf;
+        DEBUG_LOG("failed to write message");
+        perror(NULL);
+    }
+    else if (len > 0)
+    {
+        DEBUG_LOG("wrote %d", len);
     }
 
-    if (_hdr)
+    return len;
+}
+
+int WlaMessage::receiveMessage(UnixLocalSocket &socket)
+{
+    iov.iov_len = MAX_BUF_SIZE;
+    int len = socket.readMsg(&msg);
+    if (len < 0)
     {
-        for (int i = 0; i < _hdr->msg_iovlen; i++)
-        {
-            delete [] (char *)_hdr->msg_iov[i].iov_base;
-        }
-
-        delete (cmsghdr *)_hdr->msg_control;
-        delete _hdr->msg_iov;
-        delete _hdr;
+        DEBUG_LOG("failed to read message");
+        perror(NULL);
+        size = 0;
     }
-}
+    else if (len > 0)
+    {
+        DEBUG_LOG("read %d", len);
+        size = len;
+    }
 
-void WlaMessage::setData(char *buf, int size)
-{
-    _buf = buf;
-    _size = size;
-
-    gettimeofday(&_timestamp, NULL);
-}
-
-void WlaMessage::setHeader(msghdr *hdr)
-{
-    if (!hdr)
-        return;
-
-    _hdr = hdr;
-}
-
-msghdr *WlaMessage::getHeader() const
-{
-    return _hdr;
+    return len;
 }

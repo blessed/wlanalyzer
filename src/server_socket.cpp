@@ -120,7 +120,7 @@ bool UnixLocalServer::listen(const string &name)
     int val = 1;
     setsockopt(_fd, SOL_SOCKET, SO_REUSEADDR, &val, sizeof val);
 
-    LOGGER_LOG("listening on %s", name.c_str());
+    DEBUG_LOG("listening on %s", name.c_str());
 
     _serverName = name;
     _listening = true;
@@ -134,15 +134,15 @@ void UnixLocalServer::onNewConnection()
     sockaddr_un addr;
     socklen_t socklen;
 
-    LOGGER_LOG("new connection");
-    LOGGER_LOG("dupa");
+    DEBUG_LOG("new connection");
+    DEBUG_LOG("dupa");
 
     socklen = sizeof(sockaddr_un);
     clientSocket = accept(_fd, (sockaddr *)&addr, &socklen);
     if (clientSocket == -1)
         return;
 
-    LOGGER_LOG("Hm hm");
+    DEBUG_LOG("Hm hm");
 
     UnixLocalSocket *localSocket = new UnixLocalSocket;
     localSocket->setSocketDescriptor(clientSocket);
@@ -163,7 +163,7 @@ bool UnixLocalServer::waitForConnection(int ms, bool *timedout)
     {
         if (errno == EINTR)
         {
-            LOGGER_LOG("EINTR\n");
+            DEBUG_LOG("EINTR\n");
             continue;
         }
         else if (errno == ETIMEDOUT)

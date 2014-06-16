@@ -22,44 +22,31 @@
  * SOFTWARE.
  */
 
+#ifndef MESSAGE_H
+#define MESSAGE_H
 
-#ifndef REQUEST_H
-#define REQUEST_H
-
-#include <sys/time.h>
-#include <sys/socket.h>
-#include "common.h"
+#include "socket.h"
 
 class WlaMessage
 {
 public:
-
-    enum WLA_MSG_TYPE
-    {
-        REQUEST_TYPE,
-        EVENT_TYPE
-    };
-
-    WlaMessage(WLA_MSG_TYPE type) : _size(-1), _buf(NULL), _type(type), _hdr(NULL)
-    {
-    }
-
-    WlaMessage(const WlaMessage &copy);
+    WlaMessage();
     ~WlaMessage();
 
-    int size() const { return _size; }
-    void setData(char *buf, int size);
-    const char *data() const { return _buf; }
-
-    void setHeader(msghdr *hdr);
-    msghdr *getHeader() const;
+    const msghdr *getMsg();
+    int sendMessage(UnixLocalSocket &socket);
+    int receiveMessage(UnixLocalSocket &socket);
 
 private:
-    int _size;
-    char *_buf;
-    msghdr *_hdr;
-    WLA_MSG_TYPE _type;
-    timeval _timestamp;
+    static const int MAX_BUF_SIZE = 4096;
+    static const int MAX_FDS = 28;
+
+    char buf[MAX_BUF_SIZE];
+    int size;
+
+    msghdr msg;
+    char cmsg[CMSG_LEN(MAX_FDS * sizeof(int))];
+    iovec iov;
 };
 
-#endif // REQUEST_H
+#endif // MESSAGE_H

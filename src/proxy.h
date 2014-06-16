@@ -28,7 +28,7 @@
 
 #include <string>
 #include <ev++.h>
-#include <vector>
+#include <stack>
 #include "socket.h"
 #include "server_socket.h"
 #include "connection.h"
@@ -51,7 +51,7 @@ private:
     ev::io _io;
     ev::default_loop _loop;
 
-    std::vector<WlaConnection *> _connections;
+    std::stack<WlaConnection *> _connections;
 };
 
 #endif // PROXY_H

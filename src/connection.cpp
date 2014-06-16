@@ -22,69 +22,81 @@
  * SOFTWARE.
  */
 
-#include <errno.h>
-#include <sys/select.h>
-#include "connection.h"
 #include "common.h"
+#include "connection.h"
+
+using namespace std;
 
 WlaConnection::~WlaConnection()
 {
-    close();
+    client.disconnectFromServer();
+    wayland.disconnectFromServer();
 }
 
-WlaError WlaConnection::openConnection(UnixLocalSocket *client, UnixLocalSocket *server)
+void WlaConnection::createConnection(UnixLocalSocket cli, UnixLocalSocket server)
 {
-    if (!client || !server)
-    {
-        LOGGER_LOG("invalid arguments");
-        return WlaConnectionFailed;
-    }
+    client = cli;
+    wayland = server;
 
-    if (_connected)
-    {
-        LOGGER_LOG("already connected");
-        return WlaConnectionFailed;
-    }
+    client.set<WlaConnection, &WlaConnection::handleConnection>(this);
+    wayland.set<WlaConnection, &WlaConnection::handleConnection>(this);
 
-    _client = client;
-    _server = server;
+    wayland.start(EV_READ);
+    client.start(EV_READ);
 
-    _clientWatcher.set<WlaConnection, &WlaConnection::handleConnection>(this);
-    _serverWatcher.set<WlaConnection, &WlaConnection::handleConnection>(this);
-}
-
-void WlaConnection::close()
-{
-    _client->disconnectFromServer();
-    delete _client;
-
-    _server->disconnectFromServer();
-    delete _server;
+    DEBUG_LOG("connected %d with %d", client.getSocketDescriptor(),
+              wayland.getSocketDescriptor());
 }
 
 void WlaConnection::handleConnection(ev::io &watcher, int revents)
 {
-    UnixLocalSocket *src, *dst;
-
     if (revents & EV_ERROR)
     {
-        LOGGER_LOG("connection handle error");
+        DEBUG_LOG("invalid event %s", strerror(errno));
         return;
-    }
-
-    if (watcher.fd == *_client)
-    {
-        src = _client;
-        dst = _server;
-    }
-    else
-    {
-        src = _server;
-        dst = _client;
     }
 
     if (revents & EV_READ)
     {
-        WlaBuffer *input = src->read();
+        if (watcher.fd == client)
+            handleRead(client, wayland, requests);
+        else
+            handleRead(wayland, client, events);
     }
+    else if (revents & EV_WRITE)
+    {
+        if (watcher.fd == client)
+            handleWrite(client, events);
+        else
+            handleWrite(wayland, requests);
+    }
+}
+
+void WlaConnection::handleRead(UnixLocalSocket &src, UnixLocalSocket &dst, std::stack<WlaMessage *> &msgStack)
+{
+    WlaMessage *msg = new WlaMessage;
+    int len = msg->receiveMessage(src);
+    if (len <= 0)
+        return;
+
+    msgStack.push(msg);
+
+    dst.stop();
+    dst.start(EV_READ | EV_WRITE);
+}
+
+void WlaConnection::handleWrite(UnixLocalSocket &dst, std::stack<WlaMessage *> &msgStack)
+{
+    while (!msgStack.empty())
+    {
+        WlaMessage *msg = msgStack.top();
+
+        int len = msg->sendMessage(dst);;
+
+        msgStack.pop();
+        delete msg;
+    }
+
+    dst.stop();
+    dst.start(EV_READ);
 }

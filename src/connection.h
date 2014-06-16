@@ -26,43 +26,31 @@
 #define CONNECTION_H
 
 #include <pthread.h>
-#include <queue>
+#include <stack>
 #include <ev++.h>
 #include "socket.h"
-#include "request.h"
 #include "common.h"
-
-class WlaBuffer
-{
-public:
-    WlaBuffer();
-    ~WlaBuffer();
-
-private:
-    static const int MAX_BUF_SIZE;
-    char buf[MAX_BUF_SIZE];
-
-};
+#include "message.h"
 
 class WlaConnection
 {
 public:
-    WlaConnection() : _client(NULL), _server(NULL), _connected(false) {}
-    virtual ~WlaConnection();
+    WlaConnection() {}
+    ~WlaConnection();
 
-    WlaError openConnection(UnixLocalSocket *client, UnixLocalSocket *server);
-    void close();
+    void createConnection(UnixLocalSocket client, UnixLocalSocket server);
 
 private:
     void handleConnection(ev::io &watcher, int revents);
+    void handleRead(UnixLocalSocket &src, UnixLocalSocket &dst, std::stack<WlaMessage *> &msgStack);
+    void handleWrite(UnixLocalSocket &dst, std::stack<WlaMessage *> &msgStack);
 
 private:
-    UnixLocalSocket *_client;
-    UnixLocalSocket *_server;
-    ev::io _clientWatcher;
-    ev::io _serverWatcher;
+    UnixLocalSocket client;
+    UnixLocalSocket wayland;
 
-    bool _connected;
+    std::stack<WlaMessage *> events;
+    std::stack<WlaMessage *> requests;
 };
 
 #endif // CONNECTION_H

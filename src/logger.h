@@ -28,7 +28,7 @@
 
 #include <stdio.h>
 
-#define LOGGER_LOG(msg, ...) \
+#define DEBUG_LOG(msg, ...) \
     Logger::getInstance()->log("%s:%d-> " msg "\n", __PRETTY_FUNCTION__, __LINE__, ##__VA_ARGS__);
 
 class Logger

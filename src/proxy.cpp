@@ -40,7 +40,7 @@ int WlaProxyServer::init(const std::string &socketPath)
 {
     if (_serverSocket.isListening())
     {
-        LOGGER_LOG("Server is listening already");
+        DEBUG_LOG("Server is listening already");
         return -1;
     }
 
@@ -48,7 +48,7 @@ int WlaProxyServer::init(const std::string &socketPath)
             "/" + socketPath;
     if (!_serverSocket.listen(fullPath))
     {
-        LOGGER_LOG("Failed to listen on %s", socketPath.c_str());
+        DEBUG_LOG("Failed to listen on %s", socketPath.c_str());
         return -1;
     }
 
@@ -64,14 +64,6 @@ int WlaProxyServer::openServer()
 void WlaProxyServer::closeServer()
 {
     // TODO: close all connections
-
-    for (std::vector<WlaConnection *>::iterator it = _connections.begin();
-         it != _connections.end(); ++it)
-    {
-        (*it)->close();
-        delete *it;
-    }
-
     _io.stop();
 
     if (_serverSocket.isListening())
@@ -82,17 +74,20 @@ void WlaProxyServer::connectClient(ev::io &watcher, int revents)
 {
     if (revents & EV_ERROR)
     {
-        LOGGER_LOG("got invalid event");
+        DEBUG_LOG("got invalid event");
         _io.stop();
         return;
     }
 
-    UnixLocalSocket *wayland = new UnixLocalSocket;
+    DEBUG_LOG("burp");
+
+//    UnixLocalSocket *wayland = new UnixLocalSocket;
+    UnixLocalSocket wayland;
     std::string waylandPath = std::string(getenv("XDG_RUNTIME_DIR")) +
             "/" + std::string(getenv("WAYLAND_DISPLAY"));
-    if (wayland->connectToServer(waylandPath) != NoError)
+    if (wayland.connectToServer(waylandPath) != NoError)
     {
-        LOGGER_LOG("failed to connect to server");
+        DEBUG_LOG("failed to connect to server");
         return;
     }
 
@@ -101,20 +96,21 @@ void WlaProxyServer::connectClient(ev::io &watcher, int revents)
     int fd = accept(watcher.fd, (sockaddr *)&addr, &addrlen);
     if (fd == -1)
     {
-        LOGGER_LOG("failed to accept connection");
+        DEBUG_LOG("failed to accept connection");
         return;
     }
 
-    UnixLocalSocket *client = new UnixLocalSocket;
-    client->setSocketDescriptor(fd);
+//    UnixLocalSocket *client = new UnixLocalSocket;
+    UnixLocalSocket client;
+    client.setSocketDescriptor(fd);
 
     WlaConnection *connection = new WlaConnection;
     if (!connection)
     {
-        LOGGER_LOG("Failed to create connection between client and compositor");
+        DEBUG_LOG("Failed to create connection between client and compositor");
         return;
     }
+    connection->createConnection(client, wayland);
 
-    connection->openConnection(client, wayland);
-    _connections.push_back(connection);
+    _connections.push(connection);
 }

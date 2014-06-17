@@ -22,12 +22,11 @@
  * SOFTWARE.
  */
 
-#include "common.h"
 #include "message.h"
 
 WlaMessage::WlaMessage()
 {
-    size = 0;
+    msgSize = 0;
 
     iov.iov_base = buf;
     iov.iov_len = MAX_BUF_SIZE;
@@ -46,22 +45,27 @@ WlaMessage::~WlaMessage()
 
 const msghdr *WlaMessage::getMsg()
 {
+    if (!received)
+        return NULL;
+
     return &msg;
 }
 
 int WlaMessage::sendMessage(UnixLocalSocket &socket)
 {
-    iov.iov_len = size;
+    if (msgSize == 0)
+    {
+        DEBUG_LOG("message is size 0");
+        return -1;
+    }
+
+    iov.iov_len = msgSize;
 
     int len = socket.writeMsg(&msg);
     if (len < 0)
     {
         DEBUG_LOG("failed to write message");
         perror(NULL);
-    }
-    else if (len > 0)
-    {
-        DEBUG_LOG("wrote %d", len);
     }
 
     return len;
@@ -75,13 +79,57 @@ int WlaMessage::receiveMessage(UnixLocalSocket &socket)
     {
         DEBUG_LOG("failed to read message");
         perror(NULL);
-        size = 0;
+        msgSize = 0;
     }
     else if (len > 0)
     {
-        DEBUG_LOG("read %d", len);
-        size = len;
+        msgSize = len;
     }
 
     return len;
+}
+
+uint32_t WlaMessage::clientID() const
+{
+    if (!msgSize)
+        return -1;
+
+    uint32_t id = 0;
+    const char *c_id = buf;
+    for (int i = 0; i < 4; ++i)
+    {
+        id |= c_id[i] << i * 8;
+    }
+
+    return id;
+}
+
+uint16_t WlaMessage::opcode() const
+{
+    if (!msgSize)
+        return -1;
+
+    uint16_t code = 0;
+    const char *arr = buf + OPCODE_OFFSET;
+    for (int i = 0; i < 2; ++i)
+    {
+        code |= arr[i] << i * 8;
+    }
+
+    return code;
+}
+
+uint16_t WlaMessage::size() const
+{
+    if (!msgSize)
+        return -1;
+
+    uint16_t size = 0;
+    const char *arr = buf + MSG_SIZE_OFFSET;
+    for (int i = 0; i < 2; ++i)
+    {
+        size |= arr[i] << i * 8;
+    }
+
+    return size;
 }

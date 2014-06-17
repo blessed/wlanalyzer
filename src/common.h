@@ -28,6 +28,7 @@
 #include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdint.h>
 #include <string>
 #include "logger.h"
 
@@ -37,7 +38,6 @@ void debug_print(const char *buf);
 int check_error(int error);
 
 void wld_log(const char *format, ...);
-
 
 enum WlaError
 {

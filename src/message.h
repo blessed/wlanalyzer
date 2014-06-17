@@ -25,6 +25,7 @@
 #ifndef MESSAGE_H
 #define MESSAGE_H
 
+#include "common.h"
 #include "socket.h"
 
 class WlaMessage
@@ -37,12 +38,20 @@ public:
     int sendMessage(UnixLocalSocket &socket);
     int receiveMessage(UnixLocalSocket &socket);
 
+    uint32_t clientID() const;
+    uint16_t opcode() const;
+    uint16_t size() const;
+
 private:
     static const int MAX_BUF_SIZE = 4096;
     static const int MAX_FDS = 28;
+    static const int CLIENT_ID_OFFSET = 0;
+    static const int MSG_SIZE_OFFSET = 4;
+    static const int OPCODE_OFFSET = 6;
+    bool received;
 
     char buf[MAX_BUF_SIZE];
-    int size;
+    int msgSize;
 
     msghdr msg;
     char cmsg[CMSG_LEN(MAX_FDS * sizeof(int))];

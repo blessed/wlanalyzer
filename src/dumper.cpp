@@ -32,6 +32,11 @@ static void set_bit(uint32_t *val, int num, bool bit)
     *val = (*val & ~(1 << num)) | (bit << num);
 }
 
+static bool bit_isset(const uint32_t &val, int num)
+{
+    return val & (1 << num);
+}
+
 WlaIODumper::WlaIODumper()
 {
     filefd = NULL;
@@ -77,14 +82,17 @@ int WlaIODumper::write(const WlaMessage &msg)
     else
         set_bit(&flags, CMESSAGE_PRESENT, false);
 
+    // FIXME: implement proper size handling of msg headers
     ::fwrite(&flags, sizeof(flags), 1, filefd);
     ::fwrite(msg.getTimeStamp(), sizeof(timeval), 1, filefd);
 
-    if (flags & CMESSAGE_PRESENT)
+    if (bit_isset(flags, CMESSAGE_PRESENT))
     {
         uint32_t cmsg_len = msg.getControlMsgSize();
         ::fwrite(&cmsg_len, sizeof(cmsg_len), 1, filefd);
         ::fwrite(msg.getControlMsg(), cmsg_len, 1, filefd);
+        cmsg_len = 0xdeadbeef;
+        ::fwrite(&cmsg_len, sizeof(cmsg_len), 1, filefd);
     }
 
     uint32_t msg_len = msg.getMsgSize();

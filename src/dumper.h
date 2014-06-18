@@ -40,8 +40,8 @@ public:
 
 private:
 
-    static const int MESSAGE_EVENT_TYPE = 0x01;
-    static const int CMESSAGE_PRESENT = 0x02;
+    static const int MESSAGE_EVENT_TYPE = 0x00;
+    static const int CMESSAGE_PRESENT = 0x01;
 
     FILE *filefd;
     static int seq;

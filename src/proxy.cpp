@@ -58,6 +58,9 @@ int WlaProxyServer::init(const std::string &socketPath)
 
 int WlaProxyServer::openServer()
 {
+    std::string path = "dump";
+    writer.open(path);
+
     _loop.run();
 }
 
@@ -68,6 +71,16 @@ void WlaProxyServer::closeServer()
 
     if (_serverSocket.isListening())
         _serverSocket.close();
+
+    _loop.break_loop();
+}
+
+void WlaProxyServer::closeConnection(WlaConnection *conn)
+{
+    _connections.erase(conn);
+
+    if (_connections.empty())
+        closeServer();
 }
 
 void WlaProxyServer::connectClient(ev::io &watcher, int revents)
@@ -100,7 +113,7 @@ void WlaProxyServer::connectClient(ev::io &watcher, int revents)
     UnixLocalSocket client;
     client.setSocketDescriptor(fd);
 
-    WlaConnection *connection = new WlaConnection;
+    WlaConnection *connection = new WlaConnection(this, &writer);
     if (!connection)
     {
         DEBUG_LOG("Failed to create connection between client and compositor");
@@ -108,5 +121,5 @@ void WlaProxyServer::connectClient(ev::io &watcher, int revents)
     }
     connection->createConnection(client, wayland);
 
-    _connections.push(connection);
+    _connections.insert(connection);
 }

@@ -23,14 +23,22 @@
  */
 
 #include "common.h"
+#include "proxy.h"
+#include "dumper.h"
 #include "connection.h"
 
 using namespace std;
 
+WlaConnection::WlaConnection(WlaProxyServer *parent, WlaIODumper *writer)
+{
+    this->parent = parent;
+    this->writer = writer;
+}
+
 WlaConnection::~WlaConnection()
 {
-    client.disconnectFromServer();
-    wayland.disconnectFromServer();
+    closeConnection();
+    parent->closeConnection(this);
 }
 
 void WlaConnection::createConnection(UnixLocalSocket cli, UnixLocalSocket server)
@@ -59,9 +67,33 @@ void WlaConnection::handleConnection(ev::io &watcher, int revents)
     if (revents & EV_READ)
     {
         if (watcher.fd == client)
-            handleRead(client, wayland, requests);
+        {
+            WlaMessage *msg = handleRead(client, wayland);
+            if (!msg)
+            {
+                DEBUG_LOG("peer disconnected");
+                delete this;
+                return;
+            }
+
+            writer->write(*msg);
+            msg->setType(WlaMessage::REQUEST_TYPE);
+            requests.push(msg);
+        }
         else
-            handleRead(wayland, client, events);
+        {
+            WlaMessage *msg = handleRead(wayland, client);
+            if (!msg)
+            {
+                DEBUG_LOG("peer disconnected");
+                delete this;
+                return;
+            }
+
+            writer->write(*msg);
+            msg->setType(WlaMessage::EVENT_TYPE);
+            events.push(msg);
+        }
     }
     else if (revents & EV_WRITE)
     {
@@ -72,20 +104,25 @@ void WlaConnection::handleConnection(ev::io &watcher, int revents)
     }
 }
 
-void WlaConnection::handleRead(UnixLocalSocket &src, UnixLocalSocket &dst, std::stack<WlaMessage *> &msgStack)
+WlaMessage *WlaConnection::handleRead(UnixLocalSocket &src, UnixLocalSocket &dst)
 {
     WlaMessage *msg = new WlaMessage;
     int len = msg->receiveMessage(src);
-    if (len <= 0)
+    if (len < 0)
     {
         delete msg;
-        return;
+        return NULL;
     }
-
-    msgStack.push(msg);
+    else if (len == 0)
+    {
+        delete msg;
+        return NULL;
+    }
 
     dst.stop();
     dst.start(EV_READ | EV_WRITE);
+
+    return msg;
 }
 
 void WlaConnection::handleWrite(UnixLocalSocket &dst, std::stack<WlaMessage *> &msgStack)
@@ -102,4 +139,24 @@ void WlaConnection::handleWrite(UnixLocalSocket &dst, std::stack<WlaMessage *> &
 
     dst.stop();
     dst.start(EV_READ);
+}
+
+void WlaConnection::closeConnection()
+{
+    client.stop();
+    wayland.stop();
+
+    while (!requests.empty())
+    {
+        WlaMessage *msg = requests.top();
+        delete msg;
+        requests.pop();
+    }
+
+    while (!requests.empty())
+    {
+        WlaMessage *msg = events.top();
+        delete msg;
+        events.pop();
+    }
 }

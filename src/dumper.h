@@ -22,42 +22,29 @@
  * SOFTWARE.
  */
 
+#ifndef DUMPER_H
+#define DUMPER_H
 
-#ifndef PROXY_H
-#define PROXY_H
+#include "common.h"
 
-#include <string>
-#include <ev++.h>
-#include <set>
-#include "socket.h"
-#include "server_socket.h"
-#include "connection.h"
-#include "dumper.h"
+class WlaMessage;
 
-class WlaProxyServer
+class WlaIODumper
 {
 public:
-    WlaProxyServer();
-    virtual ~WlaProxyServer();
+    WlaIODumper();
+    ~WlaIODumper();
 
-    int init(const std::string &socketPath);
-    int openServer();
-    void closeServer();
-
-    void closeConnection(WlaConnection *conn);
+    int open(const std::string &path);
+    int write(const WlaMessage &msg);
 
 private:
-    void connectClient(ev::io &watcher, int revents);
-    void handleCommunication(ev::io &watcher, int revents);
 
-private:
-    UnixLocalServer _serverSocket;
-    ev::io _io;
-    ev::default_loop _loop;
+    static const int MESSAGE_EVENT_TYPE = 0x01;
+    static const int CMESSAGE_PRESENT = 0x02;
 
-    WlaIODumper writer;
-
-    std::set<WlaConnection *> _connections;
+    FILE *filefd;
+    static int seq;
 };
 
-#endif // PROXY_H
+#endif // DUMPER_H

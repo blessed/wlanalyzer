@@ -37,18 +37,12 @@ WlaMessage::WlaMessage()
     msg.msg_iovlen = 1;
     msg.msg_control = cmsg;
     msg.msg_controllen = CMSG_LEN(MAX_FDS * sizeof(int));
+
+    msgType = REQUEST_TYPE;
 }
 
 WlaMessage::~WlaMessage()
 {
-}
-
-const msghdr *WlaMessage::getMsg()
-{
-    if (!received)
-        return NULL;
-
-    return &msg;
 }
 
 int WlaMessage::sendMessage(UnixLocalSocket &socket)
@@ -83,6 +77,7 @@ int WlaMessage::receiveMessage(UnixLocalSocket &socket)
     }
     else if (len > 0)
     {
+        gettimeofday(&timestamp, NULL);
         msgSize = len;
     }
 

@@ -25,18 +25,34 @@
 #ifndef MESSAGE_H
 #define MESSAGE_H
 
+#include <sys/time.h>
 #include "common.h"
 #include "socket.h"
 
 class WlaMessage
 {
 public:
+    enum MESSAGE_TYPE
+    {
+        REQUEST_TYPE,
+        EVENT_TYPE
+    };
+
     WlaMessage();
     ~WlaMessage();
 
-    const msghdr *getMsg();
     int sendMessage(UnixLocalSocket &socket);
     int receiveMessage(UnixLocalSocket &socket);
+
+    void setType(MESSAGE_TYPE type) { msgType = type; }
+    MESSAGE_TYPE getType() const { return msgType; }
+    const timeval *getTimeStamp() const { return &timestamp; }
+
+    uint32_t getMsgSize() const { return msgSize; }
+    const char *getMsg() const { return buf; }
+
+    uint32_t getControlMsgSize() const { return msg.msg_controllen; }
+    const char *getControlMsg() const { return cmsg; }
 
     uint32_t clientID() const;
     uint16_t opcode() const;
@@ -52,6 +68,8 @@ private:
 
     char buf[MAX_BUF_SIZE];
     int msgSize;
+    MESSAGE_TYPE msgType;
+    timeval timestamp;
 
     msghdr msg;
     char cmsg[CMSG_LEN(MAX_FDS * sizeof(int))];

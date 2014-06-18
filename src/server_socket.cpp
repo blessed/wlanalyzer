@@ -43,7 +43,6 @@ UnixLocalServer::UnixLocalServer() : _fd(-1), _maxPendingConnections(1), _server
 
 UnixLocalServer::~UnixLocalServer()
 {
-    Logger::getInstance()->log("called destructor\n");
     closeServer();
 }
 
@@ -57,7 +56,7 @@ void UnixLocalServer::closeServer()
     ::close(_fd);
     unlink(_serverName.c_str());
 
-    Logger::getInstance()->log("server closed\n");
+    DEBUG_LOG("server closed");
 
     _listening = false;
     _serverName.clear();
@@ -135,14 +134,11 @@ void UnixLocalServer::onNewConnection()
     socklen_t socklen;
 
     DEBUG_LOG("new connection");
-    DEBUG_LOG("dupa");
 
     socklen = sizeof(sockaddr_un);
     clientSocket = accept(_fd, (sockaddr *)&addr, &socklen);
     if (clientSocket == -1)
         return;
-
-    DEBUG_LOG("Hm hm");
 
     UnixLocalSocket *localSocket = new UnixLocalSocket;
     localSocket->setSocketDescriptor(clientSocket);

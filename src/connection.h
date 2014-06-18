@@ -32,10 +32,13 @@
 #include "common.h"
 #include "message.h"
 
+class WlaIODumper;
+class WlaProxyServer;
+
 class WlaConnection
 {
 public:
-    WlaConnection() {}
+    WlaConnection(WlaProxyServer *parent, WlaIODumper *writer);
     ~WlaConnection();
 
     // TODO: handle connection close
@@ -43,12 +46,17 @@ public:
 
 private:
     void handleConnection(ev::io &watcher, int revents);
-    void handleRead(UnixLocalSocket &src, UnixLocalSocket &dst, std::stack<WlaMessage *> &msgStack);
+    WlaMessage *handleRead(UnixLocalSocket &src, UnixLocalSocket &dst);
     void handleWrite(UnixLocalSocket &dst, std::stack<WlaMessage *> &msgStack);
+
+    void closeConnection();
 
 private:
     UnixLocalSocket client;
     UnixLocalSocket wayland;
+
+    WlaProxyServer *parent;
+    WlaIODumper *writer;
 
     std::stack<WlaMessage *> events;
     std::stack<WlaMessage *> requests;

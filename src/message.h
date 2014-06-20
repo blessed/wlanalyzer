@@ -29,7 +29,7 @@
 #include "common.h"
 #include "socket.h"
 
-class WlaMessage
+class WlaMessageBuffer
 {
 public:
     enum MESSAGE_TYPE
@@ -38,8 +38,8 @@ public:
         EVENT_TYPE
     };
 
-    WlaMessage();
-    ~WlaMessage();
+    WlaMessageBuffer();
+    ~WlaMessageBuffer();
 
     int sendMessage(UnixLocalSocket &socket);
     int receiveMessage(UnixLocalSocket &socket);

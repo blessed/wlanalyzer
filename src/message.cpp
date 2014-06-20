@@ -24,7 +24,7 @@
 
 #include "message.h"
 
-WlaMessage::WlaMessage()
+WlaMessageBuffer::WlaMessageBuffer()
 {
     msgSize = 0;
 
@@ -41,11 +41,11 @@ WlaMessage::WlaMessage()
     msgType = REQUEST_TYPE;
 }
 
-WlaMessage::~WlaMessage()
+WlaMessageBuffer::~WlaMessageBuffer()
 {
 }
 
-int WlaMessage::sendMessage(UnixLocalSocket &socket)
+int WlaMessageBuffer::sendMessage(UnixLocalSocket &socket)
 {
     if (msgSize == 0)
     {
@@ -65,7 +65,7 @@ int WlaMessage::sendMessage(UnixLocalSocket &socket)
     return len;
 }
 
-int WlaMessage::receiveMessage(UnixLocalSocket &socket)
+int WlaMessageBuffer::receiveMessage(UnixLocalSocket &socket)
 {
     iov.iov_len = MAX_BUF_SIZE;
     int len = socket.readMsg(&msg);
@@ -84,7 +84,7 @@ int WlaMessage::receiveMessage(UnixLocalSocket &socket)
     return len;
 }
 
-uint32_t WlaMessage::clientID() const
+uint32_t WlaMessageBuffer::clientID() const
 {
     if (!msgSize)
         return -1;
@@ -99,7 +99,7 @@ uint32_t WlaMessage::clientID() const
     return id;
 }
 
-uint16_t WlaMessage::opcode() const
+uint16_t WlaMessageBuffer::opcode() const
 {
     if (!msgSize)
         return -1;
@@ -114,7 +114,7 @@ uint16_t WlaMessage::opcode() const
     return code;
 }
 
-uint16_t WlaMessage::size() const
+uint16_t WlaMessageBuffer::size() const
 {
     if (!msgSize)
         return -1;

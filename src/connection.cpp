@@ -68,7 +68,7 @@ void WlaConnection::handleConnection(ev::io &watcher, int revents)
     {
         if (watcher.fd == client)
         {
-            WlaMessage *msg = handleRead(client, wayland);
+            WlaMessageBuffer *msg = handleRead(client, wayland);
             if (!msg)
             {
                 DEBUG_LOG("peer disconnected");
@@ -77,12 +77,12 @@ void WlaConnection::handleConnection(ev::io &watcher, int revents)
             }
 
             writer->write(*msg);
-            msg->setType(WlaMessage::REQUEST_TYPE);
+            msg->setType(WlaMessageBuffer::REQUEST_TYPE);
             requests.push(msg);
         }
         else
         {
-            WlaMessage *msg = handleRead(wayland, client);
+            WlaMessageBuffer *msg = handleRead(wayland, client);
             if (!msg)
             {
                 DEBUG_LOG("peer disconnected");
@@ -91,7 +91,7 @@ void WlaConnection::handleConnection(ev::io &watcher, int revents)
             }
 
             writer->write(*msg);
-            msg->setType(WlaMessage::EVENT_TYPE);
+            msg->setType(WlaMessageBuffer::EVENT_TYPE);
             events.push(msg);
         }
     }
@@ -104,9 +104,9 @@ void WlaConnection::handleConnection(ev::io &watcher, int revents)
     }
 }
 
-WlaMessage *WlaConnection::handleRead(UnixLocalSocket &src, UnixLocalSocket &dst)
+WlaMessageBuffer *WlaConnection::handleRead(UnixLocalSocket &src, UnixLocalSocket &dst)
 {
-    WlaMessage *msg = new WlaMessage;
+    WlaMessageBuffer *msg = new WlaMessageBuffer;
     int len = msg->receiveMessage(src);
     if (len < 0)
     {
@@ -125,11 +125,11 @@ WlaMessage *WlaConnection::handleRead(UnixLocalSocket &src, UnixLocalSocket &dst
     return msg;
 }
 
-void WlaConnection::handleWrite(UnixLocalSocket &dst, std::stack<WlaMessage *> &msgStack)
+void WlaConnection::handleWrite(UnixLocalSocket &dst, std::stack<WlaMessageBuffer *> &msgStack)
 {
     while (!msgStack.empty())
     {
-        WlaMessage *msg = msgStack.top();
+        WlaMessageBuffer *msg = msgStack.top();
 
         int len = msg->sendMessage(dst);;
 
@@ -148,14 +148,14 @@ void WlaConnection::closeConnection()
 
     while (!requests.empty())
     {
-        WlaMessage *msg = requests.top();
+        WlaMessageBuffer *msg = requests.top();
         delete msg;
         requests.pop();
     }
 
     while (!requests.empty())
     {
-        WlaMessage *msg = events.top();
+        WlaMessageBuffer *msg = events.top();
         delete msg;
         events.pop();
     }

@@ -27,7 +27,7 @@
 
 #include "common.h"
 
-class WlaMessage;
+class WlaMessageBuffer;
 
 class WlaIODumper
 {
@@ -36,7 +36,7 @@ public:
     ~WlaIODumper();
 
     int open(const std::string &path);
-    int write(const WlaMessage &msg);
+    int write(const WlaMessageBuffer &msg);
 
 private:
 

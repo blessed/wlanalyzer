@@ -66,7 +66,9 @@ int WlaIODumper::open(const std::string &path)
         return 1;
 }
 
-int WlaIODumper::write(const WlaMessage &msg)
+// TODO: make the writer use strictly defined field bit lengths
+// instead of sizeof's
+int WlaIODumper::write(const WlaMessageBuffer &msg)
 {
     if (!filefd)
         return -1;
@@ -75,7 +77,7 @@ int WlaIODumper::write(const WlaMessage &msg)
     seq++;
 
     uint32_t flags = 0;
-    set_bit(&flags, MESSAGE_EVENT_TYPE, msg.getType() == WlaMessage::EVENT_TYPE ? true : false);
+    set_bit(&flags, MESSAGE_EVENT_TYPE, msg.getType() == WlaMessageBuffer::EVENT_TYPE ? true : false);
 
     if (msg.getControlMsgSize() > 0)
         set_bit(&flags, CMESSAGE_PRESENT, true);
@@ -84,20 +86,25 @@ int WlaIODumper::write(const WlaMessage &msg)
 
     // FIXME: implement proper size handling of msg headers
     ::fwrite(&flags, sizeof(flags), 1, filefd);
-    ::fwrite(msg.getTimeStamp(), sizeof(timeval), 1, filefd);
+//    ::fwrite(msg.getTimeStamp(), sizeof(timeval), 1, filefd);
+    ::fwrite(&msg.getTimeStamp()->tv_sec, sizeof(uint32_t), 1, filefd);
+    ::fwrite(&msg.getTimeStamp()->tv_usec, sizeof(uint32_t), 1, filefd);
 
     if (bit_isset(flags, CMESSAGE_PRESENT))
     {
         uint32_t cmsg_len = msg.getControlMsgSize();
         ::fwrite(&cmsg_len, sizeof(cmsg_len), 1, filefd);
-        ::fwrite(msg.getControlMsg(), cmsg_len, 1, filefd);
+        ::fwrite(msg.getControlMsg(), sizeof(uint8_t), cmsg_len, filefd);
         cmsg_len = 0xdeadbeef;
         ::fwrite(&cmsg_len, sizeof(cmsg_len), 1, filefd);
     }
 
     uint32_t msg_len = msg.getMsgSize();
     ::fwrite(&msg_len, sizeof(msg_len), 1, filefd);
-    ::fwrite(msg.getMsg(), msg_len, 1, filefd);
+    ::fwrite(msg.getMsg(), sizeof(uint8_t), msg_len, filefd);
+    DEBUG_LOG("written %d msg bytes", msg_len);
+    msg_len = 0xdeadbabe;
+    ::fwrite(&msg_len, sizeof(msg_len), 1, filefd);
 
     return 0;
 }

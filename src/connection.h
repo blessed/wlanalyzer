@@ -46,8 +46,8 @@ public:
 
 private:
     void handleConnection(ev::io &watcher, int revents);
-    WlaMessage *handleRead(UnixLocalSocket &src, UnixLocalSocket &dst);
-    void handleWrite(UnixLocalSocket &dst, std::stack<WlaMessage *> &msgStack);
+    WlaMessageBuffer *handleRead(UnixLocalSocket &src, UnixLocalSocket &dst);
+    void handleWrite(UnixLocalSocket &dst, std::stack<WlaMessageBuffer *> &msgStack);
 
     void closeConnection();
 
@@ -58,8 +58,8 @@ private:
     WlaProxyServer *parent;
     WlaIODumper *writer;
 
-    std::stack<WlaMessage *> events;
-    std::stack<WlaMessage *> requests;
+    std::stack<WlaMessageBuffer *> events;
+    std::stack<WlaMessageBuffer *> requests;
 };
 
 #endif // CONNECTION_H

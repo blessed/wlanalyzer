@@ -29,17 +29,21 @@
 #include "common.h"
 #include "socket.h"
 
+const int MESSAGE_EVENT_TYPE_BIT = 0x00;
+const int CMESSAGE_PRESENT_BIT = 0x01;
+
 struct WlaMessageBufferHeader
 {
-    WlaMessageBufferHeader() : seq(0), flags(0)
+    WlaMessageBufferHeader() : flags(0)
     {
         timestamp.tv_sec = 0;
         timestamp.tv_usec = 0;
     }
 
-    uint32_t seq;
     uint32_t flags;
     timeval timestamp;
+    uint32_t msg_len;
+    uint32_t cmsg_len;
 };
 
 class WlaMessageBuffer
@@ -57,33 +61,28 @@ public:
     int sendMessage(UnixLocalSocket &socket);
     int receiveMessage(UnixLocalSocket &socket);
 
-    void setType(MESSAGE_TYPE type) { msgType = type; }
-    MESSAGE_TYPE getType() const { return msgType; }
-    const timeval *getTimeStamp() const { return &timestamp; }
+    void setHeader(const WlaMessageBufferHeader *hdr);
+    WlaMessageBufferHeader *getHeader() { return &hdr; }
 
-    uint32_t getMsgSize() const { return msgSize; }
+    void setType(MESSAGE_TYPE type);
+    MESSAGE_TYPE getType() const;
+    const timeval *getTimeStamp() const { return &hdr.timestamp; }
+
+    uint32_t getMsgSize() const { return hdr.msg_len; }
     void setMsg(const char *msg, int size);
     const char *getMsg() const { return buf; }
 
-    uint32_t getControlMsgSize() const { return msg.msg_controllen; }
+    uint32_t getControlMsgSize() const { return hdr.cmsg_len; }
+    void setControlMsg(const char *cmsg, int size);
     const char *getControlMsg() const { return cmsg; }
-
-    uint32_t clientID() const;
-    uint16_t opcode() const;
-    uint16_t size() const;
 
 private:
     static const int MAX_BUF_SIZE = 4096;
     static const int MAX_FDS = 28;
-    static const int CLIENT_ID_OFFSET = 0;
-    static const int MSG_SIZE_OFFSET = 4;
-    static const int OPCODE_OFFSET = 6;
-    bool received;
+
+    WlaMessageBufferHeader hdr;
 
     char buf[MAX_BUF_SIZE];
-    int msgSize;
-    MESSAGE_TYPE msgType;
-    timeval timestamp;
 
     msghdr msg;
     char cmsg[CMSG_LEN(MAX_FDS * sizeof(int))];

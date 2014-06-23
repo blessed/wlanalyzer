@@ -31,9 +31,6 @@ const int SEQ_OFFSET = 0;
 const int FLAGS_OFFSET = 4;
 const int TIMESTAMP_OFFSET = 8;
 
-const int MESSAGE_EVENT_TYPE = 0x00;
-const int CMESSAGE_PRESENT = 0x01;
-
 class WlaMessageBuffer;
 
 class WlaIODumper
@@ -43,7 +40,7 @@ public:
     ~WlaIODumper();
 
     int open(const std::string &path);
-    int write(const WlaMessageBuffer &msg);
+    int write(WlaMessageBuffer &msg);
 
 private:
     FILE *filefd;

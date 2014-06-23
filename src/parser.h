@@ -47,7 +47,6 @@ public:
 private:
     void handleFileEvent(ev::io &watcher, int revents);
     int parse();
-    WlaMessageHeader *getHeader(char *buf);
     WlaMessageBuffer *nextMessage();
 
 private:

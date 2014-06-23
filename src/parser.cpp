@@ -64,82 +64,60 @@ int WlaBinParser::openFile(const std::string &path)
 
 void WlaBinParser::handleFileEvent(ev::io &watcher, int revents)
 {
-    if (revents % EV_ERROR)
+    if (revents & EV_ERROR)
     {
-//        DEBUG_LOG("got error event");
+        DEBUG_LOG("got error event");
         return;
     }
 
-    if (!(revents & EV_READ))
+    if (revents & EV_READ)
     {
-        DEBUG_LOG("no read events caught");
-        return;
+        parse();
     }
-
-    parse();
 }
 
 int WlaBinParser::parse()
 {
-    int res = 0;
-    char hdr[HEADER_SIZE];
     WlaMessageBuffer *msg;
 
     while ((msg = nextMessage()) != NULL)
     {
-//        WlaMessageHeader *msgHeader = getHeader(hdr);
+        DEBUG_LOG("got message");
+        delete msg;
     }
-}
 
-WlaMessageHeader *WlaBinParser::getHeader(char *buf)
-{
-    WlaMessageHeader *hdr = new WlaMessageHeader;
-
-    hdr->client_id = (buf[0] | (buf[1] << 8) | (buf[2] << 16) | (buf[3] << 24));
-    hdr->size = buf[4] | (buf[5] << 8);
-    hdr->opcode = buf[6] | (buf[7] << 8);
-
-    return hdr;
+    return 0;
 }
 
 WlaMessageBuffer *WlaBinParser::nextMessage()
 {
     int len;
-    WlaMessageBufferHeader *msg = new WlaMessageBufferHeader;
+    WlaMessageBuffer *msg = new WlaMessageBuffer;
 
-    while (len = read(file, msg, sizeof(WlaMessageBufferHeader)) == -1 && errno == EAGAIN)
+    uint32_t seq;
+    read(file, &seq, sizeof(uint32_t));
+
+    while ((len = read(file, msg->getHeader(), sizeof(WlaMessageBufferHeader))) < 0 && errno == EAGAIN)
     {
         continue;
     }
 
-    if (len == -1)
+    if (len <= 0)
     {
-        DEBUG_LOG("failed to read from file");
         delete msg;
         return NULL;
     }
 
-    WlaMessageBuffer *msg_buf = new WlaMessageBuffer;
+    DEBUG_LOG("seq %d, msg %d, cmsg %d", seq, msg->getMsgSize(), msg->getControlMsgSize());
+    DEBUG_LOG("timestamp %d.%d", msg->getHeader()->timestamp.tv_sec, msg->getHeader()->timestamp.tv_usec);
+    DEBUG_LOG("flags %x", msg->getHeader()->flags);
 
-    if (msg->flags & CMESSAGE_PRESENT)
+    lseek(file, msg->getMsgSize(), SEEK_CUR);
+
+    if (bit_isset(msg->getHeader()->flags, CMESSAGE_PRESENT_BIT))
     {
-        uint32_t cmsg_len;
-
-        read(file, &cmsg_len, sizeof(uint32_t));
-        DEBUG_LOG("control message present (length %d)", cmsg_len);
-
-        char *tmp = new char[cmsg_len];
-        read(file, tmp, sizeof(char) * cmsg_len);
-        delete [] tmp;
+        lseek(file, msg->getControlMsgSize(), SEEK_CUR);
     }
 
-    uint32_t msg_len;
-    read(file, &msg_len, sizeof(uint32_t));
-    DEBUG_LOG("msg payload size %d", msg_len);
-    char *tmp = new char[msg_len];
-    read(file, tmp, sizeof(char) * msg_len);
-
-    delete [] tmp;
-
-    return NULL;
+    return msg;
 }

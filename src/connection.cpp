@@ -76,8 +76,8 @@ void WlaConnection::handleConnection(ev::io &watcher, int revents)
                 return;
             }
 
-            writer->write(*msg);
             msg->setType(WlaMessageBuffer::REQUEST_TYPE);
+            writer->write(*msg);
             requests.push(msg);
         }
         else
@@ -90,8 +90,8 @@ void WlaConnection::handleConnection(ev::io &watcher, int revents)
                 return;
             }
 
-            writer->write(*msg);
             msg->setType(WlaMessageBuffer::EVENT_TYPE);
+            writer->write(*msg);
             events.push(msg);
         }
     }

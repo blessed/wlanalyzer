@@ -27,16 +27,6 @@
 
 int WlaIODumper::seq = 0;
 
-static void set_bit(uint32_t *val, int num, bool bit)
-{
-    *val = (*val & ~(1 << num)) | (bit << num);
-}
-
-static bool bit_isset(const uint32_t &val, int num)
-{
-    return val & (1 << num);
-}
-
 WlaIODumper::WlaIODumper()
 {
     filefd = NULL;
@@ -68,39 +58,22 @@ int WlaIODumper::open(const std::string &path)
 
 // TODO: make the writer use strictly defined field bit lengths
 // instead of sizeof's
-int WlaIODumper::write(const WlaMessageBuffer &msg)
+int WlaIODumper::write(WlaMessageBuffer &msg)
 {
     if (!filefd)
         return -1;
 
-    WlaMessageBufferHeader hdr;
-    hdr.seq = seq++;
+    ::fwrite(&seq, sizeof(uint32_t), 1, filefd);
+    seq++;
 
-    if (msg.getType() == WlaMessageBuffer::EVENT_TYPE)
-        set_bit(&hdr.flags, MESSAGE_EVENT_TYPE, true);
-
+    ::fwrite(msg.getHeader(), sizeof(WlaMessageBufferHeader), 1, filefd);
+//    int tmp = 0xdeadbeef;
+//    ::fwrite(&tmp, sizeof(tmp), 1, filefd);
+    ::fwrite(msg.getMsg(), sizeof(uint8_t), msg.getMsgSize(), filefd);
+//    tmp = 0xdeadbabe;
+//    ::fwrite(&tmp, sizeof(tmp), 1, filefd);
     if (msg.getControlMsgSize() > 0)
-        set_bit(&hdr.flags, CMESSAGE_PRESENT, true);
-
-    hdr.timestamp = *msg.getTimeStamp();
-
-    ::fwrite(&hdr, sizeof(WlaMessageBufferHeader), 1, filefd);
-
-    if (bit_isset(hdr.flags, CMESSAGE_PRESENT))
-    {
-        uint32_t cmsg_len = msg.getControlMsgSize();
-        ::fwrite(&cmsg_len, sizeof(cmsg_len), 1, filefd);
-        ::fwrite(msg.getControlMsg(), sizeof(uint8_t), cmsg_len, filefd);
-        cmsg_len = 0xdeadbeef;
-        ::fwrite(&cmsg_len, sizeof(cmsg_len), 1, filefd);
-    }
-
-    uint32_t msg_len = msg.getMsgSize();
-    ::fwrite(&msg_len, sizeof(msg_len), 1, filefd);
-    ::fwrite(msg.getMsg(), sizeof(uint8_t), msg_len, filefd);
-    DEBUG_LOG("written %d msg bytes", msg_len);
-    msg_len = 0xdeadbabe;
-    ::fwrite(&msg_len, sizeof(msg_len), 1, filefd);
+        ::fwrite(msg.getControlMsg(), sizeof(uint8_t), msg.getControlMsgSize(), filefd);
 
     return 0;
 }

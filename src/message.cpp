@@ -26,8 +26,6 @@
 
 WlaMessageBuffer::WlaMessageBuffer()
 {
-    msgSize = 0;
-
     iov.iov_base = buf;
     iov.iov_len = MAX_BUF_SIZE;
 
@@ -38,7 +36,11 @@ WlaMessageBuffer::WlaMessageBuffer()
     msg.msg_control = cmsg;
     msg.msg_controllen = CMSG_LEN(MAX_FDS * sizeof(int));
 
-    msgType = REQUEST_TYPE;
+    hdr.flags = 0;
+    hdr.msg_len = 0;
+    hdr.cmsg_len = 0;
+    hdr.timestamp.tv_sec = 0;
+    hdr.timestamp.tv_usec = 0;
 }
 
 WlaMessageBuffer::~WlaMessageBuffer()
@@ -47,13 +49,13 @@ WlaMessageBuffer::~WlaMessageBuffer()
 
 int WlaMessageBuffer::sendMessage(UnixLocalSocket &socket)
 {
-    if (msgSize == 0)
+    if (hdr.msg_len == 0)
     {
         DEBUG_LOG("message is size 0");
         return -1;
     }
 
-    iov.iov_len = msgSize;
+    iov.iov_len = hdr.msg_len;
 
     int len = socket.writeMsg(&msg);
     if (len < 0)
@@ -73,63 +75,45 @@ int WlaMessageBuffer::receiveMessage(UnixLocalSocket &socket)
     {
         DEBUG_LOG("failed to read message");
         perror(NULL);
-        msgSize = 0;
+        hdr.msg_len = 0;
     }
     else if (len > 0)
     {
-        gettimeofday(&timestamp, NULL);
-        msgSize = len;
+        gettimeofday(&hdr.timestamp, NULL);
+        hdr.msg_len = len;
+        hdr.cmsg_len = msg.msg_controllen;
+        if (hdr.cmsg_len > 0)
+            set_bit(&hdr.flags, CMESSAGE_PRESENT_BIT, true);
     }
 
     return len;
 }
 
+void WlaMessageBuffer::setHeader(const WlaMessageBufferHeader *hdr)
+{
+    memcpy(&hdr, hdr, sizeof(WlaMessageBufferHeader));
+}
+
+void WlaMessageBuffer::setType(WlaMessageBuffer::MESSAGE_TYPE type)
+{
+    if (type == EVENT_TYPE)
+        set_bit(&hdr.flags, MESSAGE_EVENT_TYPE_BIT, true);
+    else
+        set_bit(&hdr.flags, MESSAGE_EVENT_TYPE_BIT, false);
+}
+
 void WlaMessageBuffer::setMsg(const char *msg, int size)
 {
+    if (size > MAX_BUF_SIZE)
+    {
+        DEBUG_LOG("message too big");
+        return;
+    }
+
     memcpy(buf, msg, size);
 }
 
-uint32_t WlaMessageBuffer::clientID() const
+void WlaMessageBuffer::setControlMsg(const char *cmsg, int size)
 {
-    if (!msgSize)
-        return -1;
-
-    uint32_t id = 0;
-    const char *c_id = buf;
-    for (int i = 0; i < 4; ++i)
-    {
-        id |= c_id[i] << i * 8;
-    }
-
-    return id;
-}
-
-uint16_t WlaMessageBuffer::opcode() const
-{
-    if (!msgSize)
-        return -1;
-
-    uint16_t code = 0;
-    const char *arr = buf + OPCODE_OFFSET;
-    for (int i = 0; i < 2; ++i)
-    {
-        code |= arr[i] << i * 8;
-    }
-
-    return code;
-}
-
-uint16_t WlaMessageBuffer::size() const
-{
-    if (!msgSize)
-        return -1;
-
-    uint16_t size = 0;
-    const char *arr = buf + MSG_SIZE_OFFSET;
-    for (int i = 0; i < 2; ++i)
-    {
-        size |= arr[i] << i * 8;
-    }
-
-    return size;
+    memcpy(this->cmsg, cmsg, size);
 }

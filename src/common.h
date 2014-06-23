@@ -41,4 +41,9 @@ void wld_log(const char *format, ...);
 
 uint32_t byteArrToUInt32(const char byte[]);
 
+
+void set_bit(uint32_t *val, int num, bool bit);
+
+bool bit_isset(const uint32_t &val, int num);
+
 #endif // COMMON_H

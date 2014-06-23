@@ -37,14 +37,8 @@
 
 void debug_print(const char *buf);
 int check_error(int error);
-
 void wld_log(const char *format, ...);
 
-enum WlaError
-{
-    WlaNoError,
-    WlaConnectionFailed,
-    WlaConnectionBroken
-};
+uint32_t byteArrToUInt32(const char byte[]);
 
 #endif // COMMON_H

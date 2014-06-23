@@ -73,24 +73,20 @@ int WlaIODumper::write(const WlaMessageBuffer &msg)
     if (!filefd)
         return -1;
 
-    ::fwrite(&seq, sizeof(seq), 1, filefd);
-    seq++;
+    WlaMessageBufferHeader hdr;
+    hdr.seq = seq++;
 
-    uint32_t flags = 0;
-    set_bit(&flags, MESSAGE_EVENT_TYPE, msg.getType() == WlaMessageBuffer::EVENT_TYPE ? true : false);
+    if (msg.getType() == WlaMessageBuffer::EVENT_TYPE)
+        set_bit(&hdr.flags, MESSAGE_EVENT_TYPE, true);
 
     if (msg.getControlMsgSize() > 0)
-        set_bit(&flags, CMESSAGE_PRESENT, true);
-    else
-        set_bit(&flags, CMESSAGE_PRESENT, false);
+        set_bit(&hdr.flags, CMESSAGE_PRESENT, true);
 
-    // FIXME: implement proper size handling of msg headers
-    ::fwrite(&flags, sizeof(flags), 1, filefd);
-//    ::fwrite(msg.getTimeStamp(), sizeof(timeval), 1, filefd);
-    ::fwrite(&msg.getTimeStamp()->tv_sec, sizeof(uint32_t), 1, filefd);
-    ::fwrite(&msg.getTimeStamp()->tv_usec, sizeof(uint32_t), 1, filefd);
+    hdr.timestamp = *msg.getTimeStamp();
 
-    if (bit_isset(flags, CMESSAGE_PRESENT))
+    ::fwrite(&hdr, sizeof(WlaMessageBufferHeader), 1, filefd);
+
+    if (bit_isset(hdr.flags, CMESSAGE_PRESENT))
     {
         uint32_t cmsg_len = msg.getControlMsgSize();
         ::fwrite(&cmsg_len, sizeof(cmsg_len), 1, filefd);

@@ -22,11 +22,11 @@
  * SOFTWARE.
  */
 
-#include <unistd.h>
 #include <string.h>
 #include <stdarg.h>
 #include <stdio.h>
 #include <errno.h>
+#include "common.h"
 
 #ifndef DEBUG_BUILD
 void wld_log(const char *format, ...)
@@ -67,4 +67,14 @@ int check_error(int error)
     }
 
     return 0;
+}
+
+
+uint32_t byteArrToUInt32(const char byte[])
+{
+    int ret = 0;
+
+    ret = byte[0] | (byte[1] << 8) | (byte[2] << 16) | (byte[3] << 24);
+
+    return ret;
 }

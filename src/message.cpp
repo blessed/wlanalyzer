@@ -84,6 +84,11 @@ int WlaMessageBuffer::receiveMessage(UnixLocalSocket &socket)
     return len;
 }
 
+void WlaMessageBuffer::setMsg(const char *msg, int size)
+{
+    memcpy(buf, msg, size);
+}
+
 uint32_t WlaMessageBuffer::clientID() const
 {
     if (!msgSize)

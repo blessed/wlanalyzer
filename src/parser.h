@@ -22,32 +22,38 @@
  * SOFTWARE.
  */
 
-#ifndef DUMPER_H
-#define DUMPER_H
+#ifndef PARSER_H
+#define PARSER_H
 
+#include "message.h"
 #include "common.h"
+#include "ev++.h"
 
-const int SEQ_OFFSET = 0;
-const int FLAGS_OFFSET = 4;
-const int TIMESTAMP_OFFSET = 8;
-
-const int MESSAGE_EVENT_TYPE = 0x00;
-const int CMESSAGE_PRESENT = 0x01;
-
-class WlaMessageBuffer;
-
-class WlaIODumper
+struct WlaMessageHeader
 {
-public:
-    WlaIODumper();
-    ~WlaIODumper();
-
-    int open(const std::string &path);
-    int write(const WlaMessageBuffer &msg);
-
-private:
-    FILE *filefd;
-    static int seq;
+    uint32_t client_id;
+    uint16_t size;
+    uint16_t opcode;
 };
 
-#endif // DUMPER_H
+class WlaBinParser : public ev::io
+{
+public:
+    WlaBinParser();
+    ~WlaBinParser();
+
+    int openFile(const std::string &path);
+
+private:
+    void handleFileEvent(ev::io &watcher, int revents);
+    int parse();
+    WlaMessageHeader *getHeader(char *buf);
+    WlaMessageBuffer *nextMessage();
+
+private:
+    static const int HEADER_SIZE = 8;
+
+    int file;
+};
+
+#endif // PARSER_H

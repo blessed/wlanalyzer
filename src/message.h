@@ -29,6 +29,19 @@
 #include "common.h"
 #include "socket.h"
 
+struct WlaMessageBufferHeader
+{
+    WlaMessageBufferHeader() : seq(0), flags(0)
+    {
+        timestamp.tv_sec = 0;
+        timestamp.tv_usec = 0;
+    }
+
+    uint32_t seq;
+    uint32_t flags;
+    timeval timestamp;
+};
+
 class WlaMessageBuffer
 {
 public:
@@ -49,6 +62,7 @@ public:
     const timeval *getTimeStamp() const { return &timestamp; }
 
     uint32_t getMsgSize() const { return msgSize; }
+    void setMsg(const char *msg, int size);
     const char *getMsg() const { return buf; }
 
     uint32_t getControlMsgSize() const { return msg.msg_controllen; }

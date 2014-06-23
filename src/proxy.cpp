@@ -60,6 +60,7 @@ int WlaProxyServer::openServer()
 {
     std::string path = "dump";
     writer.open(path);
+    parser.openFile(path);
 
     _loop.run();
 }

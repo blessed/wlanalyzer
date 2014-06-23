@@ -33,6 +33,7 @@
 #include "server_socket.h"
 #include "connection.h"
 #include "dumper.h"
+#include "parser.h"
 
 class WlaProxyServer
 {
@@ -56,6 +57,7 @@ private:
     ev::default_loop _loop;
 
     WlaIODumper writer;
+    WlaBinParser parser;
 
     std::set<WlaConnection *> _connections;
 };

@@ -27,10 +27,6 @@
 
 #include "common.h"
 
-const int SEQ_OFFSET = 0;
-const int FLAGS_OFFSET = 4;
-const int TIMESTAMP_OFFSET = 8;
-
 class WlaMessageBuffer;
 
 class WlaIODumper
@@ -43,7 +39,7 @@ public:
     int write(WlaMessageBuffer &msg);
 
 private:
-    FILE *filefd;
+    int filefd;
     static int seq;
 };
 

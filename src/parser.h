@@ -48,6 +48,7 @@ private:
     void handleFileEvent(ev::io &watcher, int revents);
     int parse();
     WlaMessageBuffer *nextMessage();
+    void parseMessage(WlaMessageBuffer *msg);
 
 private:
     static const int HEADER_SIZE = 8;

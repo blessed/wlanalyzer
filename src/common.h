@@ -40,7 +40,7 @@ int check_error(int error);
 void wld_log(const char *format, ...);
 
 uint32_t byteArrToUInt32(const char byte[]);
-
+uint16_t byteArrToUInt16(const char byte[]);
 
 void set_bit(uint32_t *val, int num, bool bit);
 

@@ -32,14 +32,12 @@
 const int MESSAGE_EVENT_TYPE_BIT = 0x00;
 const int CMESSAGE_PRESENT_BIT = 0x01;
 
+const int CLIENT_ID_OFFSET = 0;
+const int SIZE_OFFSET = 6;
+const int OPCODE_OFFSET = 4;
+
 struct WlaMessageBufferHeader
 {
-    WlaMessageBufferHeader() : flags(0)
-    {
-        timestamp.tv_sec = 0;
-        timestamp.tv_usec = 0;
-    }
-
     uint32_t flags;
     timeval timestamp;
     uint32_t msg_len;

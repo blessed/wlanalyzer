@@ -22,6 +22,7 @@
  * SOFTWARE.
  */
 
+#include <fcntl.h>
 #include "message.h"
 #include "dumper.h"
 
@@ -29,13 +30,13 @@ int WlaIODumper::seq = 0;
 
 WlaIODumper::WlaIODumper()
 {
-    filefd = NULL;
+    filefd = -1;
 }
 
 WlaIODumper::~WlaIODumper()
 {
-    if (filefd)
-        fclose(filefd);
+    if (filefd != -1)
+        close(filefd);
 }
 
 int WlaIODumper::open(const std::string &path)
@@ -46,11 +47,11 @@ int WlaIODumper::open(const std::string &path)
         return -1;
     }
 
-    if (filefd)
-        fclose(filefd);
+    if (filefd == -1)
+        close(filefd);
 
-    filefd = ::fopen(path.c_str(), "w+");
-    if (!filefd)
+    filefd = ::open(path.c_str(), O_RDWR | O_CREAT);
+    if (filefd == -1)
         return -1;
     else
         return 1;
@@ -63,17 +64,13 @@ int WlaIODumper::write(WlaMessageBuffer &msg)
     if (!filefd)
         return -1;
 
-    ::fwrite(&seq, sizeof(uint32_t), 1, filefd);
+    ::write(filefd, &seq, sizeof(uint32_t));
     seq++;
 
-    ::fwrite(msg.getHeader(), sizeof(WlaMessageBufferHeader), 1, filefd);
-//    int tmp = 0xdeadbeef;
-//    ::fwrite(&tmp, sizeof(tmp), 1, filefd);
-    ::fwrite(msg.getMsg(), sizeof(uint8_t), msg.getMsgSize(), filefd);
-//    tmp = 0xdeadbabe;
-//    ::fwrite(&tmp, sizeof(tmp), 1, filefd);
+    ::write(filefd, msg.getHeader(), sizeof(WlaMessageBufferHeader));
+    ::write(filefd, msg.getMsg(), sizeof(uint8_t) * msg.getMsgSize());
     if (msg.getControlMsgSize() > 0)
-        ::fwrite(msg.getControlMsg(), sizeof(uint8_t), msg.getControlMsgSize(), filefd);
+        ::write(filefd, msg.getControlMsg(), sizeof(uint8_t) * msg.getControlMsgSize());
 
     return 0;
 }

@@ -82,7 +82,8 @@ int WlaBinParser::parse()
 
     while ((msg = nextMessage()) != NULL)
     {
-        DEBUG_LOG("got message");
+        parseMessage(msg);
+
         delete msg;
     }
 
@@ -108,16 +109,65 @@ WlaMessageBuffer *WlaBinParser::nextMessage()
         return NULL;
     }
 
-    DEBUG_LOG("seq %d, msg %d, cmsg %d", seq, msg->getMsgSize(), msg->getControlMsgSize());
-    DEBUG_LOG("timestamp %d.%d", msg->getHeader()->timestamp.tv_sec, msg->getHeader()->timestamp.tv_usec);
-    DEBUG_LOG("flags %x", msg->getHeader()->flags);
+    if (len < sizeof(WlaMessageBufferHeader))
+    {
+        lseek(file, -len, SEEK_CUR);
+        delete msg;
+        return NULL;
+    }
 
-    lseek(file, msg->getMsgSize(), SEEK_CUR);
+    int pos = lseek(file, 0, SEEK_CUR);
+
+    DEBUG_LOG("pos in file %d (%d) seq %d message size %d flags %x", pos, len, seq, msg->getMsgSize(), msg->getHeader()->flags);
+
+    char *msg_buf = new char[msg->getMsgSize()];
+    if ((len = read(file, msg_buf, msg->getMsgSize())) < 0)
+    {
+        DEBUG_LOG("failed to read from file");
+        delete [] msg_buf;
+        delete [] msg;
+        return NULL;
+    }
+    else if (len < msg->getMsgSize())
+    {
+        DEBUG_LOG("too short");
+    }
+
+    msg->setMsg(msg_buf, msg->getMsgSize());
+    delete [] msg_buf;
 
     if (bit_isset(msg->getHeader()->flags, CMESSAGE_PRESENT_BIT))
     {
-        lseek(file, msg->getControlMsgSize(), SEEK_CUR);
+        DEBUG_LOG("cmsg present");
+        char *cmsg_buf = new char[msg->getControlMsgSize()];
+        len = read(file, cmsg_buf, msg->getControlMsgSize());
+        if ( len < msg->getControlMsgSize())
+            DEBUG_LOG("too short");
+        msg->setControlMsg(cmsg_buf, msg->getControlMsgSize());
+        delete [] cmsg_buf;
     }
 
     return msg;
+}
+
+void WlaBinParser::parseMessage(WlaMessageBuffer *msg)
+{
+    const char *msg_buf = msg->getMsg();
+    int i = 0;
+
+    while (i < msg->getMsgSize())
+    {
+        uint32_t client_id = byteArrToUInt32(&msg_buf[CLIENT_ID_OFFSET]);
+        uint16_t size = byteArrToUInt16(&msg_buf[SIZE_OFFSET]);
+        uint16_t opcode = byteArrToUInt16(&msg_buf[OPCODE_OFFSET]);
+
+        DEBUG_LOG("client id = %d, size = %d, opcode = %d", client_id,
+                  size, opcode);
+
+        if (size == 0)
+            break;
+
+        msg_buf += size;
+        i += size;
+    }
 }

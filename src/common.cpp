@@ -71,7 +71,7 @@ int check_error(int error)
 
 uint32_t byteArrToUInt32(const char byte[])
 {
-    int ret = 0;
+    uint32_t ret = 0;
 
     ret = byte[0] | (byte[1] << 8) | (byte[2] << 16) | (byte[3] << 24);
 
@@ -86,4 +86,14 @@ void set_bit(uint32_t *val, int num, bool bit)
 bool bit_isset(const uint32_t &val, int num)
 {
     return val & (1 << num);
+}
+
+
+uint16_t byteArrToUInt16(const char byte[])
+{
+    uint16_t ret = 0;
+
+    ret = byte[0] | (byte[1] << 8);
+
+    return ret;
 }

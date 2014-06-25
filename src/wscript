@@ -1,0 +1,2 @@
+def ping(ctx):
+	print('pong')

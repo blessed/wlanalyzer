@@ -54,7 +54,7 @@ void verify_runtime()
     const char *runtimeDir = getenv("XDG_RUNTIME_DIR");
     if (!runtimeDir)
     {
-        Logger::getInstance()->log("XDG_RUNTIME_DIR is not set in the environment."
+        Logger::getInstance()->log("XDG_RUNTIME_DIR is not set in the environment. "
                                    "Set it first!\n");
         exit(EXIT_FAILURE);
     }
@@ -66,6 +66,14 @@ void verify_runtime()
                                    "Removing\n", debugSocketPath.c_str());
 
         unlink(debugSocketPath.c_str());
+    }
+
+    const char *socket_name = getenv("WAYLAND_DISPLAY");
+    if (!socket_name)
+    {
+        Logger::getInstance()->log("WAYLAND_DISPLAY is not set. "
+                                   "Probably no compositor is running\n");
+        exit(EXIT_FAILURE);
     }
 }
 

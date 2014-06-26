@@ -50,7 +50,7 @@ int WlaIODumper::open(const std::string &path)
     if (filefd == -1)
         close(filefd);
 
-    filefd = ::open(path.c_str(), O_RDWR | O_CREAT);
+    filefd = ::open(path.c_str(), O_RDWR | O_CREAT | O_TRUNC);
     if (filefd == -1)
         return -1;
     else

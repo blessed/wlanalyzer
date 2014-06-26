@@ -116,9 +116,7 @@ WlaMessageBuffer *WlaBinParser::nextMessage()
         return NULL;
     }
 
-    int pos = lseek(file, 0, SEEK_CUR);
-
-    DEBUG_LOG("pos in file %d (%d) seq %d message size %d flags %x", pos, len, seq, msg->getMsgSize(), msg->getHeader()->flags);
+    lseek(file, 0, SEEK_CUR);
 
     char *msg_buf = new char[msg->getMsgSize()];
     if ((len = read(file, msg_buf, msg->getMsgSize())) < 0)
@@ -138,7 +136,6 @@ WlaMessageBuffer *WlaBinParser::nextMessage()
 
     if (bit_isset(msg->getHeader()->flags, CMESSAGE_PRESENT_BIT))
     {
-        DEBUG_LOG("cmsg present");
         char *cmsg_buf = new char[msg->getControlMsgSize()];
         len = read(file, cmsg_buf, msg->getControlMsgSize());
         if ( len < msg->getControlMsgSize())
@@ -160,9 +157,6 @@ void WlaBinParser::parseMessage(WlaMessageBuffer *msg)
         uint32_t client_id = byteArrToUInt32(&msg_buf[CLIENT_ID_OFFSET]);
         uint16_t size = byteArrToUInt16(&msg_buf[SIZE_OFFSET]);
         uint16_t opcode = byteArrToUInt16(&msg_buf[OPCODE_OFFSET]);
-
-        DEBUG_LOG("client id = %d, size = %d, opcode = %d", client_id,
-                  size, opcode);
 
         if (size == 0)
             break;

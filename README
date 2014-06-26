@@ -1,0 +1,16 @@
+Wldump
+
+Wldump is a wayland protocol dumper/analyzer.
+
+== BUILD ==
+
+Deps: libev
+
+wldump uses waf as build system. Waf is written in python so make sure you have python available on your build platform.
+
+To build simply run:
+
+$ ./waf configure build
+
+To run (make sure a wayland server is running):
+./waf <wayland-client>

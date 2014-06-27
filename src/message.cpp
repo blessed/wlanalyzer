@@ -102,6 +102,14 @@ void WlaMessageBuffer::setType(WlaMessageBuffer::MESSAGE_TYPE type)
         set_bit(&hdr.flags, MESSAGE_EVENT_TYPE_BIT, false);
 }
 
+WlaMessageBuffer::MESSAGE_TYPE WlaMessageBuffer::getType() const
+{
+    if (bit_isset(hdr.flags, MESSAGE_EVENT_TYPE_BIT))
+        return EVENT_TYPE;
+    else
+        return REQUEST_TYPE;
+}
+
 void WlaMessageBuffer::setMsg(const char *msg, int size)
 {
     if (size > MAX_BUF_SIZE)

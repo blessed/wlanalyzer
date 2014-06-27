@@ -41,7 +41,6 @@ public:
     WlaConnection(WlaProxyServer *parent, WlaIODumper *writer);
     ~WlaConnection();
 
-    // TODO: handle connection close
     void createConnection(UnixLocalSocket client, UnixLocalSocket server);
 
 private:

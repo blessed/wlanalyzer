@@ -36,7 +36,7 @@ struct WlaMessageHeader
     uint16_t opcode;
 };
 
-class WlaBinParser : public ev::io
+class WlaBinParser
 {
 public:
     WlaBinParser();
@@ -46,6 +46,7 @@ public:
 
 private:
     void handleFileEvent(ev::io &watcher, int revents);
+    void timerEvent(ev::timer &timer, int revents);
     int parse();
     WlaMessageBuffer *nextMessage();
     void parseMessage(WlaMessageBuffer *msg);
@@ -53,7 +54,10 @@ private:
 private:
     static const int HEADER_SIZE = 8;
 
+    ev::timer timer;
+
     int file;
+    ev::io filewtch;
 };
 
 #endif // PARSER_H

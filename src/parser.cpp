@@ -22,6 +22,7 @@
  * SOFTWARE.
  */
 
+#include <time.h>
 #include <sys/stat.h>
 #include <fcntl.h>
 #include "dumper.h"
@@ -56,8 +57,10 @@ int WlaBinParser::openFile(const std::string &path)
         return -1;
     }
 
-    set<WlaBinParser, &WlaBinParser::handleFileEvent>(this);
-    start(file, EV_READ);
+    timer.set<WlaBinParser, &WlaBinParser::timerEvent>(this);
+
+    filewtch.set<WlaBinParser, &WlaBinParser::handleFileEvent>(this);
+    filewtch.start(file, EV_READ);
 
     return 0;
 }
@@ -74,6 +77,20 @@ void WlaBinParser::handleFileEvent(ev::io &watcher, int revents)
     {
         parse();
     }
+}
+
+void WlaBinParser::timerEvent(ev::timer &timer, int revents)
+{
+    if (revents & EV_ERROR)
+    {
+        DEBUG_LOG("error");
+        return;
+    }
+
+//    filewtch.start(file, EV_READ);
+    DEBUG_LOG("timer callback");
+
+    timer.stop();
 }
 
 int WlaBinParser::parse()
@@ -103,8 +120,16 @@ WlaMessageBuffer *WlaBinParser::nextMessage()
         continue;
     }
 
-    if (len <= 0)
+    if (len < 0)
     {
+        delete msg;
+        return NULL;
+    }
+    else if (len == 0)
+    {
+//        timer.start(0., 0.2);
+//        filewtch.stop();
+
         delete msg;
         return NULL;
     }
@@ -152,11 +177,23 @@ void WlaBinParser::parseMessage(WlaMessageBuffer *msg)
     const char *msg_buf = msg->getMsg();
     int i = 0;
 
+    char timestr[64];
+    time_t nowtime;
+    tm *nowtm;
+    nowtime = msg->getTimeStamp()->tv_sec;
+    nowtm = localtime(&nowtime);
+    strftime(timestr, sizeof(timestr), "%H:%M:%S", nowtm);
+
     while (i < msg->getMsgSize())
     {
         uint32_t client_id = byteArrToUInt32(&msg_buf[CLIENT_ID_OFFSET]);
         uint16_t size = byteArrToUInt16(&msg_buf[SIZE_OFFSET]);
         uint16_t opcode = byteArrToUInt16(&msg_buf[OPCODE_OFFSET]);
+
+        Logger::getInstance()->log("%s msg (%s.%03d), id %d, opcode %d, size %d\n",
+                  msg->getType() == WlaMessageBuffer::EVENT_TYPE ? "event" : "request",
+                  timestr, msg->getTimeStamp()->tv_usec / 1000,
+                  client_id, opcode, size);
 
         if (size == 0)
             break;

@@ -104,6 +104,7 @@ int main(int argc, char *argv[])
         {
             perror(NULL);
             Logger::getInstance()->log("failed to launch command %s\n", argv[1]);
+            exit(EXIT_FAILURE);
         }
     }
 

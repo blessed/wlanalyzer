@@ -22,10 +22,19 @@
  * SOFTWARE.
  */
 
+
 #include "../common.h"
 #include "protocol_parser.h"
 
 using namespace pugi;
+
+WldProtocolScanner::types_t WldProtocolScanner::types;
+bool WldProtocolScanner::initialized = false;
+
+WldProtocolScanner::WldProtocolScanner()
+{
+     init();
+}
 
 bool WldProtocolScanner::openProtocolFile(const std::string &path)
 {
@@ -36,12 +45,19 @@ bool WldProtocolScanner::openProtocolFile(const std::string &path)
     return result;
 }
 
-WldProtocolDefinition *WldProtocolScanner::getProtocolDefinition()
+WldProtocolDefinition *WldProtocolScanner::getProtocolDefinition(WldProtocolDefinition *protocolDef)
 {
-    WldProtocolDefinition *prot = new WldProtocolDefinition;
+    WldProtocolDefinition *prot;
+//    WldProtocolDefinition *prot = new WldProtocolDefinition;
+    if (protocolDef)
+        prot = protocolDef;
+    else
+        prot = new WldProtocolDefinition;
 
     xml_node protocol = doc.child("protocol");
     xml_attribute attr = protocol.first_attribute();
+
+    Logger::getInstance()->log("%s %s = %s\n", protocol.name(), attr.name(), attr.value());
 
     for (xml_node interfaceNode = protocol.child("interface"); interfaceNode;
          interfaceNode = interfaceNode.next_sibling())
@@ -50,6 +66,8 @@ WldProtocolDefinition *WldProtocolScanner::getProtocolDefinition()
 
         interface.name = interfaceNode.attribute("name").value();
         interface.version = interfaceNode.attribute("version").as_int();
+
+        Logger::getInstance()->log("interface: %s version: %d\n", interface.name.c_str(), interface.version);
 
         if (!scanInterface(interfaceNode, interface))
         {
@@ -60,9 +78,24 @@ WldProtocolDefinition *WldProtocolScanner::getProtocolDefinition()
         prot->addInterface(interface);
     }
 
-    DEBUG_LOG("Got protocol node %s, attr %s=%s", protocol.name(), attr.name(), attr.value());
-
     return prot;
+}
+
+void WldProtocolScanner::init()
+{
+    if (initialized)
+        return;
+
+    types["uint"] = WLD_ARG_UINT;
+    types["int"] = WLD_ARG_INT;
+    types["string"] = WLD_ARG_STRING;
+    types["fixed"] = WLD_ARG_FIXED;
+    types["object"] = WLD_ARG_OBJECT;
+    types["new_id"] = WLD_ARG_NEWID;
+    types["fd"] = WLD_ARG_FD;
+    types["array"] = WLD_ARG_ARRAY;
+
+    initialized = true;
 }
 
 bool WldProtocolScanner::scanInterface(const xml_node &node, WldInterface &interface)
@@ -91,6 +124,8 @@ bool WldProtocolScanner::getMessages(const xml_node &node, WldInterface &interfa
         msg.type = type;
         msg.signature = eventNode.attribute("name").value();
 
+        Logger::getInstance()->log("\t%s: %s\n", type == WLD_MSG_REQUEST ? "request" : "event", msg.signature.c_str());
+
         if (!scanArgs(eventNode, msg))
             return false;
 
@@ -109,29 +144,32 @@ bool WldProtocolScanner::scanArgs(const xml_node &node, WldMessage &msg)
     {
         WldArg arg;
         arg.name = argNode.attribute("name").value();
-
         std::string type = argNode.attribute("type").value();
-        if (type == "uint")
-            arg.type = WLD_ARG_UINT;
-        else if (type == "int")
-            arg.type = WLD_ARG_INT;
-        else if (type == "fixed")
-            arg.type = WLD_ARG_FIXED;
-        else if (type == "string")
-            arg.type = WLD_ARG_STRING;
-        else if (type == "object")
-            arg.type = WLD_ARG_OBJECT;
-        else if (type == "new_id")
-            arg.type = WLD_ARG_NEWID;
-        else if (type == "array")
-            arg.type = WLD_ARG_ARRAY;
-        else if (type == "fd")
-            arg.type = WLD_ARG_FD;
+
+        types_t::const_iterator it = types.find(type);
+        if (it != types.end())
+            arg.type = it->second;
         else
             arg.type = WLD_ARG_UNKNOWN;
+
+        Logger::getInstance()->log("\t\targ: %28s\ttype: %d\n", arg.name.c_str(), arg.type);
 
         msg.args.push_back(arg);
     }
 
     return true;
+}
+
+
+const WldInterface *WldProtocolDefinition::getInterface(const std::string &name) const
+{
+    std::vector<WldInterface>::const_iterator it;
+
+    for (it = interfaceList.begin(); it != interfaceList.end(); it++)
+    {
+        if ((*it).name == name)
+            return &(*it);
+    }
+
+    return NULL;
 }

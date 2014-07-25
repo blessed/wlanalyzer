@@ -25,9 +25,10 @@
 #ifndef PARSER_H
 #define PARSER_H
 
+#include <ev++.h>
 #include "message.h"
 #include "common.h"
-#include "ev++.h"
+#include "analyzer.h"
 
 struct WlaMessageHeader
 {
@@ -43,6 +44,7 @@ public:
     ~WlaBinParser();
 
     int openFile(const std::string &path);
+    void attachAnalyzer(WldProtocolAnalyzer *analyzer);
     int parse();
 
 private:
@@ -54,8 +56,9 @@ private:
 private:
     static const int HEADER_SIZE = 8;
 
-    ev::timer timer;
+    WldProtocolAnalyzer *analyzer;
 
+    ev::timer timer;
     int file;
     ev::io filewtch;
 };

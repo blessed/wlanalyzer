@@ -28,7 +28,7 @@
 #include "dumper.h"
 #include "parser.h"
 
-WlaBinParser::WlaBinParser()
+WlaBinParser::WlaBinParser() : analyzer(NULL)
 {
     file = -1;
 }
@@ -63,6 +63,11 @@ int WlaBinParser::openFile(const std::string &path)
     filewtch.start(file, EV_READ);
 
     return 0;
+}
+
+void WlaBinParser::attachAnalyzer(WldProtocolAnalyzer *analyzer)
+{
+    this->analyzer = analyzer;
 }
 
 void WlaBinParser::handleFileEvent(ev::io &watcher, int revents)
@@ -194,6 +199,16 @@ void WlaBinParser::parseMessage(WlaMessageBuffer *msg)
                   msg->getType() == WlaMessageBuffer::EVENT_TYPE ? "event" : "request",
                   timestr, msg->getTimeStamp()->tv_usec / 1000,
                   client_id, opcode, size);
+
+        if (analyzer)
+        {
+            WLD_MESSAGE_TYPE type;
+            if (msg->getType() == WlaMessageBuffer::EVENT_TYPE)
+                type = WLD_MSG_EVENT;
+            else
+                type = WLD_MSG_REQUEST;
+            analyzer->lookup(client_id, opcode, type);
+        }
 
         if (size == 0)
             break;

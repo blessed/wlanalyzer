@@ -111,13 +111,13 @@ int main(int argc, char *argv[])
         }
     }
 
-    WldProtocolScanner scanner;
-    if (scanner.openProtocolFile("wayland.xml"))
-    {
-        WldProtocolDefinition *protocol = scanner.getProtocolDefinition();
+//    WldProtocolScanner scanner;
+//    if (scanner.openProtocolFile("wayland.xml"))
+//    {
+//        WldProtocolDefinition *protocol = scanner.getProtocolDefinition();
 
-        delete protocol;
-    }
+//        delete protocol;
+//    }
 
     proxy.startServer();
 

@@ -34,6 +34,7 @@
 #include "connection.h"
 #include "dumper.h"
 #include "parser.h"
+#include "analyzer.h"
 
 class WlaProxyServer
 {
@@ -58,6 +59,7 @@ private:
 
     WlaIODumper writer;
     WlaBinParser parser;
+    WldProtocolAnalyzer analyzer;
 
     std::set<WlaConnection *> _connections;
 };

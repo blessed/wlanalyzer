@@ -25,8 +25,71 @@
 #ifndef PROTOCOL_PARSER_H
 #define PROTOCOL_PARSER_H
 
+#include <tr1/unordered_map>
+#include <vector>
 #include <pugixml.hpp>
-#include "../analyzer.h"
+
+typedef int32_t fixed_t;
+
+enum WldArgType
+{
+    WLD_ARG_UNKNOWN,
+    WLD_ARG_INT,
+    WLD_ARG_UINT,
+    WLD_ARG_FIXED,
+    WLD_ARG_STRING,
+    WLD_ARG_OBJECT,
+    WLD_ARG_NEWID,
+    WLD_ARG_ARRAY,
+    WLD_ARG_FD
+};
+
+enum WLD_MESSAGE_TYPE
+{
+    WLD_MSG_REQUEST,
+    WLD_MSG_EVENT
+};
+
+union WldArgVal
+{
+    int32_t i;
+    uint32_t u;
+    fixed_t f;
+    const char *s;
+    void *o;
+    uint32_t n;
+    void *a;
+    int32_t h;
+};
+
+struct WldArg
+{
+    WldArg()
+    {
+        name = "";
+        type = WLD_ARG_UNKNOWN;
+        value.i = 0;
+    }
+
+    std::string name;
+    WldArgType type;
+    WldArgVal value;
+};
+
+struct WldMessage
+{
+    WLD_MESSAGE_TYPE type;
+    std::string signature;
+    std::vector<WldArg> args;
+};
+
+struct WldInterface
+{
+    uint32_t version;
+    std::string name;
+    std::vector<WldMessage> requests;
+    std::vector<WldMessage> events;
+};
 
 class WldProtocolDefinition
 {
@@ -36,6 +99,8 @@ public:
         interfaceList.push_back(interface);
     }
 
+    const WldInterface *getInterface(const std::string &name) const;
+
 private:
     std::vector<WldInterface> interfaceList;
 };
@@ -43,16 +108,23 @@ private:
 class WldProtocolScanner
 {
 public:
+    WldProtocolScanner();
+
     bool openProtocolFile(const std::string &path);
-    WldProtocolDefinition *getProtocolDefinition();
+    WldProtocolDefinition *getProtocolDefinition(WldProtocolDefinition *protocolDef = NULL);
 
 private:
+    static void init();
+
     bool scanInterface(const pugi::xml_node &node, WldInterface &interface);
     bool getMessages(const pugi::xml_node &node, WldInterface &interface, WLD_MESSAGE_TYPE type);
     bool scanArgs(const pugi::xml_node &node, WldMessage &msg);
 
 private:
     pugi::xml_document doc;
+    typedef std::tr1::unordered_map<std::string, WldArgType> types_t;
+    static types_t types;
+    static bool initialized;
 };
 
 #endif // PROTOCOL_PARSER_H

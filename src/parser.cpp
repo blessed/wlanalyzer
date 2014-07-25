@@ -87,8 +87,8 @@ void WlaBinParser::timerEvent(ev::timer &timer, int revents)
         return;
     }
 
-//    filewtch.start(file, EV_READ);
-    DEBUG_LOG("timer callback");
+    filewtch.start(file, EV_READ);
+//    DEBUG_LOG("timer callback");
 
     timer.stop();
 }
@@ -127,8 +127,8 @@ WlaMessageBuffer *WlaBinParser::nextMessage()
     }
     else if (len == 0)
     {
-//        timer.start(0., 0.2);
-//        filewtch.stop();
+        timer.start(0.2, 0.0);
+        filewtch.stop();
 
         delete msg;
         return NULL;

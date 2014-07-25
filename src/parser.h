@@ -43,11 +43,11 @@ public:
     ~WlaBinParser();
 
     int openFile(const std::string &path);
+    int parse();
 
 private:
     void handleFileEvent(ev::io &watcher, int revents);
     void timerEvent(ev::timer &timer, int revents);
-    int parse();
     WlaMessageBuffer *nextMessage();
     void parseMessage(WlaMessageBuffer *msg);
 

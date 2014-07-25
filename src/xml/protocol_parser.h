@@ -22,44 +22,37 @@
  * SOFTWARE.
  */
 
+#ifndef PROTOCOL_PARSER_H
+#define PROTOCOL_PARSER_H
 
-#ifndef PROXY_H
-#define PROXY_H
+#include <pugixml.hpp>
+#include "../analyzer.h"
 
-#include <string>
-#include <ev++.h>
-#include <set>
-#include "socket.h"
-#include "server_socket.h"
-#include "connection.h"
-#include "dumper.h"
-#include "parser.h"
-
-class WlaProxyServer
+class WldProtocolDefinition
 {
 public:
-    WlaProxyServer();
-    virtual ~WlaProxyServer();
-
-    int init(const std::string &socketPath);
-    int startServer();
-    void stopServer();
-
-    void closeConnection(WlaConnection *conn);
+    void addInterface(const WldInterface &interface)
+    {
+        interfaceList.push_back(interface);
+    }
 
 private:
-    void connectClient(ev::io &watcher, int revents);
-    void handleCommunication(ev::io &watcher, int revents);
-
-private:
-    UnixLocalServer _serverSocket;
-    ev::io _io;
-    ev::default_loop _loop;
-
-    WlaIODumper writer;
-    WlaBinParser parser;
-
-    std::set<WlaConnection *> _connections;
+    std::vector<WldInterface> interfaceList;
 };
 
-#endif // PROXY_H
+class WldProtocolScanner
+{
+public:
+    bool openProtocolFile(const std::string &path);
+    WldProtocolDefinition *getProtocolDefinition();
+
+private:
+    bool scanInterface(const pugi::xml_node &node, WldInterface &interface);
+    bool getMessages(const pugi::xml_node &node, WldInterface &interface, WLD_MESSAGE_TYPE type);
+    bool scanArgs(const pugi::xml_node &node, WldMessage &msg);
+
+private:
+    pugi::xml_document doc;
+};
+
+#endif // PROTOCOL_PARSER_H

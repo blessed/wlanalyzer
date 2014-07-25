@@ -27,13 +27,14 @@
 #include "common.h"
 #include "proxy.h"
 
-WlaProxyServer::WlaProxyServer()
+WlaProxyServer::WlaProxyServer() : _loop(EVBACKEND_SELECT)
 {
+    DEBUG_LOG("_loop.backend %d", _loop.backend());
 }
 
 WlaProxyServer::~WlaProxyServer()
 {
-    closeServer();
+    stopServer();
 }
 
 int WlaProxyServer::init(const std::string &socketPath)
@@ -56,7 +57,7 @@ int WlaProxyServer::init(const std::string &socketPath)
     _io.start(_serverSocket.getFd(), EV_READ);
 }
 
-int WlaProxyServer::openServer()
+int WlaProxyServer::startServer()
 {
     std::string path = "dump";
     writer.open(path);
@@ -65,13 +66,15 @@ int WlaProxyServer::openServer()
     _loop.run();
 }
 
-void WlaProxyServer::closeServer()
+void WlaProxyServer::stopServer()
 {
     // TODO: close all connections
     _io.stop();
 
     if (_serverSocket.isListening())
         _serverSocket.close();
+
+    parser.parse();
 
     _loop.break_loop();
 }
@@ -81,7 +84,7 @@ void WlaProxyServer::closeConnection(WlaConnection *conn)
     _connections.erase(conn);
 
     if (_connections.empty())
-        closeServer();
+        stopServer();
 }
 
 void WlaProxyServer::connectClient(ev::io &watcher, int revents)
@@ -99,6 +102,7 @@ void WlaProxyServer::connectClient(ev::io &watcher, int revents)
     if (wayland.connectToServer(waylandPath) != NoError)
     {
         DEBUG_LOG("failed to connect to server");
+        stopServer();
         return;
     }
 
@@ -108,6 +112,7 @@ void WlaProxyServer::connectClient(ev::io &watcher, int revents)
     if (fd == -1)
     {
         DEBUG_LOG("failed to accept connection");
+        stopServer();
         return;
     }
 
@@ -118,6 +123,7 @@ void WlaProxyServer::connectClient(ev::io &watcher, int revents)
     if (!connection)
     {
         DEBUG_LOG("Failed to create connection between client and compositor");
+        stopServer();
         return;
     }
     connection->createConnection(client, wayland);

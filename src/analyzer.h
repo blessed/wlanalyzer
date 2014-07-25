@@ -22,44 +22,72 @@
  * SOFTWARE.
  */
 
+#ifndef ANALYZER_H
+#define ANALYZER_H
 
-#ifndef PROXY_H
-#define PROXY_H
+#include <vector>
+#include "common.h"
 
-#include <string>
-#include <ev++.h>
-#include <set>
-#include "socket.h"
-#include "server_socket.h"
-#include "connection.h"
-#include "dumper.h"
-#include "parser.h"
+typedef int32_t fixed_t;
 
-class WlaProxyServer
+enum WLD_ARG_TYPE
 {
-public:
-    WlaProxyServer();
-    virtual ~WlaProxyServer();
-
-    int init(const std::string &socketPath);
-    int startServer();
-    void stopServer();
-
-    void closeConnection(WlaConnection *conn);
-
-private:
-    void connectClient(ev::io &watcher, int revents);
-    void handleCommunication(ev::io &watcher, int revents);
-
-private:
-    UnixLocalServer _serverSocket;
-    ev::io _io;
-    ev::default_loop _loop;
-
-    WlaIODumper writer;
-    WlaBinParser parser;
-
-    std::set<WlaConnection *> _connections;
+    WLD_ARG_UNKNOWN,
+    WLD_ARG_INT,
+    WLD_ARG_UINT,
+    WLD_ARG_FIXED,
+    WLD_ARG_STRING,
+    WLD_ARG_OBJECT,
+    WLD_ARG_NEWID,
+    WLD_ARG_ARRAY,
+    WLD_ARG_FD
 };
 
-#endif // PROXY_H
+enum WLD_MESSAGE_TYPE
+{
+    WLD_MSG_REQUEST,
+    WLD_MSG_EVENT
+};
+
+union WldArgVal
+{
+    int32_t i;
+    uint32_t u;
+    fixed_t f;
+    const char *s;
+    void *o;
+    uint32_t n;
+    void *a;
+    int32_t h;
+};
+
+struct WldArg
+{
+    WldArg()
+    {
+        name = "";
+        type = WLD_ARG_UNKNOWN;
+        value.i = 0;
+    }
+
+    std::string name;
+    WLD_ARG_TYPE type;
+    WldArgVal value;
+};
+
+struct WldMessage
+{
+    WLD_MESSAGE_TYPE type;
+    std::string signature;
+    std::vector<WldArg> args;
+};
+
+struct WldInterface
+{
+    uint32_t version;
+    std::string name;
+    std::vector<WldMessage> requests;
+    std::vector<WldMessage> events;
+};
+
+#endif // ANALYZER_H

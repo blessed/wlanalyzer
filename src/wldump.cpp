@@ -33,6 +33,7 @@
 #include "common.h"
 #include "proxy.h"
 #include "logger.h"
+#include "xml/protocol_parser.h"
 
 using namespace std;
 
@@ -72,7 +73,7 @@ void verify_runtime()
     if (!socket_name)
     {
         Logger::getInstance()->log("WAYLAND_DISPLAY is not set. "
-                                   "Probably no compositor is running\n");
+                                   "Probably no compositor is running.\n");
         exit(EXIT_FAILURE);
     }
 }
@@ -84,6 +85,8 @@ void modify_environment()
 
 int main(int argc, char *argv[])
 {
+    int ppid = 0;
+
     int ret = validate_cmdline(argc, argv);
     if (ret)
     {
@@ -96,7 +99,7 @@ int main(int argc, char *argv[])
     WlaProxyServer proxy;
     proxy.init(WLA_SOCKETNAME);
 
-    if (fork() == 0)
+    if ((ppid = fork()) == 0)
     {
         modify_environment();
         ret = execvp(argv[1], argv + 1);
@@ -108,7 +111,17 @@ int main(int argc, char *argv[])
         }
     }
 
-    proxy.openServer();
+    WldProtocolScanner scanner;
+    if (scanner.openProtocolFile("wayland.xml"))
+    {
+        WldProtocolDefinition *protocol = scanner.getProtocolDefinition();
+
+        delete protocol;
+    }
+
+    proxy.startServer();
+
+    kill(ppid, SIGTERM);
 
     wait(NULL);
 

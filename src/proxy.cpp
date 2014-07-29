@@ -64,7 +64,6 @@ int WlaProxyServer::startServer()
     std::string path = "dump";
     writer.open(path);
     parser.openFile(path);
-//    parser.attachAnalyzer(&analyzer);
 
     _loop.run();
 }

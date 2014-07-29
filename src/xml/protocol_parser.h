@@ -44,8 +44,18 @@ enum WldArgType
     WLD_ARG_FD
 };
 
+struct WldArgTypeHasher
+{
+    size_t
+    operator()(WldArgType __val) const
+    {
+        return std::tr1::hash<int>()(static_cast<int>(__val));
+    }
+};
+
 enum WLD_MESSAGE_TYPE
 {
+    WLD_MSG_UNKNOWN,
     WLD_MSG_REQUEST,
     WLD_MSG_EVENT
 };
@@ -56,9 +66,9 @@ union WldArgVal
     uint32_t u;
     fixed_t f;
     const char *s;
-    void *o;
+    const void *o;
     uint32_t n;
-    void *a;
+    const void *a;
     int32_t h;
 };
 
@@ -73,11 +83,21 @@ struct WldArg
 
     std::string name;
     WldArgType type;
+    uint32_t size;
     WldArgVal value;
 };
 
+struct WldInterface;
+
 struct WldMessage
 {
+    WldMessage()
+    {
+        type = WLD_MSG_UNKNOWN;
+        signature = "";
+    }
+
+    std::string intf_name;
     WLD_MESSAGE_TYPE type;
     std::string signature;
     std::vector<WldArg> args;
@@ -123,7 +143,9 @@ private:
 private:
     pugi::xml_document doc;
     typedef std::tr1::unordered_map<std::string, WldArgType> types_t;
+    typedef std::tr1::unordered_map<WldArgType, size_t, WldArgTypeHasher> type_size_t;
     static types_t types;
+    static type_size_t type_size;
     static bool initialized;
 };
 

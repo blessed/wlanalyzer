@@ -174,6 +174,8 @@ WlaMessageBuffer *WlaBinParser::nextMessage()
         delete [] cmsg_buf;
     }
 
+    DEBUG_LOG("seq %d flags %d size %d", seq, msg->getHeader()->flags, msg->getHeader()->msg_len);
+
     return msg;
 }
 
@@ -195,10 +197,12 @@ void WlaBinParser::parseMessage(WlaMessageBuffer *msg)
         uint16_t size = byteArrToUInt16(&msg_buf[SIZE_OFFSET]);
         uint16_t opcode = byteArrToUInt16(&msg_buf[OPCODE_OFFSET]);
 
+        /*
         Logger::getInstance()->log("%s msg (%s.%03d), id %d, opcode %d, size %d\n",
                   msg->getType() == WlaMessageBuffer::EVENT_TYPE ? "event" : "request",
                   timestr, msg->getTimeStamp()->tv_usec / 1000,
                   client_id, opcode, size);
+        */
 
         if (analyzer)
         {
@@ -207,7 +211,7 @@ void WlaBinParser::parseMessage(WlaMessageBuffer *msg)
                 type = WLD_MSG_EVENT;
             else
                 type = WLD_MSG_REQUEST;
-            analyzer->lookup(client_id, opcode, type);
+            analyzer->lookup(client_id, opcode, type, msg_buf + PAYLOAD_OFFSET);
         }
 
         if (size == 0)

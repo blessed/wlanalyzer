@@ -22,8 +22,8 @@
  * SOFTWARE.
  */
 
+#include <string.h>
 #include "analyzer.h"
-
 
 WldProtocolAnalyzer::WldProtocolAnalyzer() : protocol(NULL)
 {
@@ -77,22 +77,18 @@ int WldProtocolAnalyzer::coreProtocol(const std::string &path)
     objects[2] = *proxy;
 }
 
-void WldProtocolAnalyzer::lookup(uint32_t object_id, uint32_t opcode, WLD_MESSAGE_TYPE type)
+void WldProtocolAnalyzer::lookup(uint32_t object_id, uint32_t opcode, WLD_MESSAGE_TYPE type, const char *payload)
 {
     const WldMessage *msg = NULL;
 
     objects_t::const_iterator it = objects.find(object_id);
-
-
     if (it == objects.end())
     {
-        DEBUG_LOG("Coulnd't find interface for %d", object_id);
+        Logger::getInstance()->log("Unknown message type @%u:%u\n", object_id, opcode);
         return;
     }
 
     const WldInterface &intf = it->second;
-
-    DEBUG_LOG("%d, %d %d", object_id, opcode, type);
 
     if (type == WLD_MSG_REQUEST)
     {
@@ -119,5 +115,81 @@ void WldProtocolAnalyzer::lookup(uint32_t object_id, uint32_t opcode, WLD_MESSAG
         return;
     }
 
-    DEBUG_LOG("message: %s", msg->signature.c_str());
+    Logger::getInstance()->log("%s@%u.%s()\n", intf.name.c_str(), object_id, msg->signature.c_str());
+    analyzeMessage(*msg, payload);
+}
+
+int WldProtocolAnalyzer::analyzeMessage(const WldMessage &msg, const char *payload)
+{
+    if (msg.type == WLD_MSG_EVENT && msg.intf_name == "wl_registry" &&
+            msg.signature == "global")
+    {
+        const char *p = payload;
+
+        uint32_t id = byteArrToUInt32(p);
+        p += 4;
+
+        uint32_t name_len = byteArrToUInt32(p);
+        p += 4;
+        char *name = new char[name_len];
+        strncpy(name, p, name_len);
+
+        std::string strName = name;
+
+        delete [] name;
+
+        names[id] = strName;
+
+        Logger::getInstance()->log("Found new name %d->%s\n", id, strName.c_str());
+    }
+    else if (msg.type == WLD_MSG_REQUEST && msg.intf_name == "wl_registry" &&
+             msg.signature == "bind")
+    {
+        const char *p = payload;
+
+        uint32_t id = byteArrToUInt32(p);
+        p += 4;
+
+        uint32_t name_len = byteArrToUInt32(p);
+        p += 4;
+
+        char *name = new char[name_len];
+        strncpy(name, p, name_len);
+        p += name_len;
+        std::string strName = name;
+        delete [] name;
+
+        if ((uintptr_t)p % 4)
+        {
+            p += 4 - ((uintptr_t)p % 4);
+        }
+
+        uint32_t ver = byteArrToUInt32(p);
+        p += 4;
+
+        uint32_t new_id = byteArrToUInt32(p);
+
+        const WldInterface *intf = protocol->getInterface(strName);
+        if (intf)
+        {
+            objects[new_id] = *intf;
+
+            Logger::getInstance()->log("%s.", msg.intf_name.c_str());
+            Logger::getInstance()->log("%s(", msg.signature.c_str());
+            Logger::getInstance()->log("%u, \"%s\", %u, new id@%u)\n", id, intf->name.c_str(), ver, new_id);
+//            Logger::getInstance()->log("id %d, new_id %d, name %s, ver %d\n", id, new_id, intf->name.c_str(), ver);
+        }
+
+        // print available objects
+        /*
+        DEBUG_LOG("Available objects:");
+        objects_t::const_iterator it = objects.begin();
+        for (; it != objects.end(); it++)
+        {
+            DEBUG_LOG("%u: %s", it->first, it->second.name.c_str());
+        }
+        */
+    }
+
+    return -1;
 }

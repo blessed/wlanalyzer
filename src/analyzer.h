@@ -26,7 +26,6 @@
 #define ANALYZER_H
 
 #include <tr1/unordered_map>
-//#include <map>
 #include <vector>
 #include "common.h"
 #include "xml/protocol_parser.h"
@@ -39,12 +38,17 @@ public:
 
     int addProtocolSpec(const std::string &path);
     int coreProtocol(const std::string &path);
-    void lookup(uint32_t object_id, uint32_t opcode, WLD_MESSAGE_TYPE type);
+    void lookup(uint32_t object_id, uint32_t opcode, WLD_MESSAGE_TYPE type, const char *payload);
+
+private:
+    int analyzeMessage(const WldMessage &msg, const char *payload);
 
 private:
     WldProtocolDefinition *protocol;
+    typedef std::tr1::unordered_map<uint32_t, std::string> names_t;
     typedef std::tr1::unordered_map<uint32_t, WldInterface> objects_t;
     objects_t objects;
+    names_t names;
 };
 
 #endif // ANALYZER_H

@@ -28,8 +28,12 @@
 
 #include <stdio.h>
 
+#ifndef DEBUG_BUILD
+#define DEBUG_LOG(msg, ...)
+#else
 #define DEBUG_LOG(msg, ...) \
     Logger::getInstance()->log("%s:%d-> " msg "\n", __PRETTY_FUNCTION__, __LINE__, ##__VA_ARGS__);
+#endif // DEBUG_BUILD
 
 class Logger
 {

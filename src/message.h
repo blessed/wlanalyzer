@@ -35,8 +35,9 @@ const int CMESSAGE_PRESENT_BIT = 0x01;
 const int CLIENT_ID_OFFSET = 0;
 const int SIZE_OFFSET = 6;
 const int OPCODE_OFFSET = 4;
+const int PAYLOAD_OFFSET = 8;
 
-struct WlaMessageBufferHeader
+struct __attribute__ ((__packed__)) WlaMessageBufferHeader
 {
     uint32_t flags;
     timeval timestamp;

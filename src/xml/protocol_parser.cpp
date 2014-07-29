@@ -29,6 +29,7 @@
 using namespace pugi;
 
 WldProtocolScanner::types_t WldProtocolScanner::types;
+WldProtocolScanner::type_size_t WldProtocolScanner::type_size;
 bool WldProtocolScanner::initialized = false;
 
 WldProtocolScanner::WldProtocolScanner()
@@ -67,7 +68,7 @@ WldProtocolDefinition *WldProtocolScanner::getProtocolDefinition(WldProtocolDefi
         interface.name = interfaceNode.attribute("name").value();
         interface.version = interfaceNode.attribute("version").as_int();
 
-        Logger::getInstance()->log("interface: %s version: %d\n", interface.name.c_str(), interface.version);
+//        Logger::getInstance()->log("interface: %s version: %d\n", interface.name.c_str(), interface.version);
 
         if (!scanInterface(interfaceNode, interface))
         {
@@ -86,6 +87,8 @@ void WldProtocolScanner::init()
     if (initialized)
         return;
 
+    DEBUG_LOG("sizeof WldArgTypeHasher %d", sizeof(WldArgTypeHasher));
+
     types["uint"] = WLD_ARG_UINT;
     types["int"] = WLD_ARG_INT;
     types["string"] = WLD_ARG_STRING;
@@ -94,6 +97,15 @@ void WldProtocolScanner::init()
     types["new_id"] = WLD_ARG_NEWID;
     types["fd"] = WLD_ARG_FD;
     types["array"] = WLD_ARG_ARRAY;
+
+    type_size[WLD_ARG_UINT] = sizeof(WldArgVal::u);
+    type_size[WLD_ARG_INT] = sizeof(WldArgVal::i);
+    type_size[WLD_ARG_FIXED] = sizeof(WldArgVal::f);
+    type_size[WLD_ARG_STRING] = sizeof(WldArgVal::s);
+    type_size[WLD_ARG_FD] = sizeof(WldArgVal::h);
+    type_size[WLD_ARG_ARRAY] = sizeof(WldArgVal::a);
+    type_size[WLD_ARG_OBJECT] = sizeof(WldArgVal::o);
+    type_size[WLD_ARG_NEWID] = sizeof(WldArgVal::n);
 
     initialized = true;
 }
@@ -123,8 +135,9 @@ bool WldProtocolScanner::getMessages(const xml_node &node, WldInterface &interfa
         WldMessage msg;
         msg.type = type;
         msg.signature = eventNode.attribute("name").value();
+        msg.intf_name = interface.name;
 
-        Logger::getInstance()->log("\t%s: %s\n", type == WLD_MSG_REQUEST ? "request" : "event", msg.signature.c_str());
+//        Logger::getInstance()->log("\t%s: %s\n", type == WLD_MSG_REQUEST ? "request" : "event", msg.signature.c_str());
 
         if (!scanArgs(eventNode, msg))
             return false;
@@ -140,6 +153,7 @@ bool WldProtocolScanner::getMessages(const xml_node &node, WldInterface &interfa
 
 bool WldProtocolScanner::scanArgs(const xml_node &node, WldMessage &msg)
 {
+    uint16_t offset = 0;
     for (xml_node argNode = node.child("arg"); argNode; argNode = argNode.next_sibling())
     {
         WldArg arg;
@@ -152,7 +166,12 @@ bool WldProtocolScanner::scanArgs(const xml_node &node, WldMessage &msg)
         else
             arg.type = WLD_ARG_UNKNOWN;
 
-        Logger::getInstance()->log("\t\targ: %28s\ttype: %d\n", arg.name.c_str(), arg.type);
+        arg.size = type_size.find(arg.type)->second;
+
+//        arg.offset
+//        offset += (type_size.find(arg.type))->second;
+
+//        Logger::getInstance()->log("\t\targ: %28s\ttype: %s\tsize: %d\n", arg.name.c_str(), type.c_str(), arg.size);
 
         msg.args.push_back(arg);
     }

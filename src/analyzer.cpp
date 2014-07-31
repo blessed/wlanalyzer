@@ -116,12 +116,12 @@ void WldProtocolAnalyzer::lookup(uint32_t object_id, uint32_t opcode, WLD_MESSAG
     }
 
     Logger::getInstance()->log("%s@%u.%s()\n", intf.name.c_str(), object_id, msg->signature.c_str());
-    analyzeMessage(*msg, payload);
+    analyzeMessage(intf, *msg, payload);
 }
 
-int WldProtocolAnalyzer::analyzeMessage(const WldMessage &msg, const char *payload)
+int WldProtocolAnalyzer::analyzeMessage(const WldInterface &intf, const WldMessage &msg, const char *payload)
 {
-    if (msg.type == WLD_MSG_EVENT && msg.intf_name == "wl_registry" &&
+    if (msg.type == WLD_MSG_EVENT && intf.name == "wl_registry" &&
             msg.signature == "global")
     {
         const char *p = payload;
@@ -142,7 +142,7 @@ int WldProtocolAnalyzer::analyzeMessage(const WldMessage &msg, const char *paylo
 
         Logger::getInstance()->log("Found new name %d->%s\n", id, strName.c_str());
     }
-    else if (msg.type == WLD_MSG_REQUEST && msg.intf_name == "wl_registry" &&
+    else if (intf.name == "wl_registry" &&
              msg.signature == "bind")
     {
         const char *p = payload;
@@ -169,14 +169,14 @@ int WldProtocolAnalyzer::analyzeMessage(const WldMessage &msg, const char *paylo
 
         uint32_t new_id = byteArrToUInt32(p);
 
-        const WldInterface *intf = protocol->getInterface(strName);
-        if (intf)
+        const WldInterface *prot_intf = protocol->getInterface(strName);
+        if (prot_intf)
         {
-            objects[new_id] = *intf;
+            objects[new_id] = *prot_intf;
 
             Logger::getInstance()->log("%s.", msg.intf_name.c_str());
             Logger::getInstance()->log("%s(", msg.signature.c_str());
-            Logger::getInstance()->log("%u, \"%s\", %u, new id@%u)\n", id, intf->name.c_str(), ver, new_id);
+            Logger::getInstance()->log("%u, \"%s\", %u, new id@%u)\n", id, prot_intf->name.c_str(), ver, new_id);
 //            Logger::getInstance()->log("id %d, new_id %d, name %s, ver %d\n", id, new_id, intf->name.c_str(), ver);
         }
 
@@ -190,6 +190,103 @@ int WldProtocolAnalyzer::analyzeMessage(const WldMessage &msg, const char *paylo
         }
         */
     }
+    else
+    {
+        extractArguments(msg, payload);
+    }
 
     return -1;
+}
+
+void WldProtocolAnalyzer::extractArguments(const WldMessage &msg, const char *payload)
+{
+    const char *p = payload;
+
+    std::vector<WldArg>::const_iterator it = msg.args.begin();
+    for (; it != msg.args.end(); it++)
+    {
+        if (it->type == WLD_ARG_NEWID)
+        {
+            const WldInterface *intf = protocol->getInterface(it->interface);
+            if (!intf)
+                continue;
+
+            int id = byteArrToUInt32(p);
+            p += 4;
+            objects[id] = *intf;
+        }
+        else if (it->type == WLD_ARG_STRING)
+        {
+            int len = byteArrToUInt32(p);
+            p += 4;
+            p += len;
+        }
+        else if (it->type == WLD_ARG_ARRAY)
+        {
+            int len = byteArrToUInt32(p);
+            p += 4;
+            p += len;
+        }
+        else
+        {
+            p += 4;
+        }
+    }
+}
+
+bool WldProtocolAnalyzer::createsObject(const WldMessage &msg)
+{
+    std::vector<WldArg>::const_iterator it = msg.args.begin();
+    for (; it != msg.args.end(); it++)
+    {
+        if (it->type == WLD_ARG_NEWID)
+            return true;
+    }
+
+    return false;
+}
+
+WldProtocolAnalyzer::NewId WldProtocolAnalyzer::getNewId(const WldMessage &msg, const char *payload)
+{
+    NewId id = { 0, "" };
+    const char *p = payload;
+    std::vector<WldArg>::const_iterator it = msg.args.begin();
+
+    while (it != msg.args.end())
+    {
+        switch (it->type)
+        {
+        case WLD_ARG_ARRAY:
+        {
+            int len = byteArrToUInt32(p);
+            p += 4;
+            p += len;
+            break;
+        }
+        case WLD_ARG_STRING:
+        {
+            int len = byteArrToUInt32(p);
+            p += 4;
+            p += len;
+            break;
+        }
+        case WLD_ARG_NEWID:
+        {
+            int id = byteArrToUInt32(p);
+            p += 4;
+            int name = byteArrToUInt32(p);
+            p += 4;
+            int scheme = byteArrToUInt32(p);
+
+            DEBUG_LOG("%d %d %d", id, name, scheme);
+        }
+        default:
+            p += 4;
+            break;
+        }
+
+        it++;
+    }
+
+    return id;
 }

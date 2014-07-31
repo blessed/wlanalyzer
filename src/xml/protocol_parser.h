@@ -65,10 +65,26 @@ union WldArgVal
     int32_t i;
     uint32_t u;
     fixed_t f;
-    const char *s;
-    const void *o;
-    uint32_t n;
-    const void *a;
+    struct s
+    {
+        uint32_t len;
+        const char *data;
+    };
+//    const char *s;
+    uint32_t o;
+    struct
+    {
+        uint32_t id;
+        const char *interface;
+//        std::string interface;
+    } n;
+//    uint32_t n;
+    struct
+    {
+        uint32_t size;
+        const char *data;
+    } a;
+//    const void *a;
     int32_t h;
 };
 
@@ -78,13 +94,12 @@ struct WldArg
     {
         name = "";
         type = WLD_ARG_UNKNOWN;
-        value.i = 0;
+        interface = "";
     }
 
     std::string name;
     WldArgType type;
-    uint32_t size;
-    WldArgVal value;
+    std::string interface;
 };
 
 struct WldInterface;
@@ -114,15 +129,24 @@ struct WldInterface
 class WldProtocolDefinition
 {
 public:
+    WldProtocolDefinition();
+
     void addInterface(const WldInterface &interface)
     {
         interfaceList.push_back(interface);
     }
 
     const WldInterface *getInterface(const std::string &name) const;
+    size_t getArgSize(WldArgType type);
+
+private:
+    static void init();
 
 private:
     std::vector<WldInterface> interfaceList;
+    typedef std::tr1::unordered_map<WldArgType, size_t, WldArgTypeHasher> type_size_t;
+    static type_size_t type_size;
+    static bool initialized;
 };
 
 class WldProtocolScanner
@@ -143,9 +167,7 @@ private:
 private:
     pugi::xml_document doc;
     typedef std::tr1::unordered_map<std::string, WldArgType> types_t;
-    typedef std::tr1::unordered_map<WldArgType, size_t, WldArgTypeHasher> type_size_t;
     static types_t types;
-    static type_size_t type_size;
     static bool initialized;
 };
 

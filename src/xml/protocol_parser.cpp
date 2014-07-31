@@ -29,7 +29,8 @@
 using namespace pugi;
 
 WldProtocolScanner::types_t WldProtocolScanner::types;
-WldProtocolScanner::type_size_t WldProtocolScanner::type_size;
+WldProtocolDefinition::type_size_t WldProtocolDefinition::type_size;
+bool WldProtocolDefinition::initialized = false;
 bool WldProtocolScanner::initialized = false;
 
 WldProtocolScanner::WldProtocolScanner()
@@ -68,7 +69,7 @@ WldProtocolDefinition *WldProtocolScanner::getProtocolDefinition(WldProtocolDefi
         interface.name = interfaceNode.attribute("name").value();
         interface.version = interfaceNode.attribute("version").as_int();
 
-//        Logger::getInstance()->log("interface: %s version: %d\n", interface.name.c_str(), interface.version);
+        Logger::getInstance()->log("interface: %s version: %d\n", interface.name.c_str(), interface.version);
 
         if (!scanInterface(interfaceNode, interface))
         {
@@ -97,15 +98,6 @@ void WldProtocolScanner::init()
     types["new_id"] = WLD_ARG_NEWID;
     types["fd"] = WLD_ARG_FD;
     types["array"] = WLD_ARG_ARRAY;
-
-    type_size[WLD_ARG_UINT] = sizeof(WldArgVal::u);
-    type_size[WLD_ARG_INT] = sizeof(WldArgVal::i);
-    type_size[WLD_ARG_FIXED] = sizeof(WldArgVal::f);
-    type_size[WLD_ARG_STRING] = sizeof(WldArgVal::s);
-    type_size[WLD_ARG_FD] = sizeof(WldArgVal::h);
-    type_size[WLD_ARG_ARRAY] = sizeof(WldArgVal::a);
-    type_size[WLD_ARG_OBJECT] = sizeof(WldArgVal::o);
-    type_size[WLD_ARG_NEWID] = sizeof(WldArgVal::n);
 
     initialized = true;
 }
@@ -153,7 +145,6 @@ bool WldProtocolScanner::getMessages(const xml_node &node, WldInterface &interfa
 
 bool WldProtocolScanner::scanArgs(const xml_node &node, WldMessage &msg)
 {
-    uint16_t offset = 0;
     for (xml_node argNode = node.child("arg"); argNode; argNode = argNode.next_sibling())
     {
         WldArg arg;
@@ -166,12 +157,16 @@ bool WldProtocolScanner::scanArgs(const xml_node &node, WldMessage &msg)
         else
             arg.type = WLD_ARG_UNKNOWN;
 
-        arg.size = type_size.find(arg.type)->second;
+        if (arg.type == WLD_ARG_NEWID)
+        {
+            std::string intf = argNode.attribute("interface").value();
+            if (intf.empty())
+                DEBUG_LOG("new_id has no interface");
 
-//        arg.offset
-//        offset += (type_size.find(arg.type))->second;
+            arg.interface = intf;
+        }
 
-//        Logger::getInstance()->log("\t\targ: %28s\ttype: %s\tsize: %d\n", arg.name.c_str(), type.c_str(), arg.size);
+//        Logger::getInstance()->log("\t\targ: %28s\ttype: %s\n", arg.name.c_str(), type.c_str());
 
         msg.args.push_back(arg);
     }
@@ -179,6 +174,10 @@ bool WldProtocolScanner::scanArgs(const xml_node &node, WldMessage &msg)
     return true;
 }
 
+WldProtocolDefinition::WldProtocolDefinition()
+{
+    init();
+}
 
 const WldInterface *WldProtocolDefinition::getInterface(const std::string &name) const
 {
@@ -191,4 +190,28 @@ const WldInterface *WldProtocolDefinition::getInterface(const std::string &name)
     }
 
     return NULL;
+}
+
+size_t WldProtocolDefinition::getArgSize(WldArgType type)
+{
+    return type_size.find(type)->second;
+}
+
+void WldProtocolDefinition::init()
+{
+    if (initialized)
+        return;
+
+    DEBUG_LOG("sizeof WldArgTypeHasher %d", sizeof(WldArgTypeHasher));
+
+    type_size[WLD_ARG_UINT] = sizeof(WldArgVal::u);
+    type_size[WLD_ARG_INT] = sizeof(WldArgVal::i);
+    type_size[WLD_ARG_FIXED] = sizeof(WldArgVal::f);
+    type_size[WLD_ARG_STRING] = sizeof(WldArgVal::s);
+    type_size[WLD_ARG_FD] = sizeof(WldArgVal::h);
+    type_size[WLD_ARG_ARRAY] = sizeof(WldArgVal::a);
+    type_size[WLD_ARG_OBJECT] = sizeof(WldArgVal::o);
+    type_size[WLD_ARG_NEWID] = sizeof(WldArgVal::n);
+
+    initialized = true;
 }

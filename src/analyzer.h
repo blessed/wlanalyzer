@@ -41,7 +41,16 @@ public:
     void lookup(uint32_t object_id, uint32_t opcode, WLD_MESSAGE_TYPE type, const char *payload);
 
 private:
-    int analyzeMessage(const WldMessage &msg, const char *payload);
+    struct NewId
+    {
+        uint32_t id;
+        std::string interface;
+    };
+
+    int analyzeMessage(const WldInterface &intf, const WldMessage &msg, const char *payload);
+    void extractArguments(const WldMessage &msg, const char *payload);
+    bool createsObject(const WldMessage &msg);
+    NewId getNewId(const WldMessage &msg, const char *payload);
 
 private:
     WldProtocolDefinition *protocol;

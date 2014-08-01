@@ -37,7 +37,14 @@
 
 using namespace std;
 
-int validate_cmdline(int argc, char **argv)
+struct options_t
+{
+    std::string coreProtocol;
+    std::vector<std::string> extensions;
+    std::string executable;
+};
+
+static int validate_cmdline(int argc, char **argv)
 {
     if (argc < 2)
         return -1;
@@ -45,12 +52,12 @@ int validate_cmdline(int argc, char **argv)
     return 0;
 }
 
-void usage()
+static void usage()
 {
-    fprintf(stderr, "Usage: wlanalyzer <binary> [args]\n");
+    fprintf(stderr, "Usage: wldump -c <core protocol file> -p <executable> [-e protocol extension files]\n");
 }
 
-void verify_runtime()
+static void verify_runtime()
 {
     const char *runtimeDir = getenv("XDG_RUNTIME_DIR");
     if (!runtimeDir)
@@ -78,9 +85,64 @@ void verify_runtime()
     }
 }
 
-void modify_environment()
+static void modify_environment()
 {
     setenv("WAYLAND_DISPLAY", WLA_SOCKETNAME, 1);
+}
+
+static void get_multiple_args(int argc, char **argv, options_t *opt)
+{
+    int index = optind - 1;
+    while (index < argc)
+    {
+        char *argval = argv[index];
+        if (argval[0] != '-')
+        {
+            std::string val = argv[index];
+            opt->extensions.push_back(val);
+        }
+        else
+        {
+            optind = index - 1;
+            break;
+        }
+
+        index++;
+    }
+}
+
+static int parse_cmdline(int argc, char **argv, options_t *opt)
+{
+    char c;
+
+    while ((c = getopt(argc, argv, "c:e:p:")) != -1)
+    {
+        switch (c)
+        {
+        case 'c':
+            DEBUG_LOG("c");
+            printf("optarg %s\n", optarg);
+            opt->coreProtocol = optarg;
+            break;
+        case 'p':
+            DEBUG_LOG("p");
+            opt->executable = optarg;
+            break;
+        case 'e':
+            DEBUG_LOG("e");
+            get_multiple_args(argc, argv, opt);
+            break;
+        case '?':
+            return -1;
+        default:
+            return -1;
+        }
+    }
+
+    if (opt->coreProtocol == "")
+        return -1;
+
+    return 0;
 }
 
 int main(int argc, char *argv[])
@@ -95,14 +157,36 @@ int main(int argc, char *argv[])
         exit(EXIT_FAILURE);
     }
 
+    DEBUG_LOG("dupa");
+    options_t options;
+    if (parse_cmdline(argc, argv, &options))
+    {
+        Logger::getInstance()->log("Invalid command line\n");
+        usage();
+        exit(EXIT_FAILURE);
+    }
+
     verify_runtime();
     WlaProxyServer proxy;
     proxy.init(WLA_SOCKETNAME);
 
+    WldProtocolAnalyzer *analyzer = new WldProtocolAnalyzer;
+    analyzer->coreProtocol(options.coreProtocol);
+    if (!options.extensions.empty())
+    {
+        std::vector<std::string>::const_iterator it = options.extensions.begin();
+        for (; it != options.extensions.end(); it++)
+        {
+            DEBUG_LOG("extensions %s", it->c_str());
+            analyzer->addProtocolSpec(*it);
+        }
+    }
+    proxy.setAnalyzer(analyzer);
+
     if ((ppid = fork()) == 0)
     {
         modify_environment();
-        ret = execvp(argv[1], argv + 1);
+        ret = execlp(options.executable.c_str(), options.executable.c_str(), NULL);
         if (ret)
         {
             perror(NULL);

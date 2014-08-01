@@ -59,11 +59,11 @@ int WlaProxyServer::init(const std::string &socketPath)
 
 int WlaProxyServer::startServer()
 {
-    if (!analyzer.coreProtocol("wayland.xml"))
-    {
-        analyzer.addProtocolSpec("xdg-shell.xml");
-        parser.attachAnalyzer(&analyzer);
-    }
+//    if (!analyzer.coreProtocol("wayland.xml"))
+//    {
+//        analyzer.addProtocolSpec("xdg-shell.xml");
+//        parser.attachAnalyzer(&analyzer);
+//    }
     std::string path = "dump";
     writer.open(path);
     parser.openFile(path);
@@ -82,6 +82,11 @@ void WlaProxyServer::stopServer()
     parser.parse();
 
     _loop.break_loop();
+}
+
+void WlaProxyServer::setAnalyzer(WldProtocolAnalyzer *an)
+{
+    parser.attachAnalyzer(an);
 }
 
 void WlaProxyServer::closeConnection(WlaConnection *conn)

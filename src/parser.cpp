@@ -36,6 +36,9 @@ WlaBinParser::WlaBinParser() : analyzer(NULL)
 WlaBinParser::~WlaBinParser()
 {
     close(file);
+
+    if (analyzer)
+        delete analyzer;
 }
 
 int WlaBinParser::openFile(const std::string &path)

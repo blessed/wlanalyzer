@@ -48,6 +48,8 @@ public:
 
     void closeConnection(WlaConnection *conn);
 
+    void setAnalyzer(WldProtocolAnalyzer *an);
+
 private:
     void connectClient(ev::io &watcher, int revents);
     void handleCommunication(ev::io &watcher, int revents);
@@ -59,7 +61,6 @@ private:
 
     WlaIODumper writer;
     WlaBinParser parser;
-    WldProtocolAnalyzer analyzer;
 
     std::set<WlaConnection *> _connections;
 };

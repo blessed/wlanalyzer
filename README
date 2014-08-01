@@ -13,4 +13,4 @@ To build simply run:
 $ ./waf configure build
 
 To run (make sure a wayland server is running and that the WAYLAND_DISPLAY variable is set):
-./wldump <wayland-client>
+./wldump -c <core protocol file> -p <executable> [-e protocol extension files] 

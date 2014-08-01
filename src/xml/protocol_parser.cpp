@@ -42,7 +42,7 @@ bool WldProtocolScanner::openProtocolFile(const std::string &path)
 {
     xml_parse_result result = doc.load_file(path.c_str());
 
-    DEBUG_LOG("result %s", result.description());
+    Logger::getInstance()->log("result %s: %s\n", result.description(), path.c_str());
 
     return result;
 }

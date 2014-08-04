@@ -61,9 +61,7 @@ int WlaBinParser::openFile(const std::string &path)
     }
 
     timer.set<WlaBinParser, &WlaBinParser::timerEvent>(this);
-
     filewtch.set<WlaBinParser, &WlaBinParser::handleFileEvent>(this);
-    filewtch.start(file, EV_READ);
 
     return 0;
 }
@@ -71,6 +69,14 @@ int WlaBinParser::openFile(const std::string &path)
 void WlaBinParser::attachAnalyzer(WldProtocolAnalyzer *analyzer)
 {
     this->analyzer = analyzer;
+}
+
+void WlaBinParser::setState(bool state)
+{
+    if (state)
+        filewtch.start(file, EV_READ);
+    else
+        filewtch.stop();
 }
 
 void WlaBinParser::handleFileEvent(ev::io &watcher, int revents)

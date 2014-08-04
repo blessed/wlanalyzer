@@ -65,6 +65,8 @@ int WlaIODumper::write(WlaMessageBuffer &msg)
     if (!filefd)
         return -1;
 
+    DEBUG_LOG("");
+
     ::write(filefd, &seq, sizeof(uint32_t));
     seq++;
 

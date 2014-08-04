@@ -27,7 +27,7 @@
 #include "common.h"
 #include "proxy.h"
 
-WlaProxyServer::WlaProxyServer() : _loop(EVBACKEND_SELECT)
+WlaProxyServer::WlaProxyServer() : _loop(EVBACKEND_SELECT), dumper(NULL), parser(NULL)
 {
     DEBUG_LOG("_loop.backend %d", _loop.backend());
 }
@@ -35,6 +35,7 @@ WlaProxyServer::WlaProxyServer() : _loop(EVBACKEND_SELECT)
 WlaProxyServer::~WlaProxyServer()
 {
     stopServer();
+    setDumper(NULL);
 }
 
 int WlaProxyServer::init(const std::string &socketPath)
@@ -59,34 +60,29 @@ int WlaProxyServer::init(const std::string &socketPath)
 
 int WlaProxyServer::startServer()
 {
-//    if (!analyzer.coreProtocol("wayland.xml"))
-//    {
-//        analyzer.addProtocolSpec("xdg-shell.xml");
-//        parser.attachAnalyzer(&analyzer);
-//    }
-    std::string path = "dump";
-    writer.open(path);
-    parser.openFile(path);
+//    std::string path = "dump.log";
+//    parser.openFile(path);
 
     _loop.run();
 }
 
 void WlaProxyServer::stopServer()
 {
-    // TODO: close all connections
     _io.stop();
 
     if (_serverSocket.isListening())
         _serverSocket.close();
 
-    parser.parse();
+    if (parser)
+        parser->parse();
+
+    std::set<WlaConnection *>::const_iterator it = _connections.begin();
+    for (; it != _connections.end(); it++)
+    {
+        (*it)->closeConnection();
+    }
 
     _loop.break_loop();
-}
-
-void WlaProxyServer::setAnalyzer(WldProtocolAnalyzer *an)
-{
-    parser.attachAnalyzer(an);
 }
 
 void WlaProxyServer::closeConnection(WlaConnection *conn)
@@ -95,6 +91,29 @@ void WlaProxyServer::closeConnection(WlaConnection *conn)
 
     if (_connections.empty())
         stopServer();
+}
+
+void WlaProxyServer::setDumper(WldDumper *dumper)
+{
+    std::set<WlaConnection *>::const_iterator it = _connections.begin();
+    for (; it != _connections.end(); it++)
+    {
+        (*it)->setDumper(dumper);
+    }
+
+    if (this->dumper)
+        delete this->dumper;
+
+    this->dumper = dumper;
+}
+
+void WlaProxyServer::setParser(WlaBinParser *parser)
+{
+    if (this->parser)
+        delete this->parser;
+
+    this->parser = parser;
+    this->parser->setState(true);
 }
 
 void WlaProxyServer::connectClient(ev::io &watcher, int revents)
@@ -129,7 +148,8 @@ void WlaProxyServer::connectClient(ev::io &watcher, int revents)
     UnixLocalSocket client;
     client.setSocketDescriptor(fd);
 
-    WlaConnection *connection = new WlaConnection(this, &writer);
+//    WlaConnection *connection = new WlaConnection(this, &writer);
+    WlaConnection *connection = new WlaConnection(this, dumper);
     if (!connection)
     {
         DEBUG_LOG("Failed to create connection between client and compositor");

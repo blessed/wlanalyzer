@@ -48,11 +48,13 @@ public:
 
     void closeConnection(WlaConnection *conn);
 
-    void setAnalyzer(WldProtocolAnalyzer *an);
+    void setDumper(WldDumper *dumper);
+    void setParser(WlaBinParser *parser);
+//    void setAnalyzer(WldProtocolAnalyzer *an);
 
 private:
     void connectClient(ev::io &watcher, int revents);
-    void handleCommunication(ev::io &watcher, int revents);
+//    void handleCommunication(ev::io &watcher, int revents);
 
 private:
     UnixLocalServer _serverSocket;
@@ -60,8 +62,9 @@ private:
     ev::default_loop _loop;
 
 //    WlaIODumper writer;
-    WldIODumper writer;
-    WlaBinParser parser;
+    WldDumper *dumper;
+//    WldIODumper writer;
+    WlaBinParser *parser;
 
     std::set<WlaConnection *> _connections;
 };

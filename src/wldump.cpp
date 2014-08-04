@@ -39,8 +39,11 @@ using namespace std;
 
 struct options_t
 {
+    options_t() : exec(NULL), coreProtocol(""), analyze(false) {}
+
     std::string coreProtocol;
     std::vector<std::string> extensions;
+    bool analyze;
     char **exec;
 };
 
@@ -54,7 +57,14 @@ static int validate_cmdline(int argc, char **argv)
 
 static void usage()
 {
-    fprintf(stderr, "Usage: wldump -c <core protocol file> -p <executable> [-e protocol extension files]\n");
+//    fprintf(stderr, "Usage: wldump -c <core protocol file> [-e protocol extension files] -- <executable>\n");
+
+    fprintf(stderr, "wldump is a wayland protocol dumper\n"
+            "Usage:\twldump [OPTIONS] -- <wayland_client>\n\n"
+            "Options:\n"
+//            "\t-a <-c path> [-e paths] - enable protocol analyzer\n"
+            "\t-c <file_path> - set the core protocol specification file\n"
+            "\t-e <file_paths> - provide extensions of the protocol file\n");
 }
 
 static void verify_runtime()
@@ -90,27 +100,6 @@ static void modify_environment()
     setenv("WAYLAND_DISPLAY", WLA_SOCKETNAME, 1);
 }
 
-static void get_multiple_args(int argc, char **argv, options_t *opt)
-{
-    int index = optind - 1;
-    while (index < argc)
-    {
-        char *argval = argv[index];
-        if (argval[0] != '-')
-        {
-            std::string val = argv[index];
-            opt->extensions.push_back(val);
-        }
-        else
-        {
-            optind = index - 1;
-            break;
-        }
-
-        index++;
-    }
-}
-
 static int parse_cmdline(int argc, char **argv, options_t *opt)
 {
     for (int i = 1; i < argc; i++)
@@ -125,6 +114,7 @@ static int parse_cmdline(int argc, char **argv, options_t *opt)
             }
 
             opt->coreProtocol = argv[i];
+            opt->analyze = true;
         }
         else if (!strcmp(argv[i], "-e"))
         {
@@ -140,7 +130,7 @@ static int parse_cmdline(int argc, char **argv, options_t *opt)
                 opt->extensions.push_back(argv[i]);
                 i++;
 
-                if (i == argc - 1)
+                if (i >= argc - 1)
                 {
                     break;
                 }
@@ -154,10 +144,15 @@ static int parse_cmdline(int argc, char **argv, options_t *opt)
             if (i == argc)
             {
                 Logger::getInstance()->log("Program not specified\n");
+                usage();
                 exit(EXIT_FAILURE);
             }
             opt->exec = &argv[i];
         }
+//        else if (!strcmp(argv[i], "-a"))
+//        {
+//            opt->analyze = true;
+//        }
         else
         {
             Logger::getInstance()->log("Unknown option %s\n", argv[i]);
@@ -169,6 +164,7 @@ static int parse_cmdline(int argc, char **argv, options_t *opt)
     if (!opt->exec)
     {
         Logger::getInstance()->log("No program specified\n");
+        usage();
         exit(EXIT_FAILURE);
     }
 
@@ -199,18 +195,29 @@ int main(int argc, char *argv[])
     WlaProxyServer proxy;
     proxy.init(WLA_SOCKETNAME);
 
-    WldProtocolAnalyzer *analyzer = new WldProtocolAnalyzer;
-    analyzer->coreProtocol(options.coreProtocol);
-    if (!options.extensions.empty())
+    if (options.coreProtocol.size())
     {
-        std::vector<std::string>::const_iterator it = options.extensions.begin();
-        for (; it != options.extensions.end(); it++)
+        WldProtocolAnalyzer *analyzer = new WldProtocolAnalyzer;
+        analyzer->coreProtocol(options.coreProtocol);
+        if (!options.extensions.empty())
         {
-            DEBUG_LOG("extensions %s", it->c_str());
-            analyzer->addProtocolSpec(*it);
+            std::vector<std::string>::const_iterator it = options.extensions.begin();
+            for (; it != options.extensions.end(); it++)
+            {
+                DEBUG_LOG("extensions %s", it->c_str());
+                analyzer->addProtocolSpec(*it);
+            }
         }
+
+        WldIODumper *dumper = new WldIODumper;
+        dumper->open("dump.log");
+        proxy.setDumper(dumper);
+
+        WlaBinParser *parser = new WlaBinParser;
+        parser->openFile("dump.log");
+        parser->attachAnalyzer(analyzer);
+        proxy.setParser(parser);
     }
-    proxy.setAnalyzer(analyzer);
 
     if ((ppid = fork()) == 0)
     {
@@ -223,14 +230,6 @@ int main(int argc, char *argv[])
             exit(EXIT_FAILURE);
         }
     }
-
-//    WldProtocolScanner scanner;
-//    if (scanner.openProtocolFile("wayland.xml"))
-//    {
-//        WldProtocolDefinition *protocol = scanner.getProtocolDefinition();
-
-//        delete protocol;
-//    }
 
     proxy.startServer();
 

@@ -39,25 +39,27 @@ class WlaProxyServer;
 class WlaConnection
 {
 public:
-    WlaConnection(WlaProxyServer *parent, WldDumper *writer);
+    WlaConnection(WlaProxyServer *parent, WldDumper *dumper = NULL);
     ~WlaConnection();
 
     void createConnection(UnixLocalSocket client, UnixLocalSocket server);
+    void closeConnection();
+    void setDumper(WldDumper *dumper);
 
 private:
     void handleConnection(ev::io &watcher, int revents);
     WlaMessageBuffer *handleRead(UnixLocalSocket &src, UnixLocalSocket &dst);
     void handleWrite(UnixLocalSocket &dst, std::stack<WlaMessageBuffer *> &msgStack);
 
-    void closeConnection();
-
 private:
     UnixLocalSocket client;
     UnixLocalSocket wayland;
 
+    bool running;
+
     WlaProxyServer *parent;
 //    WlaIODumper *writer;
-    WldDumper *writer;
+    WldDumper *dumper;
 
     std::stack<WlaMessageBuffer *> events;
     std::stack<WlaMessageBuffer *> requests;

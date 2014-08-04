@@ -31,8 +31,9 @@ using namespace std;
 
 WlaConnection::WlaConnection(WlaProxyServer *parent, WldDumper *writer)
 {
+    running = false;
     this->parent = parent;
-    this->writer = writer;
+    this->dumper = writer;
 }
 
 WlaConnection::~WlaConnection()
@@ -52,8 +53,15 @@ void WlaConnection::createConnection(UnixLocalSocket cli, UnixLocalSocket server
     wayland.start(EV_READ);
     client.start(EV_READ);
 
+    running = true;
+
     DEBUG_LOG("connected %d with %d", client.getSocketDescriptor(),
               wayland.getSocketDescriptor());
+}
+
+void WlaConnection::setDumper(WldDumper *dumper)
+{
+    this->dumper = dumper;
 }
 
 void WlaConnection::handleConnection(ev::io &watcher, int revents)
@@ -77,7 +85,8 @@ void WlaConnection::handleConnection(ev::io &watcher, int revents)
             }
 
             msg->setType(WlaMessageBuffer::REQUEST_TYPE);
-            writer->dump(*msg);
+            if (dumper)
+                dumper->dump(*msg);
             requests.push(msg);
         }
         else
@@ -91,7 +100,8 @@ void WlaConnection::handleConnection(ev::io &watcher, int revents)
             }
 
             msg->setType(WlaMessageBuffer::EVENT_TYPE);
-            writer->dump(*msg);
+            if (dumper)
+                dumper->dump(*msg);
             events.push(msg);
         }
     }
@@ -143,6 +153,9 @@ void WlaConnection::handleWrite(UnixLocalSocket &dst, std::stack<WlaMessageBuffe
 
 void WlaConnection::closeConnection()
 {
+    if (!running)
+        return;
+
     client.stop();
     wayland.stop();
 
@@ -159,4 +172,6 @@ void WlaConnection::closeConnection()
         delete msg;
         events.pop();
     }
+
+    running = false;
 }

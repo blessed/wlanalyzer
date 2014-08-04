@@ -37,6 +37,8 @@ struct WlaMessageHeader
     uint16_t opcode;
 };
 
+// TODO: Refactor WlaBinParser so that it holds an internal message queue.
+// Make nextMessage() generic!
 class WlaBinParser
 {
 public:
@@ -45,6 +47,7 @@ public:
 
     int openFile(const std::string &path);
     void attachAnalyzer(WldProtocolAnalyzer *analyzer);
+    void setState(bool state = true);
     int parse();
 
 private:

@@ -27,6 +27,7 @@
 #include "dumper.h"
 
 int WlaIODumper::seq = 0;
+int WldIODumper::seq = 0;
 
 WlaIODumper::WlaIODumper()
 {
@@ -47,7 +48,7 @@ int WlaIODumper::open(const std::string &path)
         return -1;
     }
 
-    if (filefd == -1)
+    if (filefd != -1)
         close(filefd);
 
     filefd = ::open(path.c_str(), O_RDWR | O_CREAT | O_TRUNC);
@@ -60,6 +61,41 @@ int WlaIODumper::open(const std::string &path)
 // TODO: make the writer use strictly defined field bit lengths
 // instead of sizeof's
 int WlaIODumper::write(WlaMessageBuffer &msg)
+{
+    if (!filefd)
+        return -1;
+
+    ::write(filefd, &seq, sizeof(uint32_t));
+    seq++;
+
+    ::write(filefd, msg.getHeader(), sizeof(WlaMessageBufferHeader));
+    ::write(filefd, msg.getMsg(), sizeof(uint8_t) * msg.getMsgSize());
+    if (msg.getControlMsgSize() > 0)
+        ::write(filefd, msg.getControlMsg(), sizeof(uint8_t) * msg.getControlMsgSize());
+
+    return 0;
+}
+
+
+int WldIODumper::open(const std::string &resource)
+{
+    if (resource.empty())
+    {
+        DEBUG_LOG("failed: empty path");
+        return -1;
+    }
+
+    if (filefd != -1)
+        close(filefd);
+
+    filefd = ::open(resource.c_str(), O_RDWR | O_CREAT | O_TRUNC);
+    if (filefd == -1)
+        return -1;
+    else
+        return 1;
+}
+
+int WldIODumper::dump(WlaMessageBuffer &msg)
 {
     if (!filefd)
         return -1;

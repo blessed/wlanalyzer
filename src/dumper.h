@@ -29,6 +29,39 @@
 
 class WlaMessageBuffer;
 
+class WldDumper
+{
+public:
+    virtual int open(const std::string &resource) = 0;
+    virtual int dump(WlaMessageBuffer &msg) = 0;
+};
+
+class WldIODumper : public WldDumper
+{
+public:
+    WldIODumper() { filefd = -1; }
+    virtual ~WldIODumper() { if (filefd != -1) close(filefd); }
+
+    virtual int open(const std::string &resource);
+    virtual int dump(WlaMessageBuffer &msg);
+
+private:
+    int filefd;
+    static int seq;
+};
+
+class WldNetDumper : public WldDumper
+{
+public:
+    WldNetDumper();
+    virtual ~WldNetDumper();
+
+    virtual int dump(const WlaMessageBuffer &msg);
+
+private:
+    int socket;
+};
+
 class WlaIODumper
 {
 public:

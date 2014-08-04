@@ -29,7 +29,7 @@
 
 using namespace std;
 
-WlaConnection::WlaConnection(WlaProxyServer *parent, WlaIODumper *writer)
+WlaConnection::WlaConnection(WlaProxyServer *parent, WldDumper *writer)
 {
     this->parent = parent;
     this->writer = writer;
@@ -77,7 +77,7 @@ void WlaConnection::handleConnection(ev::io &watcher, int revents)
             }
 
             msg->setType(WlaMessageBuffer::REQUEST_TYPE);
-            writer->write(*msg);
+            writer->dump(*msg);
             requests.push(msg);
         }
         else
@@ -91,7 +91,7 @@ void WlaConnection::handleConnection(ev::io &watcher, int revents)
             }
 
             msg->setType(WlaMessageBuffer::EVENT_TYPE);
-            writer->write(*msg);
+            writer->dump(*msg);
             events.push(msg);
         }
     }

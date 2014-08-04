@@ -41,7 +41,7 @@ struct options_t
 {
     std::string coreProtocol;
     std::vector<std::string> extensions;
-    std::string executable;
+    char **exec;
 };
 
 static int validate_cmdline(int argc, char **argv)
@@ -113,34 +113,64 @@ static void get_multiple_args(int argc, char **argv, options_t *opt)
 
 static int parse_cmdline(int argc, char **argv, options_t *opt)
 {
-    char c;
-
-    while ((c = getopt(argc, argv, "c:e:p:")) != -1)
+    for (int i = 1; i < argc; i++)
     {
-        switch (c)
+        if (!strcmp(argv[i], "-c"))
         {
-        case 'c':
-            DEBUG_LOG("c");
-            printf("optarg %s\n", optarg);
-            opt->coreProtocol = optarg;
-            break;
-        case 'p':
-            DEBUG_LOG("p");
-            opt->executable = optarg;
-            break;
-        case 'e':
-            DEBUG_LOG("e");
-            get_multiple_args(argc, argv, opt);
-            break;
-        case '?':
-            return -1;
-        default:
-            return -1;
+            i++;
+            if (i == argc)
+            {
+                Logger::getInstance()->log("Core protocol specification file not specified\n");
+                exit(EXIT_FAILURE);
+            }
+
+            opt->coreProtocol = argv[i];
+        }
+        else if (!strcmp(argv[i], "-e"))
+        {
+            i++;
+            if (i == argc)
+            {
+                Logger::getInstance()->log("No extensions specified\n");
+                exit(EXIT_FAILURE);
+            }
+
+            while (argv[i][0] != '-')
+            {
+                opt->extensions.push_back(argv[i]);
+                i++;
+
+                if (i == argc - 1)
+                {
+                    break;
+                }
+            }
+
+            i--;
+        }
+        else if (!strcmp(argv[i], "--"))
+        {
+            i++;
+            if (i == argc)
+            {
+                Logger::getInstance()->log("Program not specified\n");
+                exit(EXIT_FAILURE);
+            }
+            opt->exec = &argv[i];
+        }
+        else
+        {
+            Logger::getInstance()->log("Unknown option %s\n", argv[i]);
+            usage();
+            exit(EXIT_FAILURE);
         }
     }
 
-    if (opt->coreProtocol == "")
-        return -1;
+    if (!opt->exec)
+    {
+        Logger::getInstance()->log("No program specified\n");
+        exit(EXIT_FAILURE);
+    }
 
     return 0;
 }
@@ -157,7 +187,6 @@ int main(int argc, char *argv[])
         exit(EXIT_FAILURE);
     }
 
-    DEBUG_LOG("dupa");
     options_t options;
     if (parse_cmdline(argc, argv, &options))
     {
@@ -186,7 +215,7 @@ int main(int argc, char *argv[])
     if ((ppid = fork()) == 0)
     {
         modify_environment();
-        ret = execlp(options.executable.c_str(), options.executable.c_str(), NULL);
+        ret = execvp(options.exec[0], options.exec);
         if (ret)
         {
             perror(NULL);

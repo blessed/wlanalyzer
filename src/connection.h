@@ -32,13 +32,14 @@
 #include "common.h"
 #include "message.h"
 
+class WldDumper;
 class WlaIODumper;
 class WlaProxyServer;
 
 class WlaConnection
 {
 public:
-    WlaConnection(WlaProxyServer *parent, WlaIODumper *writer);
+    WlaConnection(WlaProxyServer *parent, WldDumper *writer);
     ~WlaConnection();
 
     void createConnection(UnixLocalSocket client, UnixLocalSocket server);
@@ -55,7 +56,8 @@ private:
     UnixLocalSocket wayland;
 
     WlaProxyServer *parent;
-    WlaIODumper *writer;
+//    WlaIODumper *writer;
+    WldDumper *writer;
 
     std::stack<WlaMessageBuffer *> events;
     std::stack<WlaMessageBuffer *> requests;

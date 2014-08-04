@@ -47,7 +47,7 @@ private:
         std::string interface;
     };
 
-    int analyzeMessage(const WldInterface &intf, const WldMessage &msg, const char *payload);
+    int analyzeMessage(const WldInterface &intf, const WldMessage &msg, uint32_t obj_id, const char *payload);
     void extractArguments(const WldMessage &msg, const char *payload);
     bool createsObject(const WldMessage &msg);
     NewId getNewId(const WldMessage &msg, const char *payload);

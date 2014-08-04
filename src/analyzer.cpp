@@ -116,10 +116,10 @@ void WldProtocolAnalyzer::lookup(uint32_t object_id, uint32_t opcode, WLD_MESSAG
     }
 
     Logger::getInstance()->log("%s@%u.%s()\n", intf.name.c_str(), object_id, msg->signature.c_str());
-    analyzeMessage(intf, *msg, payload);
+    analyzeMessage(intf, *msg, object_id, payload);
 }
 
-int WldProtocolAnalyzer::analyzeMessage(const WldInterface &intf, const WldMessage &msg, const char *payload)
+int WldProtocolAnalyzer::analyzeMessage(const WldInterface &intf, const WldMessage &msg, uint32_t obj_id, const char *payload)
 {
     if (msg.type == WLD_MSG_EVENT && intf.name == "wl_registry" &&
             msg.signature == "global")
@@ -190,12 +190,16 @@ int WldProtocolAnalyzer::analyzeMessage(const WldInterface &intf, const WldMessa
         }
         */
     }
+    else if (msg.signature == "destroy")
+    {
+        objects.erase(obj_id);
+    }
     else
     {
         extractArguments(msg, payload);
     }
 
-    return -1;
+    return 0;
 }
 
 void WldProtocolAnalyzer::extractArguments(const WldMessage &msg, const char *payload)

@@ -59,7 +59,8 @@ private:
     ev::io _io;
     ev::default_loop _loop;
 
-    WlaIODumper writer;
+//    WlaIODumper writer;
+    WldIODumper writer;
     WlaBinParser parser;
 
     std::set<WlaConnection *> _connections;

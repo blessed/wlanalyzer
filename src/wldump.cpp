@@ -57,14 +57,12 @@ static int validate_cmdline(int argc, char **argv)
 
 static void usage()
 {
-//    fprintf(stderr, "Usage: wldump -c <core protocol file> [-e protocol extension files] -- <executable>\n");
-
     fprintf(stderr, "wldump is a wayland protocol dumper\n"
             "Usage:\twldump [OPTIONS] -- <wayland_client>\n\n"
             "Options:\n"
-//            "\t-a <-c path> [-e paths] - enable protocol analyzer\n"
             "\t-c <file_path> - set the core protocol specification file\n"
-            "\t-e <file_paths> - provide extensions of the protocol file\n");
+            "\t-e <file_paths> - provide extensions of the protocol file. "
+            "Use only with -c option\n");
 }
 
 static void verify_runtime()
@@ -149,10 +147,6 @@ static int parse_cmdline(int argc, char **argv, options_t *opt)
             }
             opt->exec = &argv[i];
         }
-//        else if (!strcmp(argv[i], "-a"))
-//        {
-//            opt->analyze = true;
-//        }
         else
         {
             Logger::getInstance()->log("Unknown option %s\n", argv[i]);
@@ -210,14 +204,18 @@ int main(int argc, char *argv[])
         }
 
         WldIODumper *dumper = new WldIODumper;
-        dumper->open("dump.log");
+        dumper->open("dump");
         proxy.setDumper(dumper);
 
         WlaBinParser *parser = new WlaBinParser;
-        parser->openFile("dump.log");
+        parser->openFile("dump");
         parser->attachAnalyzer(analyzer);
         proxy.setParser(parser);
     }
+
+    WldNetDumper netDump;
+    if (netDump.open("5000"))
+        DEBUG_LOG("Failed to open port 5000");
 
     if ((ppid = fork()) == 0)
     {

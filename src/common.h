@@ -42,6 +42,9 @@ void wld_log(const char *format, ...);
 uint32_t byteArrToUInt32(const char byte[]);
 uint16_t byteArrToUInt16(const char byte[]);
 
+void UInt16ToByteArr(char arr, uint32_t val);
+void UInt32ToByteArr(char arr, uint16_t val);
+
 void set_bit(uint32_t *val, int num, bool bit);
 bool bit_isset(const uint32_t &val, int num);
 

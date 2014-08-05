@@ -22,6 +22,7 @@
  * SOFTWARE.
  */
 
+#include <arpa/inet.h>
 #include <fcntl.h>
 #include "message.h"
 #include "dumper.h"
@@ -58,8 +59,6 @@ int WlaIODumper::open(const std::string &path)
         return 1;
 }
 
-// TODO: make the writer use strictly defined field bit lengths
-// instead of sizeof's
 int WlaIODumper::write(WlaMessageBuffer &msg)
 {
     if (!filefd)
@@ -70,7 +69,6 @@ int WlaIODumper::write(WlaMessageBuffer &msg)
     ::write(filefd, &seq, sizeof(uint32_t));
     seq++;
 
-    ::write(filefd, msg.getHeader(), sizeof(WlaMessageBufferHeader));
     ::write(filefd, msg.getMsg(), sizeof(uint8_t) * msg.getMsgSize());
     if (msg.getControlMsgSize() > 0)
         ::write(filefd, msg.getControlMsg(), sizeof(uint8_t) * msg.getControlMsgSize());
@@ -105,10 +103,112 @@ int WldIODumper::dump(WlaMessageBuffer &msg)
     ::write(filefd, &seq, sizeof(uint32_t));
     seq++;
 
-    ::write(filefd, msg.getHeader(), sizeof(WlaMessageBufferHeader));
+    char *buf = new char[WlaMessageBufferHeader::getSerializeSize()];
+    memset(buf, 0, WlaMessageBufferHeader::getSerializeSize());
+
+    int len = msg.getHeader()->serializeToBuf(buf, WlaMessageBufferHeader::getSerializeSize());
+
+    ::write(filefd, buf, len);
     ::write(filefd, msg.getMsg(), sizeof(uint8_t) * msg.getMsgSize());
     if (msg.getControlMsgSize() > 0)
         ::write(filefd, msg.getControlMsg(), sizeof(uint8_t) * msg.getControlMsgSize());
 
+    delete [] buf;
+
     return 0;
+}
+
+
+WldNetDumper::WldNetDumper()
+{
+    socket_fd = -1;
+}
+
+WldNetDumper::~WldNetDumper()
+{
+    if (socket_fd != -1)
+        ::close(socket_fd);
+}
+
+int WldNetDumper::open(const std::string &resource)
+{
+    socket_fd = socket(AF_INET, SOCK_STREAM, 0);
+    if (socket_fd < 0)
+    {
+        DEBUG_LOG("failed to create socket");
+        return -1;
+    }
+
+    sockaddr_in srv_addr;
+    memset(&srv_addr, 0, sizeof(sockaddr_in));
+    srv_addr.sin_family = AF_INET;
+    srv_addr.sin_addr.s_addr = htonl(INADDR_ANY);
+    srv_addr.sin_port = htons(atoi(resource.c_str()));
+
+    if (bind(socket_fd, (sockaddr *)&srv_addr, sizeof(sockaddr_in)) < 0)
+    {
+        DEBUG_LOG("Failed to bind socket to port %s", resource.c_str());
+        close(socket_fd);
+        return -1;
+    }
+
+    if (listen(socket_fd, 5) < 0)
+    {
+        DEBUG_LOG("Failed to listen on server socket");
+        close(socket_fd);
+        return -1;
+    }
+
+    socket_watcher.set<WldNetDumper, &WldNetDumper::acceptClient>(this);
+    socket_watcher.start(socket_fd, EV_READ);
+
+    return 0;
+}
+
+int WldNetDumper::dump(WlaMessageBuffer &msg)
+{
+    if (clients.empty())
+        return 0;
+
+    std::vector<int>::iterator it = clients.begin();
+    for (; it != clients.begin(); it++)
+    {
+        int len;
+        do
+        {
+            len = send(*it, msg.getMsg(), msg.getMsgSize(), 0);
+        } while (len < 0 && errno == EINTR || errno == EWOULDBLOCK);
+
+        if (len < 0 && errno == EPIPE)
+        {
+            Logger::getInstance()->log("Connection with analyzer broken, closing socket\n");
+            ::close((*it));
+            clients.erase(it);
+        }
+    }
+}
+
+bool WldNetDumper::validateIpAddress(const std::string &ipAddress)
+{
+    sockaddr_in sock;
+    int result = inet_pton(AF_INET, ipAddress.c_str(), &(sock.sin_addr));
+
+    return result != 0;
+}
+
+void WldNetDumper::acceptClient(ev::io &watcher, int revents)
+{
+    if (revents & EV_ERROR)
+        return;
+
+    DEBUG_LOG("");
+
+    int fd = accept(socket_fd, (sockaddr *)NULL, NULL);
+    if (fd < 0)
+    {
+        DEBUG_LOG("Failed to accept connection");
+        return;
+    }
+
+    clients.push_back(fd);
 }

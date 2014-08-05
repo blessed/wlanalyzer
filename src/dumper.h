@@ -25,6 +25,8 @@
 #ifndef DUMPER_H
 #define DUMPER_H
 
+#include <vector>
+#include <ev++.h>
 #include "common.h"
 
 class WlaMessageBuffer;
@@ -56,10 +58,17 @@ public:
     WldNetDumper();
     virtual ~WldNetDumper();
 
-    virtual int dump(const WlaMessageBuffer &msg);
+    virtual int open(const std::string &resource);
+    virtual int dump(WlaMessageBuffer &msg);
 
 private:
-    int socket;
+    bool validateIpAddress(const std::string &ipAddress);
+    void acceptClient(ev::io &watcher, int revents);
+
+private:
+    int socket_fd;
+    std::vector<int> clients;
+    ev::io socket_watcher;
 };
 
 class WlaIODumper

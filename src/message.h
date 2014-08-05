@@ -25,6 +25,7 @@
 #ifndef MESSAGE_H
 #define MESSAGE_H
 
+#include <arpa/inet.h>
 #include <sys/time.h>
 #include "common.h"
 #include "socket.h"
@@ -37,8 +38,69 @@ const int SIZE_OFFSET = 6;
 const int OPCODE_OFFSET = 4;
 const int PAYLOAD_OFFSET = 8;
 
-struct __attribute__ ((__packed__)) WlaMessageBufferHeader
+struct WlaMessageBufferHeader
 {
+    int serializeToBuf(char *buf, size_t size) const
+    {
+        if (size < getSerializeSize())
+        {
+            DEBUG_LOG("buffer too small");
+            return -1;
+        }
+
+        uint32_t nbo_f = htonl(flags);
+        memcpy(buf, &nbo_f, sizeof(nbo_f));
+        buf += sizeof(nbo_f);
+
+        uint32_t nbo_ts = htonl(timestamp.tv_sec);
+        memcpy(buf, &nbo_ts, sizeof(nbo_ts));
+        buf += sizeof(nbo_ts);
+        uint32_t nbo_tus = htonl(timestamp.tv_usec);
+        memcpy(buf, &nbo_tus, sizeof(nbo_tus));
+        buf += sizeof(nbo_tus);
+
+        uint32_t nbo_mlen = htonl(msg_len);
+        memcpy(buf, &nbo_mlen, sizeof(nbo_mlen));
+        buf += sizeof(nbo_mlen);
+
+        uint32_t nbo_cmlen = htonl(cmsg_len);
+        memcpy(buf, &nbo_cmlen, sizeof(nbo_cmlen));
+
+        return getSerializeSize();
+    }
+
+    void deserializeFromBuf(const char *buf, size_t size)
+    {
+        if (size < getSerializeSize())
+        {
+            DEBUG_LOG("buffer too small");
+            return;
+        }
+
+        uint32_t hbo_f = byteArrToUInt32(buf);
+        buf += sizeof(hbo_f);
+        flags = ntohl(hbo_f);
+
+        uint32_t hbo_ts = byteArrToUInt32(buf);
+        buf += sizeof(hbo_ts);
+        timestamp.tv_sec = ntohl(hbo_ts);
+        uint32_t hbo_tus = byteArrToUInt32(buf);
+        buf += sizeof(hbo_tus);
+        timestamp.tv_usec = ntohl(hbo_tus);
+
+        uint32_t hbo_mlen = byteArrToUInt32(buf);
+        buf += sizeof (hbo_mlen);
+        msg_len = ntohl(hbo_mlen);
+
+        uint32_t hbo_cmlen = byteArrToUInt32(buf);
+        cmsg_len = ntohl(hbo_cmlen);
+    }
+
+    static size_t getSerializeSize()
+    {
+        return sizeof(flags) + sizeof(timestamp) + sizeof(msg_len) + sizeof(cmsg_len);
+    }
+
     uint32_t flags;
     timeval timestamp;
     uint32_t msg_len;

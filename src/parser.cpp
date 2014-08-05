@@ -129,7 +129,10 @@ WlaMessageBuffer *WlaBinParser::nextMessage()
     uint32_t seq;
     read(file, &seq, sizeof(uint32_t));
 
-    while ((len = read(file, msg->getHeader(), sizeof(WlaMessageBufferHeader))) < 0 && errno == EAGAIN)
+    int size = msg->getHeader()->getSerializeSize();
+    char *buf = new char[size];
+
+    while ((len = read(file, buf, size)) < 0 && errno == EAGAIN)
     {
         continue;
     }
@@ -148,12 +151,16 @@ WlaMessageBuffer *WlaBinParser::nextMessage()
         return NULL;
     }
 
-    if (len < sizeof(WlaMessageBufferHeader))
+    if (len < size)
     {
         lseek(file, -len, SEEK_CUR);
+        delete [] buf;
         delete msg;
         return NULL;
     }
+
+    msg->getHeader()->deserializeFromBuf(buf, size);
+    delete [] buf;
 
     lseek(file, 0, SEEK_CUR);
 

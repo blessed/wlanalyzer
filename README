@@ -4,7 +4,7 @@ Wldump is a wayland protocol dumper/analyzer.
 
 == BUILD ==
 
-Deps: libev
+Deps: libev, pugiXML
 
 wldump uses waf as build system. Waf is written in python so make sure you have python available on your build platform.
 

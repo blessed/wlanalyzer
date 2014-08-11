@@ -1,6 +1,7 @@
 top = '.'
 out = 'build'
-APPNAME = 'wldump'
+DUMPER = 'wldump'
+ANALYZER = 'wlanalyzer'
 VERSION = '0.1'
 
 def options(ctx):
@@ -19,5 +20,9 @@ def configure(ctx):
 	ctx.check_cxx(lib='pugixml', uselib_store='PUGI')
 
 def build(bld):
-	source_files = bld.path.ant_glob('^src/**/*.cpp$')
-	bld.program(source=source_files, target=APPNAME, use=['EV', 'PUGI'])
+	source_files = bld.path.ant_glob('^src/**/*.cpp$', excl=['^src/**/wldump.cpp', '^src/**/wlanalyzer.cpp'])
+	wldumper = [bld.path.make_node('/src/wldump.cpp')]
+	wlanalyzer = [bld.path.make_node('/src/wlanalyzer.cpp')]
+	print(source_files + wldumper)
+	bld.program(source=source_files + wldumper, target=DUMPER, use=['EV', 'PUGI'])
+	bld.program(source=source_files + wlanalyzer, target=ANALYZER, use=['EV', 'PUGI'])

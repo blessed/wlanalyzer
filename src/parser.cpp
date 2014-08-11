@@ -123,13 +123,13 @@ int WlaBinParser::parse()
 
 WlaMessageBuffer *WlaBinParser::nextMessage()
 {
-    int len;
+    uint32_t len;
     WlaMessageBuffer *msg = new WlaMessageBuffer;
 
     uint32_t seq;
     read(file, &seq, sizeof(uint32_t));
 
-    int size = msg->getHeader()->getSerializeSize();
+    uint32_t size = msg->getHeader()->getSerializeSize();
     char *buf = new char[size];
 
     while ((len = read(file, buf, size)) < 0 && errno == EAGAIN)
@@ -198,7 +198,7 @@ WlaMessageBuffer *WlaBinParser::nextMessage()
 void WlaBinParser::parseMessage(WlaMessageBuffer *msg)
 {
     const char *msg_buf = msg->getMsg();
-    int i = 0;
+    uint32_t i = 0;
 
     char timestr[64];
     time_t nowtime;

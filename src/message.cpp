@@ -47,7 +47,7 @@ WlaMessageBuffer::~WlaMessageBuffer()
 {
 }
 
-int WlaMessageBuffer::sendMessage(UnixLocalSocket &socket)
+int WlaMessageBuffer::sendMessage(WldSocket &socket)
 {
     if (hdr.msg_len == 0)
     {
@@ -67,7 +67,7 @@ int WlaMessageBuffer::sendMessage(UnixLocalSocket &socket)
     return len;
 }
 
-int WlaMessageBuffer::receiveMessage(UnixLocalSocket &socket)
+int WlaMessageBuffer::receiveMessage(WldSocket &socket)
 {
     iov.iov_len = MAX_BUF_SIZE;
     int len = socket.readMsg(&msg);

@@ -9,6 +9,7 @@ def options(ctx):
 
 def configure(ctx):
 	ctx.load('compiler_cxx')
+	ctx.env.CXXFLAGS += ['-Wall']
 	if ctx.options.debug:
 		ctx.env.CXXFLAGS += ['-g', '-O0', '-DDEBUG_BUILD']
 	# Check for libev

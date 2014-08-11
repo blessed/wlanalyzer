@@ -30,11 +30,11 @@
 #include <queue>
 #include "socket.h"
 
-class UnixLocalServer
+class WldServer
 {
 public:
-    UnixLocalServer();
-    ~UnixLocalServer();
+    WldServer();
+    ~WldServer();
 
     void setMaxPendingConnections(unsigned int num)
     {
@@ -52,22 +52,33 @@ public:
     bool isListening() const { return _listening; }
 
     bool waitForConnection(int ms, bool *timedout);
-    UnixLocalSocket *nextPendingConnection();
+    WldSocket *nextPendingConnection();
 
     void close();
+
+protected:
+    virtual bool bind(const std::string &resource);
+    virtual void onNewConnection();
 
 private:
     void closeServer();
     void clearPendingConnections();
 
-    void onNewConnection();
+protected:
+    int _fd;
+    std::queue<WldSocket *> _pendingConnections;
 
 private:
-    int _fd;
     unsigned int _maxPendingConnections;
     std::string _serverName;
     bool _listening;
-    std::queue<UnixLocalSocket *> _pendingConnections;
+};
+
+class WldNetServer : public WldServer
+{
+protected:
+    bool bind(const std::string &resource);
+    void onNewConnection();
 };
 
 #endif // SERVER_SOCKET_H

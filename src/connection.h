@@ -42,18 +42,18 @@ public:
     WlaConnection(WlaProxyServer *parent, WldDumper *dumper = NULL);
     ~WlaConnection();
 
-    void createConnection(UnixLocalSocket client, UnixLocalSocket server);
+    void createConnection(WldSocket client, WldSocket server);
     void closeConnection();
     void setDumper(WldDumper *dumper);
 
 private:
     void handleConnection(ev::io &watcher, int revents);
-    WlaMessageBuffer *handleRead(UnixLocalSocket &src, UnixLocalSocket &dst);
-    void handleWrite(UnixLocalSocket &dst, std::stack<WlaMessageBuffer *> &msgStack);
+    WlaMessageBuffer *handleRead(WldSocket &src, WldSocket &dst);
+    void handleWrite(WldSocket &dst, std::stack<WlaMessageBuffer *> &msgStack);
 
 private:
-    UnixLocalSocket client;
-    UnixLocalSocket wayland;
+    WldSocket client;
+    WldSocket wayland;
 
     bool running;
 

@@ -31,7 +31,14 @@
 #include <string>
 #include <ev++.h>
 
-enum UnixLocalSocketError
+enum SocketDomain
+{
+    UNIX_DOMAIN = AF_UNIX,
+    NET4_DOMAIN = AF_INET,
+    NET6_DOMAIN = AF_INET6
+};
+
+enum SocketError
 {
     ConnectionRefusedError,
     ServerNotFoundError,
@@ -40,20 +47,20 @@ enum UnixLocalSocketError
     SocketResourceError,
     UnsupportedSocketOperationError,
     UnknownSocketError,
+    InvalidServerAddress,
     NoError
 };
 
-
-class UnixLocalSocket : public ev::io
+class WldSocket : public ev::io
 {
 public:
-    UnixLocalSocket();
-    UnixLocalSocket(const UnixLocalSocket &copy);
-    ~UnixLocalSocket();
+    WldSocket();
+    WldSocket(const WldSocket &copy);
+    virtual ~WldSocket();
 
-    UnixLocalSocketError connectToServer(const char *path);
-    UnixLocalSocketError connectToServer(const std::string &path);
-    UnixLocalSocketError disconnectFromServer();
+    SocketError connectToServer(const char *path, SocketDomain dom);
+    SocketError connectToServer(const std::string &path, SocketDomain dom);
+    SocketError disconnectFromServer();
 
     void setSocketDescriptor(int fd, int flags = 0);
     int getSocketDescriptor() const
@@ -68,16 +75,19 @@ public:
 
     bool isConnected() const { return _connected; }
 
-    UnixLocalSocket &operator=(const UnixLocalSocket &copy);
+    WldSocket &operator=(const WldSocket &copy);
 
     bool operator==(int fd) { return fd == _fd; }
-    friend bool operator==(int fd, const UnixLocalSocket &sock);
+    friend bool operator==(int fd, const WldSocket &sock);
 
     long read(char *data, long max_size) const;
-    bool write(const char *data, long c) const;
+    bool write(const char *data, size_t c) const;
 
     int readMsg(msghdr *msg);
     int writeMsg(const msghdr *msg);
+
+protected:
+    virtual SocketError connect(const std::string &path);
 
 private:
     void shutdown();
@@ -86,7 +96,17 @@ private:
     int _fd;
     bool _connected;
 };
+bool operator==(int fd, const WldSocket &sock);
 
-bool operator==(int fd, const UnixLocalSocket &sock);
+class WldNetSocket : public WldSocket
+{
+public:
+    WldNetSocket() { }
+    WldNetSocket(const WldNetSocket &copy);
+    virtual ~WldNetSocket() { }
+
+protected:
+    SocketError connect(const std::string &path);
+};
 
 #endif // SOCKET_H

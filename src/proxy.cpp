@@ -56,6 +56,8 @@ int WlaProxyServer::init(const std::string &socketPath)
 
     _io.set<WlaProxyServer, &WlaProxyServer::connectClient>(this);
     _io.start(_serverSocket.getFd(), EV_READ);
+
+    return 0;
 }
 
 int WlaProxyServer::startServer()
@@ -64,6 +66,8 @@ int WlaProxyServer::startServer()
 //    parser.openFile(path);
 
     _loop.run();
+
+    return 0;
 }
 
 void WlaProxyServer::stopServer()
@@ -125,10 +129,10 @@ void WlaProxyServer::connectClient(ev::io &watcher, int revents)
         return;
     }
 
-    UnixLocalSocket wayland;
+    WldSocket wayland;
     std::string waylandPath = std::string(getenv("XDG_RUNTIME_DIR")) +
             "/" + std::string(getenv("WAYLAND_DISPLAY"));
-    if (wayland.connectToServer(waylandPath) != NoError)
+    if (wayland.connectToServer(waylandPath, UNIX_DOMAIN) != NoError)
     {
         DEBUG_LOG("failed to connect to server");
         stopServer();
@@ -145,7 +149,7 @@ void WlaProxyServer::connectClient(ev::io &watcher, int revents)
         return;
     }
 
-    UnixLocalSocket client;
+    WldSocket client;
     client.setSocketDescriptor(fd);
 
 //    WlaConnection *connection = new WlaConnection(this, &writer);

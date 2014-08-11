@@ -39,7 +39,7 @@ using namespace std;
 
 struct options_t
 {
-    options_t() : exec(NULL), coreProtocol(""), analyze(false) {}
+    options_t() : coreProtocol(""), analyze(false), exec(NULL) {}
 
     std::string coreProtocol;
     std::vector<std::string> extensions;
@@ -207,15 +207,16 @@ int main(int argc, char *argv[])
         dumper->open("dump");
         proxy.setDumper(dumper);
 
+//        WldNetDumper *netDump = new WldNetDumper;
+//        if (netDump->open("5000"))
+//            DEBUG_LOG("Failed to open port 5000");
+//        proxy.setDumper(netDump);
+
         WlaBinParser *parser = new WlaBinParser;
         parser->openFile("dump");
         parser->attachAnalyzer(analyzer);
         proxy.setParser(parser);
     }
-
-    WldNetDumper netDump;
-    if (netDump.open("5000"))
-        DEBUG_LOG("Failed to open port 5000");
 
     if ((ppid = fork()) == 0)
     {

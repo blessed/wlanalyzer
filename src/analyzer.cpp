@@ -75,6 +75,8 @@ int WldProtocolAnalyzer::coreProtocol(const std::string &path)
     objects[0] = dummy;
     objects[1] = *display;
     objects[2] = *proxy;
+
+    return 0;
 }
 
 void WldProtocolAnalyzer::lookup(uint32_t object_id, uint32_t opcode, WLD_MESSAGE_TYPE type, const char *payload)

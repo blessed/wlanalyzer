@@ -28,12 +28,16 @@
 #include <vector>
 #include <ev++.h>
 #include "common.h"
+#include "socket.h"
+#include "server_socket.h"
 
 class WlaMessageBuffer;
 
 class WldDumper
 {
 public:
+    virtual ~WldDumper() {}
+
     virtual int open(const std::string &resource) = 0;
     virtual int dump(WlaMessageBuffer &msg) = 0;
 };
@@ -64,11 +68,19 @@ public:
 private:
     bool validateIpAddress(const std::string &ipAddress);
     void acceptClient(ev::io &watcher, int revents);
+    int sendData(const char *data, size_t size);
 
 private:
     int socket_fd;
-    std::vector<int> clients;
+    int client;
     ev::io socket_watcher;
+
+    WldNetServer server_socket;
+    WldSocket *client_socket;
+
+    static int seq;
+
+    std::vector<WlaMessageBuffer *> message_queue;
 };
 
 class WlaIODumper

@@ -57,7 +57,7 @@ private:
 //    void handleCommunication(ev::io &watcher, int revents);
 
 private:
-    UnixLocalServer _serverSocket;
+    WldServer _serverSocket;
     ev::io _io;
     ev::default_loop _loop;
 

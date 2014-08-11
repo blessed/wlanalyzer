@@ -25,16 +25,18 @@
 #include <unistd.h>
 #include <sys/socket.h>
 #include <sys/un.h>
+#include <netinet/ip.h>
+#include <arpa/inet.h>
 #include <errno.h>
 #include <fcntl.h>
 #include "socket.h"
 #include "common.h"
 
-UnixLocalSocket::UnixLocalSocket() : _fd(-1), _connected(false)
+WldSocket::WldSocket() : _fd(-1), _connected(false)
 {
 }
 
-UnixLocalSocket::UnixLocalSocket(const UnixLocalSocket &copy)
+WldSocket::WldSocket(const WldSocket &copy)
 {
     if (copy.isConnected())
     {
@@ -43,7 +45,7 @@ UnixLocalSocket::UnixLocalSocket(const UnixLocalSocket &copy)
     }
 }
 
-UnixLocalSocket::~UnixLocalSocket()
+WldSocket::~WldSocket()
 {
     if (isConnected())
     {
@@ -52,13 +54,13 @@ UnixLocalSocket::~UnixLocalSocket()
     }
 }
 
-UnixLocalSocketError UnixLocalSocket::connectToServer(const char *path)
+SocketError WldSocket::connectToServer(const char *path, SocketDomain dom)
 {
     std::string strPath(path);
-    return connectToServer(strPath);
+    return connectToServer(strPath, dom);
 }
 
-UnixLocalSocketError UnixLocalSocket::connectToServer(const std::string &path)
+SocketError WldSocket::connectToServer(const std::string &path, SocketDomain dom)
 {
     int err;
 
@@ -72,11 +74,18 @@ UnixLocalSocketError UnixLocalSocket::connectToServer(const std::string &path)
     if (check_error(_fd))
         return SocketResourceError;
 
+//    SocketError err = connect(path);
+//    if (err != NoError)
+//    {
+//        disconnectFromServer();
+//        return err;
+//    }
+
     sockaddr_un address;
     memset(&address, 0, sizeof(sockaddr_un));
-    address.sun_family = AF_UNIX;
+    address.sun_family = dom;
     strncpy(address.sun_path, path.c_str(), path.size());
-    err = connect(_fd, (sockaddr *)&address, sizeof(sockaddr_un));
+    err = ::connect(_fd, (sockaddr *)&address, sizeof(sockaddr_un));
     if (err == -1)
     {
         disconnectFromServer();
@@ -102,7 +111,7 @@ UnixLocalSocketError UnixLocalSocket::connectToServer(const std::string &path)
     return NoError;
 }
 
-UnixLocalSocketError UnixLocalSocket::disconnectFromServer()
+SocketError WldSocket::disconnectFromServer()
 {
     if (_connected)
     {
@@ -111,9 +120,11 @@ UnixLocalSocketError UnixLocalSocket::disconnectFromServer()
 
         _connected = false;
     }
+
+    return NoError;
 }
 
-void UnixLocalSocket::setSocketDescriptor(int fd, int flags)
+void WldSocket::setSocketDescriptor(int fd, int flags)
 {
     if (isConnected())
         disconnectFromServer();
@@ -127,23 +138,25 @@ void UnixLocalSocket::setSocketDescriptor(int fd, int flags)
     _connected = true;
 }
 
-void UnixLocalSocket::start(int eventMask)
+void WldSocket::start(int eventMask)
 {
     ev::io::start(_fd, eventMask);
 }
 
-UnixLocalSocket &UnixLocalSocket::operator=(const UnixLocalSocket &copy)
+WldSocket &WldSocket::operator=(const WldSocket &copy)
 {
     _fd = dup(copy._fd);
     _connected = copy._connected;
+
+    return *this;
 }
 
-bool operator==(int fd, const UnixLocalSocket &sock)
+bool operator==(int fd, const WldSocket &sock)
 {
     return fd == sock.getSocketDescriptor();
 }
 
-long UnixLocalSocket::read(char *data, long max_size) const
+long WldSocket::read(char *data, long max_size) const
 {
     if (!isConnected())
         return -1;
@@ -155,7 +168,7 @@ long UnixLocalSocket::read(char *data, long max_size) const
     return err;
 }
 
-bool UnixLocalSocket::write(const char *data, long c) const
+bool WldSocket::write(const char *data, size_t c) const
 {
     while (c > 0)
     {
@@ -169,7 +182,7 @@ bool UnixLocalSocket::write(const char *data, long c) const
     return true;
 }
 
-int UnixLocalSocket::readMsg(msghdr *msg)
+int WldSocket::readMsg(msghdr *msg)
 {
     int len;
     do
@@ -180,7 +193,7 @@ int UnixLocalSocket::readMsg(msghdr *msg)
     return len;
 }
 
-int UnixLocalSocket::writeMsg(const msghdr *msg)
+int WldSocket::writeMsg(const msghdr *msg)
 {
     int len;
     do
@@ -189,4 +202,80 @@ int UnixLocalSocket::writeMsg(const msghdr *msg)
     } while (len < 0 && errno == EINTR);
 
     return len;
+}
+
+SocketError WldSocket::connect(const std::string &path)
+{
+    DEBUG_LOG("");
+
+    sockaddr_un address;
+    memset(&address, 0, sizeof(sockaddr_un));
+    address.sun_family = AF_UNIX;
+    strncpy(address.sun_path, path.c_str(), path.size());
+    int err = ::connect(_fd, (sockaddr *)&address, sizeof(sockaddr_un));
+    if (err == -1)
+    {
+        disconnectFromServer();
+
+        switch (errno)
+        {
+        case EINVAL:
+        case ECONNREFUSED:
+            return ConnectionRefusedError;
+        case ENOENT:
+            return ServerNotFoundError;
+        case ETIMEDOUT:
+            return SocketTimeoutError;
+
+        default:
+            return UnknownSocketError;
+        }
+    }
+
+    return NoError;
+}
+
+
+WldNetSocket::WldNetSocket(const WldNetSocket &copy) : WldSocket(copy)
+{
+}
+
+SocketError WldNetSocket::connect(const std::string &path)
+{
+    DEBUG_LOG("");
+
+    sockaddr_in addr;
+    memset(&addr, 0, sizeof(sockaddr_in));
+
+    size_t idx = path.find(':');
+    std::string ip = path.substr(0, idx-1);
+    std::string port = path.substr(idx);
+    if (port.empty())
+        return InvalidServerAddress;
+
+    addr.sin_port = htons(atoi(port.c_str()));
+    addr.sin_family = AF_INET;
+    addr.sin_addr.s_addr = inet_addr(ip.c_str());
+
+    int err = ::connect(fd ,(sockaddr *)&addr, sizeof(sockaddr_in));
+    if (err == -1)
+    {
+        disconnectFromServer();
+
+        switch (errno)
+        {
+        case EINVAL:
+        case ECONNREFUSED:
+            return ConnectionRefusedError;
+        case ENOENT:
+            return ServerNotFoundError;
+        case ETIMEDOUT:
+            return SocketTimeoutError;
+
+        default:
+            return UnknownSocketError;
+        }
+    }
+
+    return NoError;
 }

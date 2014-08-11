@@ -98,7 +98,8 @@ struct WlaMessageBufferHeader
 
     static size_t getSerializeSize()
     {
-        return sizeof(flags) + sizeof(timestamp) + sizeof(msg_len) + sizeof(cmsg_len);
+        return sizeof(flags) + sizeof(timestamp)
+                + sizeof(msg_len) + sizeof(cmsg_len);
     }
 
     uint32_t flags;
@@ -119,8 +120,8 @@ public:
     WlaMessageBuffer();
     ~WlaMessageBuffer();
 
-    int sendMessage(UnixLocalSocket &socket);
-    int receiveMessage(UnixLocalSocket &socket);
+    int sendMessage(WldSocket &socket);
+    int receiveMessage(WldSocket &socket);
 
     void setHeader(const WlaMessageBufferHeader *hdr);
     WlaMessageBufferHeader *getHeader() { return &hdr; }

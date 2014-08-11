@@ -42,7 +42,7 @@ WlaConnection::~WlaConnection()
     parent->closeConnection(this);
 }
 
-void WlaConnection::createConnection(UnixLocalSocket cli, UnixLocalSocket server)
+void WlaConnection::createConnection(WldSocket cli, WldSocket server)
 {
     client = cli;
     wayland = server;
@@ -114,7 +114,7 @@ void WlaConnection::handleConnection(ev::io &watcher, int revents)
     }
 }
 
-WlaMessageBuffer *WlaConnection::handleRead(UnixLocalSocket &src, UnixLocalSocket &dst)
+WlaMessageBuffer *WlaConnection::handleRead(WldSocket &src, WldSocket &dst)
 {
     WlaMessageBuffer *msg = new WlaMessageBuffer;
     int len = msg->receiveMessage(src);
@@ -135,13 +135,13 @@ WlaMessageBuffer *WlaConnection::handleRead(UnixLocalSocket &src, UnixLocalSocke
     return msg;
 }
 
-void WlaConnection::handleWrite(UnixLocalSocket &dst, std::stack<WlaMessageBuffer *> &msgStack)
+void WlaConnection::handleWrite(WldSocket &dst, std::stack<WlaMessageBuffer *> &msgStack)
 {
     while (!msgStack.empty())
     {
         WlaMessageBuffer *msg = msgStack.top();
 
-        int len = msg->sendMessage(dst);;
+        msg->sendMessage(dst);;
 
         msgStack.pop();
         delete msg;

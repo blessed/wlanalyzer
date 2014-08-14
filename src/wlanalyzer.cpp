@@ -134,6 +134,10 @@ int main(int argc, char **argv)
         exit(EXIT_FAILURE);
     }
 
+    WldProtocolAnalyzer *analyzer = new WldProtocolAnalyzer;
+    analyzer->coreProtocol(options.coreProtocol);
+    parser.attachAnalyzer(analyzer);
+
     loop.run();
 
     return 0;

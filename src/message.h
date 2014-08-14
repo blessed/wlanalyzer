@@ -98,7 +98,7 @@ struct WlaMessageBufferHeader
 
     static size_t getSerializeSize()
     {
-        return sizeof(flags) + sizeof(timestamp)
+        return sizeof(flags) + 2 * sizeof(uint32_t)
                 + sizeof(msg_len) + sizeof(cmsg_len);
     }
 

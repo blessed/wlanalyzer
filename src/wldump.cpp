@@ -203,19 +203,19 @@ int main(int argc, char *argv[])
             }
         }
 
-        WldIODumper *dumper = new WldIODumper;
-        dumper->open("dump");
-        proxy.setDumper(dumper);
+//        WldIODumper *dumper = new WldIODumper;
+//        dumper->open("dump");
+//        proxy.setDumper(dumper);
 
-//        WldNetDumper *netDump = new WldNetDumper;
-//        if (netDump->open("5000"))
-//            DEBUG_LOG("Failed to open port 5000");
-//        proxy.setDumper(netDump);
+        WldNetDumper *netDump = new WldNetDumper;
+        if (netDump->open("5000"))
+            DEBUG_LOG("Failed to open port 5000");
+        proxy.setDumper(netDump);
 
-        WlaBinParser *parser = new WlaBinParser;
-        parser->openResource("dump");
-        parser->attachAnalyzer(analyzer);
-        proxy.setParser(parser);
+//        WlaBinParser *parser = new WlaBinParser;
+//        parser->openResource("dump");
+//        parser->attachAnalyzer(analyzer);
+//        proxy.setParser(parser);
     }
 
     if ((ppid = fork()) == 0)

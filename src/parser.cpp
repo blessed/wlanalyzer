@@ -298,26 +298,20 @@ void WldNetParser::handleSocketEvent(ev::io &watcher, int revents)
 WlaMessageBuffer *WldNetParser::nextMessage()
 {
     WlaMessageBuffer *msg = new WlaMessageBuffer;
-    int bytes;
 
     uint32_t seq;
-    bytes = socket.readUntil((char *)&seq, sizeof(seq));
-    DEBUG_LOG("Read %d of %d bytes", bytes, sizeof(seq));
+    socket.readUntil((char *)&seq, sizeof(seq));
 
     uint32_t size = msg->getHeader()->getSerializeSize();
     char *buf = new char[size];
     memset(buf, 0, size);
 
-    bytes = socket.readUntil(buf, size);
-    DEBUG_LOG("Read %d of %d bytes", bytes, size)
-
+    socket.readUntil(buf, size);
     msg->getHeader()->deserializeFromBuf(buf, size);
     delete [] buf;
 
-    DEBUG_LOG("%d", msg->getMsgSize());
     char *msg_buf = new char[msg->getMsgSize()];
-    bytes = socket.readUntil(msg_buf, msg->getMsgSize());
-    DEBUG_LOG("Read %d of %d bytes", bytes, msg->getMsgSize());
+    socket.readUntil(msg_buf, msg->getMsgSize());
 
     msg->setMsg(msg_buf, msg->getMsgSize());
     delete [] msg_buf;
@@ -325,8 +319,7 @@ WlaMessageBuffer *WldNetParser::nextMessage()
     if (bit_isset(msg->getHeader()->flags, CMESSAGE_PRESENT_BIT))
     {
         char *cmsg_buf = new char[msg->getControlMsgSize()];
-        bytes = socket.readUntil(cmsg_buf, msg->getControlMsgSize());
-        DEBUG_LOG("Read %d bytes", bytes)
+        socket.readUntil(cmsg_buf, msg->getControlMsgSize());
         msg->setControlMsg(cmsg_buf, msg->getControlMsgSize());
         delete [] cmsg_buf;
     }

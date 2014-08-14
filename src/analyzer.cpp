@@ -94,18 +94,20 @@ void WldProtocolAnalyzer::lookup(uint32_t object_id, uint32_t opcode, WLD_MESSAG
 
     if (type == WLD_MSG_REQUEST)
     {
-        if (opcode > intf.requests.size())
+        if (opcode >= intf.requests.size())
         {
-            DEBUG_LOG("%d", intf.requests.size());
+            DEBUG_LOG("The request %d/%d for %s interface is invalid", opcode, intf.requests.size(),
+                      intf.name.c_str());
             return;
         }
         msg = &intf.requests[opcode];
     }
     else
     {
-        if (opcode > intf.events.size())
+        if (opcode >= intf.events.size())
         {
-            DEBUG_LOG("%d", intf.requests.size());
+            DEBUG_LOG("The event %d/%d for %s interface is invalid", opcode, intf.events.size(),
+                      intf.name.c_str());
             return;
         }
         msg = &intf.events[opcode];
@@ -117,7 +119,7 @@ void WldProtocolAnalyzer::lookup(uint32_t object_id, uint32_t opcode, WLD_MESSAG
         return;
     }
 
-    Logger::getInstance()->log("%s@%u.%s()\n", intf.name.c_str(), object_id, msg->signature.c_str());
+    Logger::getInstance()->log("%s@%u.%s@%u()\n", intf.name.c_str(), object_id, msg->signature.c_str(), opcode);
     analyzeMessage(intf, *msg, object_id, payload);
 }
 

@@ -58,8 +58,8 @@ public:
     WldSocket(const WldSocket &copy);
     virtual ~WldSocket();
 
-    SocketError connectToServer(const char *path, SocketDomain dom);
-    SocketError connectToServer(const std::string &path, SocketDomain dom);
+    SocketError connectToServer(const char *path);
+    SocketError connectToServer(const std::string &path);
     SocketError disconnectFromServer();
 
     void setSocketDescriptor(int fd, int flags = 0);
@@ -83,6 +83,9 @@ public:
     long read(char *data, long max_size) const;
     bool write(const char *data, size_t c) const;
 
+    size_t readUntil(char *data, size_t max_size) const;
+    bool writeUntil(const char *data, size_t c) const;
+
     int readMsg(msghdr *msg);
     int writeMsg(const msghdr *msg);
 
@@ -92,8 +95,11 @@ protected:
 private:
     void shutdown();
 
-private:
+protected:
     int _fd;
+
+private:
+//    int _fd;
     bool _connected;
 };
 bool operator==(int fd, const WldSocket &sock);

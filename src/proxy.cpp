@@ -117,7 +117,7 @@ void WlaProxyServer::setParser(WlaBinParser *parser)
         delete this->parser;
 
     this->parser = parser;
-    this->parser->setState(true);
+    this->parser->enable(true);
 }
 
 void WlaProxyServer::connectClient(ev::io &watcher, int revents)
@@ -132,7 +132,7 @@ void WlaProxyServer::connectClient(ev::io &watcher, int revents)
     WldSocket wayland;
     std::string waylandPath = std::string(getenv("XDG_RUNTIME_DIR")) +
             "/" + std::string(getenv("WAYLAND_DISPLAY"));
-    if (wayland.connectToServer(waylandPath, UNIX_DOMAIN) != NoError)
+    if (wayland.connectToServer(waylandPath) != NoError)
     {
         DEBUG_LOG("failed to connect to server");
         stopServer();

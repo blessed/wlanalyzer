@@ -38,6 +38,25 @@ WldProtocolScanner::WldProtocolScanner()
      init();
 }
 
+void WldProtocolScanner::init()
+{
+    if (initialized)
+        return;
+
+    DEBUG_LOG("sizeof WldArgTypeHasher %d", sizeof(WldArgTypeHasher));
+
+    types["uint"] = WLD_ARG_UINT;
+    types["int"] = WLD_ARG_INT;
+    types["string"] = WLD_ARG_STRING;
+    types["fixed"] = WLD_ARG_FIXED;
+    types["object"] = WLD_ARG_OBJECT;
+    types["new_id"] = WLD_ARG_NEWID;
+    types["fd"] = WLD_ARG_FD;
+    types["array"] = WLD_ARG_ARRAY;
+
+    initialized = true;
+}
+
 bool WldProtocolScanner::openProtocolFile(const std::string &path)
 {
     xml_parse_result result = doc.load_file(path.c_str());
@@ -62,7 +81,7 @@ WldProtocolDefinition *WldProtocolScanner::getProtocolDefinition(WldProtocolDefi
     Logger::getInstance()->log("%s %s = %s\n", protocol.name(), attr.name(), attr.value());
 
     for (xml_node interfaceNode = protocol.child("interface"); interfaceNode;
-         interfaceNode = interfaceNode.next_sibling())
+         interfaceNode = interfaceNode.next_sibling("interface"))
     {
         WldInterface interface;
 
@@ -81,25 +100,6 @@ WldProtocolDefinition *WldProtocolScanner::getProtocolDefinition(WldProtocolDefi
     }
 
     return prot;
-}
-
-void WldProtocolScanner::init()
-{
-    if (initialized)
-        return;
-
-    DEBUG_LOG("sizeof WldArgTypeHasher %d", sizeof(WldArgTypeHasher));
-
-    types["uint"] = WLD_ARG_UINT;
-    types["int"] = WLD_ARG_INT;
-    types["string"] = WLD_ARG_STRING;
-    types["fixed"] = WLD_ARG_FIXED;
-    types["object"] = WLD_ARG_OBJECT;
-    types["new_id"] = WLD_ARG_NEWID;
-    types["fd"] = WLD_ARG_FD;
-    types["array"] = WLD_ARG_ARRAY;
-
-    initialized = true;
 }
 
 bool WldProtocolScanner::scanInterface(const xml_node &node, WldInterface &interface)
@@ -122,14 +122,14 @@ bool WldProtocolScanner::getMessages(const xml_node &node, WldInterface &interfa
         typeStr = "event";
 
     for (xml_node eventNode = node.child(typeStr.c_str()); eventNode;
-         eventNode = eventNode.next_sibling())
+         eventNode = eventNode.next_sibling(typeStr.c_str()))
     {
         WldMessage msg;
         msg.type = type;
         msg.signature = eventNode.attribute("name").value();
         msg.intf_name = interface.name;
 
-//        Logger::getInstance()->log("\t%s: %s\n", type == WLD_MSG_REQUEST ? "request" : "event", msg.signature.c_str());
+        Logger::getInstance()->log("\t%s: %s\n", type == WLD_MSG_REQUEST ? "request" : "event", msg.signature.c_str());
 
         if (!scanArgs(eventNode, msg))
             return false;
@@ -166,7 +166,7 @@ bool WldProtocolScanner::scanArgs(const xml_node &node, WldMessage &msg)
             arg.interface = intf;
         }
 
-//        Logger::getInstance()->log("\t\targ: %28s\ttype: %s\n", arg.name.c_str(), type.c_str());
+        Logger::getInstance()->log("\t\targ: %28s\ttype: %s\n", arg.name.c_str(), type.c_str());
 
         msg.args.push_back(arg);
     }

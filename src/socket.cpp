@@ -54,15 +54,15 @@ WldSocket::~WldSocket()
     }
 }
 
-SocketError WldSocket::connectToServer(const char *path, SocketDomain dom)
+SocketError WldSocket::connectToServer(const char *path)
 {
     std::string strPath(path);
-    return connectToServer(strPath, dom);
+    return connectToServer(strPath);
 }
 
-SocketError WldSocket::connectToServer(const std::string &path, SocketDomain dom)
+SocketError WldSocket::connectToServer(const std::string &path)
 {
-    int err;
+//    int err;
 
     if (path.empty())
         return ServerNotFoundError;
@@ -70,40 +70,36 @@ SocketError WldSocket::connectToServer(const std::string &path, SocketDomain dom
     if (isConnected())
         disconnectFromServer();
 
-    _fd = socket(AF_UNIX, SOCK_STREAM, 0);
-    if (check_error(_fd))
-        return SocketResourceError;
-
-//    SocketError err = connect(path);
-//    if (err != NoError)
-//    {
-//        disconnectFromServer();
-//        return err;
-//    }
-
-    sockaddr_un address;
-    memset(&address, 0, sizeof(sockaddr_un));
-    address.sun_family = dom;
-    strncpy(address.sun_path, path.c_str(), path.size());
-    err = ::connect(_fd, (sockaddr *)&address, sizeof(sockaddr_un));
-    if (err == -1)
+    SocketError err = connect(path);
+    if (err != NoError)
     {
         disconnectFromServer();
-
-        switch (errno)
-        {
-        case EINVAL:
-        case ECONNREFUSED:
-            return ConnectionRefusedError;
-        case ENOENT:
-            return ServerNotFoundError;
-        case ETIMEDOUT:
-            return SocketTimeoutError;
-
-        default:
-            return UnknownSocketError;
-        }
+        return err;
     }
+
+//    sockaddr_un address;
+//    memset(&address, 0, sizeof(sockaddr_un));
+//    address.sun_family = AF_UNIX;
+//    strncpy(address.sun_path, path.c_str(), path.size());
+//    err = ::connect(_fd, (sockaddr *)&address, sizeof(sockaddr_un));
+//    if (err == -1)
+//    {
+//        disconnectFromServer();
+
+//        switch (errno)
+//        {
+//        case EINVAL:
+//        case ECONNREFUSED:
+//            return ConnectionRefusedError;
+//        case ENOENT:
+//            return ServerNotFoundError;
+//        case ETIMEDOUT:
+//            return SocketTimeoutError;
+
+//        default:
+//            return UnknownSocketError;
+//        }
+//    }
 
     Logger::getInstance()->log("Connected to %s\n", path.c_str());
     _connected = true;
@@ -161,9 +157,11 @@ long WldSocket::read(char *data, long max_size) const
     if (!isConnected())
         return -1;
 
-    int err = recv(_fd, data, max_size, MSG_DONTWAIT);
-    if (err == -1 && (errno == EWOULDBLOCK || errno == EAGAIN))
-        return 0;
+    int err;
+    do
+    {
+        err = recv(_fd, data, max_size, MSG_DONTWAIT);
+    } while (err == -1 && (errno == EWOULDBLOCK || errno == EAGAIN));
 
     return err;
 }
@@ -178,6 +176,36 @@ bool WldSocket::write(const char *data, size_t c) const
 
         c -= wrote;
     }
+
+    return true;
+}
+
+size_t WldSocket::readUntil(char *data, size_t max_size) const
+{
+    size_t sz = 0;
+    int r;
+
+    while (max_size > 0)
+    {
+        r = read(data, max_size);
+        if (r == -1)
+            return r;
+
+        data += r;
+        max_size -= r;
+    }
+
+    return sz;
+}
+
+bool WldSocket::writeUntil(const char *data, size_t c) const
+{
+    size_t sz = 0;
+
+    do
+    {
+        sz += write(data + sz, c);
+    } while (sz < c);
 
     return true;
 }
@@ -207,6 +235,10 @@ int WldSocket::writeMsg(const msghdr *msg)
 SocketError WldSocket::connect(const std::string &path)
 {
     DEBUG_LOG("");
+
+    _fd = socket(AF_UNIX, SOCK_STREAM, 0);
+    if (check_error(_fd))
+        return SocketResourceError;
 
     sockaddr_un address;
     memset(&address, 0, sizeof(sockaddr_un));
@@ -244,12 +276,16 @@ SocketError WldNetSocket::connect(const std::string &path)
 {
     DEBUG_LOG("");
 
+    _fd = socket(AF_INET, SOCK_STREAM, 0);
+    if (check_error(_fd))
+        return SocketResourceError;
+
     sockaddr_in addr;
     memset(&addr, 0, sizeof(sockaddr_in));
 
     size_t idx = path.find(':');
-    std::string ip = path.substr(0, idx-1);
-    std::string port = path.substr(idx);
+    std::string ip = path.substr(0, idx);
+    std::string port = path.substr(idx + 1);
     if (port.empty())
         return InvalidServerAddress;
 
@@ -257,10 +293,12 @@ SocketError WldNetSocket::connect(const std::string &path)
     addr.sin_family = AF_INET;
     addr.sin_addr.s_addr = inet_addr(ip.c_str());
 
-    int err = ::connect(fd ,(sockaddr *)&addr, sizeof(sockaddr_in));
+    int err = ::connect(_fd ,(sockaddr *)&addr, sizeof(sockaddr_in));
     if (err == -1)
     {
         disconnectFromServer();
+
+        DEBUG_LOG("%d", errno);
 
         switch (errno)
         {

@@ -30,7 +30,6 @@
 #include <stdlib.h>
 #include <stdint.h>
 #include <unistd.h>
-#include <string>
 #include "logger.h"
 
 #define WLA_SOCKETNAME "wayland-debug"

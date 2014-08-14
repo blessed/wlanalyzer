@@ -30,40 +30,62 @@
 #include "common.h"
 #include "analyzer.h"
 
-struct WlaMessageHeader
+class WldParser
 {
-    uint32_t client_id;
-    uint16_t size;
-    uint16_t opcode;
+public:
+    WldParser();
+    virtual ~WldParser();
+
+    void attachAnalyzer(WldProtocolAnalyzer *analyzer);
+    virtual int openResource(const std::string &resource) = 0;
+    int parse();
+
+protected:
+    virtual WlaMessageBuffer *nextMessage() = 0;
+    void parseMessage(WlaMessageBuffer *msg);
+
+protected:
+    WldProtocolAnalyzer *analyzer;
 };
 
 // TODO: Refactor WlaBinParser so that it holds an internal message queue.
 // Make nextMessage() generic!
-class WlaBinParser
+class WlaBinParser : public WldParser
 {
 public:
     WlaBinParser();
     ~WlaBinParser();
 
-    int openFile(const std::string &path);
-    void attachAnalyzer(WldProtocolAnalyzer *analyzer);
-    void setState(bool state = true);
-    int parse();
+    int openResource(const std::string &path);
+//    void attachAnalyzer(WldProtocolAnalyzer *analyzer);
+    void enable(bool state = true);
 
 private:
     void handleFileEvent(ev::io &watcher, int revents);
     void timerEvent(ev::timer &timer, int revents);
     WlaMessageBuffer *nextMessage();
-    void parseMessage(WlaMessageBuffer *msg);
 
 private:
-    static const int HEADER_SIZE = 8;
-
-    WldProtocolAnalyzer *analyzer;
-
     ev::timer timer;
     int file;
     ev::io filewtch;
+};
+
+class WldNetParser : public WldParser
+{
+public:
+    WldNetParser();
+    ~WldNetParser();
+
+    int openResource(const std::string &resource);
+
+private:
+    void handleSocketEvent(ev::io &watcher, int revents);
+    WlaMessageBuffer *nextMessage();
+
+private:
+    WldNetSocket socket;
+    ev::io socketwtch;
 };
 
 #endif // PARSER_H

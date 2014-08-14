@@ -22,14 +22,119 @@
  * SOFTWARE.
  */
 
-#include <iostream>
+#include <vector>
+#include <string>
+#include <string.h>
 #include "common.h"
+#include "parser.h"
 
 using namespace std;
 
+struct options_t
+{
+    options_t() : coreProtocol(""), analyze(false) {}
+
+    string coreProtocol;
+    vector<string> extensions;
+    bool analyze;
+    string address;
+};
+
+static int parse_cmdline(int argc, char **argv, options_t *opt)
+{
+    if (argc < 3)
+    {
+        Logger::getInstance()->log("Invalid command line argument count\n");
+        exit(EXIT_FAILURE);
+    }
+
+    for (int i = 1; i < argc; i++)
+    {
+        if (!strcmp(argv[i], "-c"))
+        {
+            i++;
+            if (i == argc)
+            {
+                Logger::getInstance()->log("Core protocol specification file not specified\n");
+                exit(EXIT_FAILURE);
+            }
+
+            opt->coreProtocol = argv[i];
+            opt->analyze = true;
+        }
+        else if (!strcmp(argv[i], "-e"))
+        {
+            i++;
+            if (i == argc)
+            {
+                Logger::getInstance()->log("No extensions specified\n");
+                exit(EXIT_FAILURE);
+            }
+
+            while (argv[i][0] != '-')
+            {
+                opt->extensions.push_back(argv[i]);
+                i++;
+
+                if (i >= argc - 1)
+                {
+                    break;
+                }
+            }
+
+            i--;
+        }
+        else if (!strcmp(argv[i], "--"))
+        {
+            i++;
+            if (i == argc)
+            {
+                Logger::getInstance()->log("Address not specified\n");
+                exit(EXIT_FAILURE);
+            }
+            opt->address = argv[i];
+        }
+        else
+        {
+            Logger::getInstance()->log("Unknown option %s\n", argv[i]);
+            exit(EXIT_FAILURE);
+        }
+    }
+
+    if (opt->coreProtocol.empty())
+    {
+        Logger::getInstance()->log("No core protocol definition provided\n");
+        exit(EXIT_FAILURE);
+    }
+
+    if (opt->address.empty())
+    {
+        Logger::getInstance()->log("No address specified\n");
+        exit(EXIT_FAILURE);
+    }
+
+    return 0;
+}
+
 int main(int argc, char **argv)
 {
-    cout << argv[0] << endl;
+    options_t options;
+    ev::default_loop loop;
+
+    if (parse_cmdline(argc, argv, &options))
+    {
+        Logger::getInstance()->log("Invalid command line\n");
+        return -1;
+    }
+
+    WldNetParser parser;
+    if (parser.openResource(options.address))
+    {
+        Logger::getInstance()->log("Failed to connecto to %s\n", options.address.c_str());
+        exit(EXIT_FAILURE);
+    }
+
+    loop.run();
 
     return 0;
 }

@@ -188,7 +188,7 @@ size_t WldSocket::readUntil(char *data, size_t max_size) const
     while (max_size > 0)
     {
         r = read(data, max_size);
-        if (r == -1)
+        if (r <= 0)
             return r;
 
         data += r;
@@ -204,7 +204,12 @@ bool WldSocket::writeUntil(const char *data, size_t c) const
 
     do
     {
-        sz += write(data + sz, c);
+        int ret;
+        ret = write(data + sz, c);
+        if (ret <= 0)
+            return false;
+
+        sz += ret;
     } while (sz < c);
 
     return true;

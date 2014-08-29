@@ -44,6 +44,7 @@ struct options_t
     std::string coreProtocol;
     std::vector<std::string> extensions;
     bool analyze;
+    std::string port_number; // used when the dumper is launched in server mode
     char **exec;
 };
 
@@ -62,7 +63,9 @@ static void usage()
             "Options:\n"
             "\t-c <file_path> - set the core protocol specification file\n"
             "\t-e <file_paths> - provide extensions of the protocol file. "
-            "Use only with -c option\n");
+            "Use only with -c option\n"
+            "\t-n <port number> - launch in server mode\n"
+            "\t-h - this help screen\n");
 }
 
 static void verify_runtime()
@@ -113,6 +116,17 @@ static int parse_cmdline(int argc, char **argv, options_t *opt)
 
             opt->coreProtocol = argv[i];
             opt->analyze = true;
+        }
+        else if (!strcmp(argv[i], "-n"))
+        {
+            i++;
+            if (i == argc)
+            {
+                Logger::getInstance()->log("port number not specified\n");
+                exit(EXIT_FAILURE);
+            }
+
+            opt->port_number = argv[i];
         }
         else if (!strcmp(argv[i], "-e"))
         {
@@ -203,19 +217,26 @@ int main(int argc, char *argv[])
             }
         }
 
-//        WldIODumper *dumper = new WldIODumper;
-//        dumper->open("dump");
-//        proxy.setDumper(dumper);
+        WldIODumper *dumper = new WldIODumper;
+        dumper->open("dump");
+        proxy.setDumper(dumper);
 
+//        WldNetDumper *netDump = new WldNetDumper;
+//        if (netDump->open("5000"))
+//            DEBUG_LOG("Failed to open port 5000");
+//        proxy.setDumper(netDump);
+
+        WlaBinParser *parser = new WlaBinParser;
+        parser->openResource("dump");
+        parser->attachAnalyzer(analyzer);
+        proxy.setParser(parser);
+    }
+    else if (options.port_number.size())
+    {
         WldNetDumper *netDump = new WldNetDumper;
-        if (netDump->open("5000"))
-            DEBUG_LOG("Failed to open port 5000");
+        if (netDump->open(options.port_number))
+            DEBUG_LOG("Failed to open port %s", options.port_number.c_str());
         proxy.setDumper(netDump);
-
-//        WlaBinParser *parser = new WlaBinParser;
-//        parser->openResource("dump");
-//        parser->attachAnalyzer(analyzer);
-//        proxy.setParser(parser);
     }
 
     if ((ppid = fork()) == 0)

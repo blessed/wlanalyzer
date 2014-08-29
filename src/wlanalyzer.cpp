@@ -40,11 +40,23 @@ struct options_t
     string address;
 };
 
+static void usage()
+{
+    fprintf(stderr, "wlanalyzer is a wayland protocol analyzer\n"
+            "Usage:\twlanalyzer [OPTIONS] -- <ip address>\n\n"
+            "Options:\n"
+            "\t-c <file_path> - set the core protocol specification file\n"
+            "\t-e <file_paths> - provide extensions of the protocol file. "
+            "Use only with -c option\n"
+            "\t-h - this help screen\n");
+}
+
 static int parse_cmdline(int argc, char **argv, options_t *opt)
 {
     if (argc < 3)
     {
         Logger::getInstance()->log("Invalid command line argument count\n");
+        usage();
         exit(EXIT_FAILURE);
     }
 
@@ -97,6 +109,7 @@ static int parse_cmdline(int argc, char **argv, options_t *opt)
         else
         {
             Logger::getInstance()->log("Unknown option %s\n", argv[i]);
+            usage();
             exit(EXIT_FAILURE);
         }
     }
@@ -136,7 +149,20 @@ int main(int argc, char **argv)
 
     WldProtocolAnalyzer *analyzer = new WldProtocolAnalyzer;
     analyzer->coreProtocol(options.coreProtocol);
+
+    if (!options.extensions.empty())
+    {
+        std::vector<std::string>::const_iterator it = options.extensions.begin();
+        for (; it != options.extensions.end(); it++)
+        {
+            DEBUG_LOG("extension %s", it->c_str());
+            analyzer->addProtocolSpec(*it);
+        }
+    }
+
     parser.attachAnalyzer(analyzer);
+
+
 
     loop.run();
 

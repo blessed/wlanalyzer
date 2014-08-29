@@ -6,10 +6,12 @@ VERSION = '0.1'
 
 def options(ctx):
 	ctx.load('compiler_cxx')
+	ctx.load('qt5')
 	ctx.add_option('-d', '--debug', action='store_true', default=False, help='Compile with debug symbols')
 
 def configure(ctx):
 	ctx.load('compiler_cxx')
+	ctx.load('qt5')
 	ctx.env.CXXFLAGS += ['-Wall']
 	if ctx.options.debug:
 		ctx.env.CXXFLAGS += ['-g', '-O0', '-DDEBUG_BUILD']
@@ -19,10 +21,15 @@ def configure(ctx):
 	# Check for pugixml
 	ctx.check_cxx(lib='pugixml', uselib_store='PUGI')
 
+	if ctx.env.LIB_QT5QUICK and ctx.env.INCLUDES_QT5QUICK:
+		ctx.env.BUILD_WLANALYZER = True
+		print("Building with Qt")
+
 def build(bld):
 	source_files = bld.path.ant_glob('^src/**/*.cpp$', excl=['^src/**/wldump.cpp', '^src/**/wlanalyzer.cpp'])
 	wldumper = [bld.path.make_node('/src/wldump.cpp')]
 	wlanalyzer = [bld.path.make_node('/src/wlanalyzer.cpp')]
 	print(source_files + wldumper)
 	bld.program(source=source_files + wldumper, target=DUMPER, use=['EV', 'PUGI'])
-	bld.program(source=source_files + wlanalyzer, target=ANALYZER, use=['EV', 'PUGI'])
+	if bld.env.BUILD_WLANALYZER:
+		bld.program(source=source_files + wlanalyzer, target=ANALYZER, use=['EV', 'PUGI', 'QT5QUICK'], features='qt5')

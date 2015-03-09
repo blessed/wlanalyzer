@@ -89,11 +89,15 @@ int WldIODumper::open(const std::string &resource)
     if (filefd != -1)
         close(filefd);
 
-    filefd = ::open(resource.c_str(), O_RDWR | O_CREAT | O_TRUNC);
+	filefd = ::open(resource.c_str(), O_RDWR | O_CREAT | O_TRUNC, S_IRUSR | S_IWUSR	| S_IRGRP | S_IROTH);
     if (filefd == -1)
+	{
+		DEBUG_LOG("Failed to create file %s", resource.c_str());
+		perror(NULL);
         return -1;
-    else
-        return 1;
+	}
+
+	return 1;
 }
 
 int WldIODumper::dump(WlaMessageBuffer &msg)
@@ -153,7 +157,6 @@ int WldNetDumper::open(const std::string &resource)
         return -1;
     }
 
-    DEBUG_LOG("");
     if (!server_socket.listen(resource))
         return false;
 

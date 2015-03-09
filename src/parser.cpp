@@ -78,12 +78,10 @@ void WldParser::parseMessage(WlaMessageBuffer *msg)
         uint16_t size = byteArrToUInt16(&msg_buf[SIZE_OFFSET]);
         uint16_t opcode = byteArrToUInt16(&msg_buf[OPCODE_OFFSET]);
 
-
-//        Logger::getInstance()->log("%s msg (%s.%03d), id %d, opcode %d, size %d\n",
-//                  msg->getType() == WlaMessageBuffer::EVENT_TYPE ? "event" : "request",
-//                  timestr, msg->getTimeStamp()->tv_usec / 1000,
-//                  client_id, opcode, size);
-
+		Logger::getInstance()->log("%s msg (%s.%03d), id %d, opcode %d, size %d\n",
+				  msg->getType() == WlaMessageBuffer::EVENT_TYPE ? "event" : "request",
+				  timestr, msg->getTimeStamp()->tv_usec / 1000,
+				  client_id, opcode, size);
 
         if (analyzer)
         {
@@ -302,7 +300,10 @@ WlaMessageBuffer *WldNetParser::nextMessage()
     uint32_t seq;
     if (!socket.readUntil((char *)&seq, sizeof(seq)))
     {
+		DEBUG_LOG("stopping read");
         socketwtch.stop();
+		delete msg;
+		return NULL;
     }
 
     uint32_t size = msg->getHeader()->getSerializeSize();
@@ -311,7 +312,10 @@ WlaMessageBuffer *WldNetParser::nextMessage()
 
     if (!socket.readUntil(buf, size))
     {
+		DEBUG_LOG("stopping read");
         socketwtch.stop();
+		delete msg;
+		return NULL;
     }
     msg->getHeader()->deserializeFromBuf(buf, size);
     delete [] buf;
@@ -319,7 +323,10 @@ WlaMessageBuffer *WldNetParser::nextMessage()
     char *msg_buf = new char[msg->getMsgSize()];
     if (!socket.readUntil(msg_buf, msg->getMsgSize()))
     {
+		DEBUG_LOG("stopping read");
         socketwtch.stop();
+		delete msg;
+		return NULL;
     }
 
     msg->setMsg(msg_buf, msg->getMsgSize());
@@ -330,7 +337,10 @@ WlaMessageBuffer *WldNetParser::nextMessage()
         char *cmsg_buf = new char[msg->getControlMsgSize()];
         if (!socket.readUntil(cmsg_buf, msg->getControlMsgSize()))
         {
+			DEBUG_LOG("stopping read");
             socketwtch.stop();
+			delete msg;
+			return NULL;
         }
         msg->setControlMsg(cmsg_buf, msg->getControlMsgSize());
         delete [] cmsg_buf;

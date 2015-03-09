@@ -160,8 +160,8 @@ long WldSocket::read(char *data, long max_size) const
     int err;
     do
     {
-        err = recv(_fd, data, max_size, MSG_DONTWAIT);
-    } while (err == -1 && (errno == EWOULDBLOCK || errno == EAGAIN));
+		err = recv(_fd, data, max_size, MSG_WAITALL);
+	} while (err == -1 && (errno == EWOULDBLOCK || errno == EAGAIN));
 
     return err;
 }
@@ -192,6 +192,7 @@ size_t WldSocket::readUntil(char *data, size_t max_size) const
             return r;
 
         data += r;
+        sz += r;
         max_size -= r;
     }
 
@@ -293,6 +294,7 @@ SocketError WldNetSocket::connect(const std::string &path)
     std::string port = path.substr(idx + 1);
     if (port.empty())
         return InvalidServerAddress;
+
 
     addr.sin_port = htons(atoi(port.c_str()));
     addr.sin_family = AF_INET;

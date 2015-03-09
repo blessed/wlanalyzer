@@ -162,8 +162,6 @@ int main(int argc, char **argv)
 
     parser.attachAnalyzer(analyzer);
 
-
-
     loop.run();
 
     return 0;

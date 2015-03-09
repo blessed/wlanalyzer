@@ -129,7 +129,7 @@ bool WldProtocolScanner::getMessages(const xml_node &node, WldInterface &interfa
         msg.signature = eventNode.attribute("name").value();
         msg.intf_name = interface.name;
 
-        Logger::getInstance()->log("\t%s: %s\n", type == WLD_MSG_REQUEST ? "request" : "event", msg.signature.c_str());
+//        Logger::getInstance()->log("\t%s: %s\n", type == WLD_MSG_REQUEST ? "request" : "event", msg.signature.c_str());
 
         if (!scanArgs(eventNode, msg))
             return false;
@@ -166,7 +166,7 @@ bool WldProtocolScanner::scanArgs(const xml_node &node, WldMessage &msg)
             arg.interface = intf;
         }
 
-        Logger::getInstance()->log("\t\targ: %28s\ttype: %s\n", arg.name.c_str(), type.c_str());
+//        Logger::getInstance()->log("\t\targ: %28s\ttype: %s\n", arg.name.c_str(), type.c_str());
 
         msg.args.push_back(arg);
     }

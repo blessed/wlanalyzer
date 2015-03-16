@@ -39,6 +39,9 @@ public:
     void attachAnalyzer(WldProtocolAnalyzer *analyzer);
     virtual int openResource(const std::string &resource) = 0;
     int parse();
+	void enable(bool state = true)
+	{
+	}
 
 protected:
     virtual WlaMessageBuffer *nextMessage() = 0;

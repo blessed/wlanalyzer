@@ -49,7 +49,7 @@ public:
     void closeConnection(WlaConnection *conn);
 
     void setDumper(WldDumper *dumper);
-    void setParser(WlaBinParser *parser);
+	void setParser(WldParser *parser);
 //    void setAnalyzer(WldProtocolAnalyzer *an);
 
 private:
@@ -64,7 +64,7 @@ private:
 //    WlaIODumper writer;
     WldDumper *dumper;
 //    WldIODumper writer;
-    WlaBinParser *parser;
+	WldParser *parser;
 
     std::set<WlaConnection *> _connections;
 };

@@ -219,7 +219,11 @@ int WldNetDumper::dump(WlaMessageBuffer &msg)
     }
 
     int sequence_no = seq++;
-    client_socket->write((const char *)&sequence_no, sizeof(sequence_no));
+	if (!client_socket->write((const char *)&sequence_no, sizeof(sequence_no)))
+	{
+		DEBUG_LOG("Connection with client lost");
+		return 0;
+	}
 
     char *buf = new char[WlaMessageBufferHeader::getSerializeSize()];
     memset(buf, 0, WlaMessageBufferHeader::getSerializeSize());

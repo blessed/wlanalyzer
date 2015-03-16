@@ -170,7 +170,7 @@ bool WldSocket::write(const char *data, size_t c) const
 {
     while (c > 0)
     {
-        int wrote = send(_fd, data, c, 0);
+		int wrote = send(_fd, data, c, MSG_NOSIGNAL);
         if (wrote == -1)
             return false;
 

@@ -111,7 +111,7 @@ void WlaProxyServer::setDumper(WldDumper *dumper)
     this->dumper = dumper;
 }
 
-void WlaProxyServer::setParser(WlaBinParser *parser)
+void WlaProxyServer::setParser(WldParser *parser)
 {
     if (this->parser)
         delete this->parser;

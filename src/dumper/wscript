@@ -1,0 +1,11 @@
+#! /usr/bin/env python
+
+target = 'wldumper'
+
+def configure(ctx):
+	print('Configuring in ' + ctx.path.abspath())
+
+def build(bld):
+	print('Building ' + target)
+	source_files = bld.path.ant_glob('*.cpp')
+	bld.program(source=source_files, target=target, use=['base'])

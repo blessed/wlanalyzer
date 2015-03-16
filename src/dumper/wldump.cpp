@@ -30,10 +30,10 @@
 #include <unistd.h>
 #include <sys/wait.h>
 
-#include "common.h"
-#include "proxy.h"
-#include "logger.h"
-#include "xml/protocol_parser.h"
+#include "../base/common.h"
+#include "../base/proxy.h"
+#include "../base/logger.h"
+#include "../base/xml/protocol_parser.h"
 
 using namespace std;
 

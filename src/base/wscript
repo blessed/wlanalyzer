@@ -1,0 +1,16 @@
+#! /usr/bin/env python
+
+out = 'build'
+
+def configure(ctx):
+	# Check for libev
+	ctx.check_cxx(header_name='ev++.h')
+	ctx.check_cxx(lib='ev', uselib_store='EV')
+	# Check for pugixml
+	ctx.check_cxx(lib='pugixml', uselib_store='PUGI')
+
+
+def build(bld):
+	source_files = bld.path.ant_glob('**/*.cpp')
+	bld.stlib(source=source_files, use=['EV', 'PUGI'], target='base')
+	print("Building base")

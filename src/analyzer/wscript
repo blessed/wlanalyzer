@@ -1,0 +1,9 @@
+#! /usr/bin/env python
+
+target = 'wlanalyzer'
+
+def configure(ctx):
+	ctx.load('qt5')
+
+def build(bld):
+	print('Building ' + target)

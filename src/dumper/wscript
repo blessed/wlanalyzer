@@ -2,8 +2,13 @@
 
 target = 'wldumper'
 
+def options(ctx):
+	ctx.load('compiler_cxx')
+
+
 def configure(ctx):
-	print('Configuring in ' + ctx.path.abspath())
+	ctx.load('compiler_cxx')
+
 
 def build(bld):
 	print('Building ' + target)

@@ -2,8 +2,15 @@
 
 target = 'wlanalyzer'
 
+def options(opt):
+	opt.load('compiler_cxx qt5')
+
+
 def configure(ctx):
-	ctx.load('qt5')
+	ctx.load('compiler_cxx qt5')
+
 
 def build(bld):
-	print('Building ' + target)
+	source_files = bld.path.ant_glob('*.cpp')
+	bld(source = source_files, target='wlanalyzer', features='qt5 cxx cxxprogram', use = [ 'QT5CORE', 'QT5GUI', 'QT5WIDGETS', 'base' ])
+

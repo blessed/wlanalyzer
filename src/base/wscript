@@ -2,7 +2,12 @@
 
 out = 'build'
 
+def options(ctx):
+        ctx.load('compiler_cxx')
+
+
 def configure(ctx):
+        ctx.load('compiler_cxx')
 	# Check for libev
 	ctx.check_cxx(header_name='ev++.h')
 	ctx.check_cxx(lib='ev', uselib_store='EV')
@@ -12,5 +17,4 @@ def configure(ctx):
 
 def build(bld):
 	source_files = bld.path.ant_glob('**/*.cpp')
-	bld.stlib(source=source_files, use=['EV', 'PUGI'], target='base')
-	print("Building base")
+	bld.stlib(source=source_files, use=['EV', 'PUGI'], target='base', install_path=bld.env.PREFIX + '/lib')

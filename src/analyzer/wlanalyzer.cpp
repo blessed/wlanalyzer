@@ -25,8 +25,8 @@
 #include <vector>
 #include <string>
 #include <string.h>
-#include "common.h"
-#include "parser.h"
+#include "../base/common.h"
+#include "../base/parser.h"
 
 using namespace std;
 

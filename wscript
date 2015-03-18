@@ -26,6 +26,3 @@ def configure(ctx):
 
 def build(bld):
 	bld.recurse('src')
-	bld.recurse('src/base')
-	bld.recurse('src/dumper')
-	bld.recurse('src/analyzer')

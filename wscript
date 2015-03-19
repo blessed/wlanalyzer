@@ -17,11 +17,12 @@ def configure(ctx):
 	if ctx.options.debug:
 		ctx.env.CXXFLAGS += ['-g', '-O0', '-DDEBUG_BUILD']
 
-	ctx.recurse('src')
+        if ctx.options.analyzer:
+            ctx.env.analyzer = True
+        else:
+            ctx.env.analyzer = False
 
-	if ctx.env.LIB_QT5QUICK and ctx.env.INCLUDES_QT5QUICK:
-		ctx.env.BUILD_WLANALYZER = True
-		print("Building a GUI analyzer")
+	ctx.recurse('src')
 
 
 def build(bld):

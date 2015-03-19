@@ -30,10 +30,10 @@
 #include <unistd.h>
 #include <sys/wait.h>
 
-#include "../base/common.h"
-#include "../base/proxy.h"
-#include "../base/logger.h"
-#include "../base/xml/protocol_parser.h"
+#include "../wlanalyzer_base/common.h"
+#include "../wlanalyzer_base/proxy.h"
+#include "../wlanalyzer_base/logger.h"
+#include "../wlanalyzer_base/xml/protocol_parser.h"
 
 using namespace std;
 

@@ -25,8 +25,8 @@
 #include <vector>
 #include <string>
 #include <string.h>
-#include "../base/common.h"
-#include "../base/parser.h"
+#include "../wlanalyzer_base/common.h"
+#include "../wlanalyzer_base/parser.h"
 
 using namespace std;
 

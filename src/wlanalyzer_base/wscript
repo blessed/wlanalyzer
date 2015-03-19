@@ -1,6 +1,6 @@
 #! /usr/bin/env python
 
-out = 'build'
+target_name = 'wlanalyzer_base'
 
 def options(ctx):
         ctx.load('compiler_cxx')
@@ -17,4 +17,6 @@ def configure(ctx):
 
 def build(bld):
 	source_files = bld.path.ant_glob('**/*.cpp')
-	bld.stlib(source=source_files, use=['EV', 'PUGI'], target='base', install_path=bld.env.PREFIX + '/lib')
+	header_files = bld.path.ant_glob('**/*.h')
+	bld.shlib(source=source_files, use=['EV', 'PUGI'], target=target_name)
+	bld.install_files(bld.env.PREFIX + '/include', header_files, relative_trick=True)

@@ -1,16 +1,25 @@
-Wldump
+wlanalyzer
 
-Wldump is a wayland protocol dumper/analyzer.
+The wlanalyzer project contains two tools:
+- wldumper - this tool is a proxy between a wayland client and the compositor. It is supposed to dump the wayland IPC traffic between the two.
+- wlanalyzer - this is a GUI analyzer that can analyze acquired wayland traffic data either from a pre-recorded file in offline mode
+               or in online mode by connecting the wldumper
 
 == BUILD ==
 
-Deps: libev, pugiXML
+Deps: libev, pugiXML, QT5 (optional for building the analyzer)
 
-wldump uses waf as build system. Waf is written in python so make sure you have python available on your build platform.
+wlanalyzer uses the waf build system. Waf is written in python so make sure you have python available on your platform.
 
-To build simply run:
+To build run:
 
-$ ./waf configure build
+$ ./waf configure [--prefix=INSTALL_DIR] [-d | --debug] [--analyzer]
 
-To run (make sure a wayland server is running and that the WAYLAND_DISPLAY variable is set):
-./wldump -- <wayland_client>
+To make the dumper intercept traffic and save it to file:
+$ ./wldump -c <path to the wayland.xml protocol definition>  [-e <paths to additional protocol definitions, e.g. xdg-shell>] -- <wayland_client>
+
+You can also run the wldump app run as server and send the acquired data over TCP/IP:
+$ ./wldump -n [ port ] -- <wayland_client>
+
+Currently wlanalyzer can only receive data from wldump over network. To run type:
+$ ./wlanalyzer -c <wayland.xml path> [ -e <additional protocol definition paths> ] -- <ip:port>

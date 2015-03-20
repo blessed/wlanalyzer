@@ -37,7 +37,8 @@ IpDialog::IpDialog(QWidget *parent) : QDialog(parent)
 		QFont font = edit->font();
 		font.setStyleHint(QFont::Monospace);
 		font.setFixedPitch(true);
-
+		// set reasonable lineedit width without subclassing equal to width of octet and one digit margin
+		edit->setFixedWidth(5 * QFontMetrics(font).width("0"));
 		QRegExp rx("^(0|[1-9]|[1-9][0-9]|1[0-9][0-9]|2([0-4][0-9]|5[0-5]))$");
 		QValidator *validator = new QRegExpValidator(rx, edit);
 		edit->setValidator(validator);

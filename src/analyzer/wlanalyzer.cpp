@@ -25,6 +25,7 @@
 #include <vector>
 #include <string>
 #include <string.h>
+#include "wlanalyzer.moc"
 #include "../wlanalyzer_base/common.h"
 #include "../wlanalyzer_base/parser.h"
 
@@ -133,6 +134,12 @@ int main(int argc, char **argv)
 {
     options_t options;
     ev::default_loop loop;
+
+	QApplication app(argc, argv);
+	MainWindow window;
+	window.resize(300, 200);
+	window.show();
+	return app.exec();
 
     if (parse_cmdline(argc, argv, &options))
     {

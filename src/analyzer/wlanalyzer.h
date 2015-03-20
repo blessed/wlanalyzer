@@ -8,9 +8,24 @@ class MainWindow : public QMainWindow
 	Q_OBJECT
 
 public:
-	MainWindow()
-	{
-	}
+	MainWindow();
+
+private:
+	void createActions();
+	void createMenus();
+
+private slots:
+	void connectSlot();
+
+private:
+
+	QMenu *fileMenu;
+	QMenu *helpMenu;
+
+	QAction *connectAct;
+	QAction *openAct;
+	QAction *exitAct;
+	QAction *aboutAct;
 };
 
 #endif // WLANALYZER_H

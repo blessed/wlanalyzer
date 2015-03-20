@@ -53,9 +53,9 @@ void MainWindow::createMenus()
 
 void MainWindow::connectSlot()
 {
-	IpDialog ipDialog;
+	IpDialog* ip = new IpDialog();
 
-	ipDialog.exec();
+	ip->show();
 }
 
 using namespace std;

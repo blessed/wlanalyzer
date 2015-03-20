@@ -7,7 +7,7 @@
 #include "ipdialog.h"
 #include "ipdialog.moc"
 
-IpDialog::IpDialog(QWidget *parent) : QDialog(parent)
+IpDialog::IpDialog(QWidget *parent) : QFrame(parent)
 {
 	QHBoxLayout *hboxlayout = new QHBoxLayout(this);
 
@@ -71,7 +71,7 @@ IpDialog::~IpDialog()
 
 bool IpDialog::eventFilter(QObject *obj, QEvent *event)
 {
-	bool res = QDialog::eventFilter(obj, event);
+	bool res = QFrame::eventFilter(obj, event);
 
 	if (event->type() == QEvent::KeyPress)
 	{

@@ -1,11 +1,11 @@
 #ifndef IPDIALOG_H
 #define IPDIALOG_H
 
-#include <QDialog>
+#include <QFrame>
 #include <QWidget>
 #include <QLineEdit>
 
-class IpDialog : public QDialog
+class IpDialog : public QFrame
 {
 	Q_OBJECT
 

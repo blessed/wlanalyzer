@@ -95,9 +95,9 @@ bool IpDialog::eventFilter(QObject *obj, QEvent *event)
 						break;
 
 					case Qt::Key_0:
-						if (edit->text().isEmpty() || edit->text() == "0")
+						if (edit->text().isEmpty() || edit->text().endsWith("0"))
 						{
-							edit->setText("0");
+							edit->setText(edit->text() + "0");
 							moveNextLineEdit(i);
 						}
 						break;

@@ -25,9 +25,38 @@
 #include <vector>
 #include <string>
 #include <string.h>
+#include "wlanalyzer.h"
 #include "wlanalyzer.moc"
+#include "ipdialog.h"
 #include "../wlanalyzer_base/common.h"
 #include "../wlanalyzer_base/parser.h"
+
+MainWindow::MainWindow()
+{
+	createActions();
+	createMenus();
+}
+
+void MainWindow::createActions()
+{
+	connectAct = new QAction(tr("&Connect..."), this);
+	connectAct->setShortcuts(QKeySequence::New);
+	connectAct->setStatusTip(tr("Connect to wldumper"));
+	connect(connectAct, SIGNAL(triggered()), this, SLOT(connectSlot()));
+}
+
+void MainWindow::createMenus()
+{
+	fileMenu = menuBar()->addMenu(tr("&File"));
+	fileMenu->addAction(connectAct);
+}
+
+void MainWindow::connectSlot()
+{
+	IpDialog ipDialog;
+
+	ipDialog.exec();
+}
 
 using namespace std;
 
@@ -137,7 +166,7 @@ int main(int argc, char **argv)
 
 	QApplication app(argc, argv);
 	MainWindow window;
-	window.resize(300, 200);
+	window.resize(800, 600);
 	window.show();
 	return app.exec();
 

@@ -19,7 +19,6 @@ IpDialog::IpDialog(QWidget *parent) : QFrame(parent)
 		if (i != 0)
 		{
 			QLabel *dot = new QLabel(".", this);
-			dot->setStyleSheet("background: white");
 			hboxlayout->addWidget(dot);
 			hboxlayout->setStretch(hboxlayout->count(), 0);
 		}
@@ -45,7 +44,6 @@ IpDialog::IpDialog(QWidget *parent) : QFrame(parent)
 	}
 
 	QLabel *colon = new QLabel(":", this);
-	colon->setStyleSheet("background: white");
 	hboxlayout->addWidget(colon);
 	hboxlayout->setStretch(hboxlayout->count(), 1);
 

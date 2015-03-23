@@ -1,11 +1,11 @@
 #ifndef IPDIALOG_H
 #define IPDIALOG_H
 
-#include <QFrame>
-#include <QWidget>
-#include <QLineEdit>
+#include <QHostAddress>
+#include <QtWidgets>
+#include "ipfield.h"
 
-class IpDialog : public QFrame
+class IpDialog : public QDialog
 {
 	Q_OBJECT
 
@@ -13,21 +13,14 @@ public:
 	IpDialog(QWidget *parent = 0);
 	~IpDialog();
 
-	virtual bool eventFilter( QObject *obj, QEvent *event );
-
-public slots:
-	void slotTextChanged(QLineEdit* pEdit);
-
-signals:
-	void signalTextChanged(QLineEdit* pEdit);
+	QHostAddress getAddress() const;
+	quint16 getPort() const;
 
 private:
-	void moveNextLineEdit (int i);
-	void movePrevLineEdit (int i);
-
-private:
-	QLineEdit *ipLine[4];
-	QLineEdit *portLine;
+	IpField *ipfield;
+	QPushButton *okButton;
+	QPushButton *cancelButton;
 };
 
 #endif // IPDIALOG_H
+

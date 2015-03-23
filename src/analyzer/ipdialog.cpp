@@ -7,7 +7,7 @@
 #include "ipdialog.h"
 #include "ipdialog.moc"
 
-IpDialog::IpDialog(QWidget *parent) : QDialog(parent)
+IpDialog::IpDialog(QWidget *parent) : QFrame(parent)
 {
 	QHBoxLayout *hboxlayout = new QHBoxLayout(this);
 
@@ -19,7 +19,6 @@ IpDialog::IpDialog(QWidget *parent) : QDialog(parent)
 		if (i != 0)
 		{
 			QLabel *dot = new QLabel(".", this);
-			dot->setStyleSheet("background: white");
 			hboxlayout->addWidget(dot);
 			hboxlayout->setStretch(hboxlayout->count(), 0);
 		}
@@ -37,14 +36,14 @@ IpDialog::IpDialog(QWidget *parent) : QDialog(parent)
 		QFont font = edit->font();
 		font.setStyleHint(QFont::Monospace);
 		font.setFixedPitch(true);
-
+		// set reasonable lineedit width without subclassing equal to width of octet and one digit margin
+		edit->setFixedWidth(5 * QFontMetrics(font).width("0"));
 		QRegExp rx("^(0|[1-9]|[1-9][0-9]|1[0-9][0-9]|2([0-4][0-9]|5[0-5]))$");
 		QValidator *validator = new QRegExpValidator(rx, edit);
 		edit->setValidator(validator);
 	}
 
 	QLabel *colon = new QLabel(":", this);
-	colon->setStyleSheet("background: white");
 	hboxlayout->addWidget(colon);
 	hboxlayout->setStretch(hboxlayout->count(), 1);
 
@@ -70,7 +69,7 @@ IpDialog::~IpDialog()
 
 bool IpDialog::eventFilter(QObject *obj, QEvent *event)
 {
-	bool res = QDialog::eventFilter(obj, event);
+	bool res = QFrame::eventFilter(obj, event);
 
 	if (event->type() == QEvent::KeyPress)
 	{
@@ -95,9 +94,9 @@ bool IpDialog::eventFilter(QObject *obj, QEvent *event)
 						break;
 
 					case Qt::Key_0:
-						if (edit->text().isEmpty() || edit->text() == "0")
+						if (edit->text().isEmpty() || edit->text().endsWith("0"))
 						{
-							edit->setText("0");
+							edit->setText(edit->text() + "0");
 							moveNextLineEdit(i);
 						}
 						break;

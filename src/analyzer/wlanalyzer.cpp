@@ -43,19 +43,42 @@ void MainWindow::createActions()
 	connectAct->setShortcuts(QKeySequence::New);
 	connectAct->setStatusTip(tr("Connect to wldumper"));
 	connect(connectAct, SIGNAL(triggered()), this, SLOT(connectSlot()));
+
+	openAct = new QAction(tr("&Open file"), this);
+	openAct->setStatusTip(tr("Open a file with grabbed data"));
+	connect(openAct, SIGNAL(triggered(bool)), this, SLOT(openSlot()));
 }
 
 void MainWindow::createMenus()
 {
 	fileMenu = menuBar()->addMenu(tr("&File"));
+	fileMenu->addAction(openAct);
 	fileMenu->addAction(connectAct);
 }
 
 void MainWindow::connectSlot()
 {
-	IpDialog* ip = new IpDialog();
+	IpDialog ip;
+	if (ip.exec())
+	{
+		qDebug("connect to %s:%d", ip.getAddress().toString().toStdString().c_str(), ip.getPort());
+	}
+	else
+	{
+		qDebug("Pressed cancel");
+	}
+}
 
-	ip->show();
+void MainWindow::openSlot()
+{
+	QFileDialog fileDialog;
+
+	if (fileDialog.exec())
+	{
+		qDebug("Opened");
+	}
+	else
+		qDebug("Pressed cancel");
 }
 
 using namespace std;

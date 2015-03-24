@@ -25,6 +25,7 @@
 #include <vector>
 #include <string>
 #include <string.h>
+#include <QMessageBox>
 #include "wlanalyzer.h"
 #include "wlanalyzer.moc"
 #include "ipdialog.h"
@@ -47,6 +48,10 @@ void MainWindow::createActions()
 	openAct = new QAction(tr("&Open file"), this);
 	openAct->setStatusTip(tr("Open a file with grabbed data"));
 	connect(openAct, SIGNAL(triggered(bool)), this, SLOT(openSlot()));
+
+    aboutAct = new QAction(tr("&About"), this);
+	aboutAct->setStatusTip(tr("Display information about this application"));
+	connect(aboutAct, SIGNAL(triggered(bool)), this, SLOT(aboutSlot()));
 }
 
 void MainWindow::createMenus()
@@ -54,6 +59,7 @@ void MainWindow::createMenus()
 	fileMenu = menuBar()->addMenu(tr("&File"));
 	fileMenu->addAction(openAct);
 	fileMenu->addAction(connectAct);
+	menuBar()->addAction(aboutAct);
 }
 
 void MainWindow::connectSlot()
@@ -79,6 +85,14 @@ void MainWindow::openSlot()
 	}
 	else
 		qDebug("Pressed cancel");
+}
+
+void MainWindow::aboutSlot()
+{
+    QMessageBox::about(this, tr("About this application"),
+            tr("This is a GUI analyzer that can analyze acquired wayland traffic.\n"
+               "The data can originate either from a pre-recorded file gathered "
+               "in offline mode or in online mode by connecting the wldumper"));
 }
 
 using namespace std;

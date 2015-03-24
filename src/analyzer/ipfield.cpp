@@ -96,7 +96,8 @@ bool IpField::eventFilter(QObject *obj, QEvent *event)
 						break;
 
 					case Qt::Key_0:
-						if (edit->text().isEmpty() || edit->text().endsWith("0") || edit->text().size() == 2)
+						if (edit->text().isEmpty() || edit->text().endsWith("0") || edit->text().size() == 2 ||
+								edit->text()[0] > '2')
 							moveNextLineEdit(i);
 						break;
 
@@ -131,8 +132,9 @@ void IpField::slotTextChanged(QLineEdit *pEdit)
 	{
 		if (pEdit == ipLine[i])
 		{
-			if ((pEdit->text().size() == 3 && pEdit->text().size() == pEdit->cursorPosition()) ||
-					(pEdit->text() == "0"))
+			if (((pEdit->text().size() == 3) && (pEdit->text().size() == pEdit->cursorPosition())) ||
+					((pEdit->text()[0] != '1') && (pEdit->text()[0] != '2') && (pEdit->text().size() == 2)) ||
+					(pEdit->text().endsWith("0")))
 			{
 				if ( i + 1 < IP_SIZE)
 				{

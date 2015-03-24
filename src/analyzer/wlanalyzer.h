@@ -17,6 +17,7 @@ private:
 private slots:
 	void connectSlot();
 	void openSlot();
+	void aboutSlot();
 
 private:
 

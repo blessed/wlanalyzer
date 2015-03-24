@@ -13,7 +13,10 @@ wlanalyzer uses the waf build system. Waf is written in python so make sure you 
 
 To build run:
 
-$ ./waf configure [--prefix=INSTALL_DIR] [-d | --debug] [--analyzer]
+$ ./waf configure [--prefix=INSTALL_DIR] [-d | --debug] [--analyzer] build
+
+To install under the location given in the prefix option (by default /usr/local/) run:
+$ ./waf install
 
 To make the dumper intercept traffic and save it to file:
 $ ./wldump -c <path to the wayland.xml protocol definition>  [-e <paths to additional protocol definitions, e.g. xdg-shell>] -- <wayland_client>

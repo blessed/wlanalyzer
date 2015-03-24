@@ -50,6 +50,7 @@ void MainWindow::createActions()
 	connect(openAct, SIGNAL(triggered(bool)), this, SLOT(openSlot()));
 
 	exitAct = new QAction(tr("&Exit"), this);
+	exitAct->setShortcuts(QKeySequence::Quit);
 	connect(exitAct, SIGNAL(triggered(bool)), this, SLOT(close()));
 
     aboutAct = new QAction(tr("&About"), this);

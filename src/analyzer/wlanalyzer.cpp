@@ -49,6 +49,9 @@ void MainWindow::createActions()
 	openAct->setStatusTip(tr("Open a file with grabbed data"));
 	connect(openAct, SIGNAL(triggered(bool)), this, SLOT(openSlot()));
 
+	exitAct = new QAction(tr("&Exit"), this);
+	connect(exitAct, SIGNAL(triggered(bool)), this, SLOT(close()));
+
     aboutAct = new QAction(tr("&About"), this);
 	aboutAct->setStatusTip(tr("Display information about this application"));
 	connect(aboutAct, SIGNAL(triggered(bool)), this, SLOT(aboutSlot()));
@@ -59,7 +62,11 @@ void MainWindow::createMenus()
 	fileMenu = menuBar()->addMenu(tr("&File"));
 	fileMenu->addAction(openAct);
 	fileMenu->addAction(connectAct);
-	menuBar()->addAction(aboutAct);
+	fileMenu->addSeparator();
+	fileMenu->addAction(exitAct);
+
+	helpMenu = menuBar()->addMenu(tr("&Help"));
+	helpMenu->addAction(aboutAct);
 }
 
 void MainWindow::connectSlot()

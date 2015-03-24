@@ -47,6 +47,7 @@ void MainWindow::createActions()
 
 	openAct = new QAction(tr("&Open file"), this);
 	openAct->setStatusTip(tr("Open a file with grabbed data"));
+	openAct->setShortcuts(QKeySequence::Open);
 	connect(openAct, SIGNAL(triggered(bool)), this, SLOT(openSlot()));
 
 	exitAct = new QAction(tr("&Exit"), this);

@@ -25,84 +25,11 @@
 #include <vector>
 #include <string>
 #include <string.h>
-#include <QMessageBox>
-#include "wlanalyzer.h"
-#include "wlanalyzer.moc"
-#include "ipdialog.h"
+#include <QApplication>
+#include "mainwindow.h"
+#include "mainwindow.moc"
 #include "../wlanalyzer_base/common.h"
 #include "../wlanalyzer_base/parser.h"
-
-MainWindow::MainWindow()
-{
-	createActions();
-	createMenus();
-}
-
-void MainWindow::createActions()
-{
-	connectAct = new QAction(tr("&Connect..."), this);
-	connectAct->setShortcuts(QKeySequence::New);
-	connectAct->setStatusTip(tr("Connect to wldumper"));
-	connect(connectAct, SIGNAL(triggered()), this, SLOT(connectSlot()));
-
-	openAct = new QAction(tr("&Open file"), this);
-	openAct->setStatusTip(tr("Open a file with grabbed data"));
-	openAct->setShortcuts(QKeySequence::Open);
-	connect(openAct, SIGNAL(triggered(bool)), this, SLOT(openSlot()));
-
-	exitAct = new QAction(tr("&Exit"), this);
-	exitAct->setShortcuts(QKeySequence::Quit);
-	connect(exitAct, SIGNAL(triggered(bool)), this, SLOT(close()));
-
-    aboutAct = new QAction(tr("&About"), this);
-	aboutAct->setStatusTip(tr("Display information about this application"));
-	connect(aboutAct, SIGNAL(triggered(bool)), this, SLOT(aboutSlot()));
-}
-
-void MainWindow::createMenus()
-{
-	fileMenu = menuBar()->addMenu(tr("&File"));
-	fileMenu->addAction(openAct);
-	fileMenu->addAction(connectAct);
-	fileMenu->addSeparator();
-	fileMenu->addAction(exitAct);
-
-	helpMenu = menuBar()->addMenu(tr("&Help"));
-	helpMenu->addAction(aboutAct);
-}
-
-void MainWindow::connectSlot()
-{
-	IpDialog ip;
-	if (ip.exec())
-	{
-		qDebug("connect to %s:%d", ip.getAddress().toString().toStdString().c_str(), ip.getPort());
-	}
-	else
-	{
-		qDebug("Pressed cancel");
-	}
-}
-
-void MainWindow::openSlot()
-{
-	QFileDialog fileDialog;
-
-	if (fileDialog.exec())
-	{
-		qDebug("Opened");
-	}
-	else
-		qDebug("Pressed cancel");
-}
-
-void MainWindow::aboutSlot()
-{
-    QMessageBox::about(this, tr("About this application"),
-            tr("This is a GUI analyzer that can analyze acquired wayland traffic.\n"
-               "The data can originate either from a pre-recorded file gathered "
-               "in offline mode or in online mode by connecting the wldumper"));
-}
 
 using namespace std;
 
@@ -212,7 +139,6 @@ int main(int argc, char **argv)
 
 	QApplication app(argc, argv);
 	MainWindow window;
-	window.resize(800, 600);
 	window.show();
 	return app.exec();
 

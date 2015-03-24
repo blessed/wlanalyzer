@@ -12,5 +12,6 @@ def configure(ctx):
 
 def build(bld):
 	source_files = bld.path.ant_glob('*.cpp')
-	bld(source = source_files, target='wlanalyzer', features='qt5 cxx cxxprogram', use = [ 'QT5CORE', 'QT5GUI', 'QT5WIDGETS', 'QT5NETWORK', 'wlanalyzer_base' ], includes = [ bld.path.get_bld() ])
+	ui_files = bld.path.ant_glob('*.ui')
+	bld(source = source_files + ui_files, target='wlanalyzer', features='qt5 cxx cxxprogram', use = [ 'QT5CORE', 'QT5GUI', 'QT5WIDGETS', 'QT5NETWORK', 'wlanalyzer_base' ], includes = [ bld.path.get_bld() ])
 

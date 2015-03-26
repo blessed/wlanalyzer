@@ -13,7 +13,7 @@ def configure(ctx):
 	ctx.check_cxx(lib='ev', uselib_store='EV')
 	# Check for pugixml
 	ctx.check_cxx(lib='pugixml', uselib_store='PUGI')
-	ctx.env.RPATH += [ ctx.env.PREFIX + '/lib' ]
+	ctx.env.RPATH += [ ctx.env.LIBDIR ]
 
 
 def build(bld):

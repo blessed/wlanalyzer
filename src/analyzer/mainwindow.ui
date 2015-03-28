@@ -69,7 +69,7 @@
        <attribute name="title">
         <string>Validator</string>
        </attribute>
-       <layout class="QGridLayout" name="gridLayout_3">
+       <layout class="QGridLayout" name="gridLayout">
         <item row="0" column="0">
          <widget class="QLabel" name="label">
           <property name="sizePolicy">
@@ -89,6 +89,12 @@
          </widget>
         </item>
        </layout>
+      </widget>
+      <widget class="QWidget" name="tabWidgetTestPage">
+       <attribute name="title">
+        <string>TestPage</string>
+       </attribute>
+       <layout class="QGridLayout" name="gridLayout_3"/>
       </widget>
      </widget>
     </item>

@@ -9,6 +9,25 @@ MainWindow::MainWindow(QWidget *parent) :
     ui(new Ui::MainWindow)
 {
     ui->setupUi(this);
+    QMainWindow *dock_area = new QMainWindow(this, Qt::Widget);
+    ui->tabWidgetTestPage->layout()->addWidget(dock_area);
+
+
+    QDockWidget* dw1 = new QDockWidget(dock_area);
+    dw1->setObjectName(QStringLiteral("dw1"));
+    dw1->setContextMenuPolicy(Qt::CustomContextMenu);
+
+    dw1->setWidget(new QLabel(">>>>1<<<<<<"));
+    dock_area->addDockWidget(static_cast<Qt::DockWidgetArea>(1), dw1);
+
+
+    QDockWidget* dw2 = new QDockWidget(dock_area);
+    dw2->setObjectName(QStringLiteral("dw1"));
+    dw2->setContextMenuPolicy(Qt::CustomContextMenu);
+
+    dw2->setWidget(new QLabel(">>>>2<<<<<<"));
+    dock_area->addDockWidget(static_cast<Qt::DockWidgetArea>(1), dw2);
+
 }
 
 MainWindow::~MainWindow()

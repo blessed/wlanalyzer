@@ -238,7 +238,19 @@
     </property>
     <addaction name="action_About"/>
    </widget>
+   <widget class="QMenu" name="menu_View">
+    <property name="title">
+     <string>&amp;View</string>
+    </property>
+    <widget class="QMenu" name="menu_Logs">
+     <property name="title">
+      <string>&amp;Logs</string>
+     </property>
+    </widget>
+    <addaction name="menu_Logs"/>
+   </widget>
    <addaction name="menuFile"/>
+   <addaction name="menu_View"/>
    <addaction name="menuAbout"/>
   </widget>
   <action name="actionConnect">

@@ -13,6 +13,11 @@ MainWindow::MainWindow(QWidget *parent) :
     //QMainWindow acting as dockarea is asked to acta as a widget instead of
     //top level window. There is no way to set it from designer
     ui->log_page_dockarea->setWindowFlags(Qt::Widget);
+
+    //Show toggle menu actions for all docks in main window menubar
+    ui->menu_Logs->addAction(ui->dockPacketList->toggleViewAction());
+    ui->menu_Logs->addAction(ui->dockPacketDissection->toggleViewAction());
+    ui->menu_Logs->addAction(ui->dockPacketHex->toggleViewAction());
 }
 
 MainWindow::~MainWindow()

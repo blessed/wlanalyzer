@@ -50,20 +50,136 @@
       <property name="movable">
        <bool>true</bool>
       </property>
-      <widget class="QSplitter" name="tabWidgetLogPage">
-       <property name="orientation">
-        <enum>Qt::Vertical</enum>
-       </property>
+      <widget class="QWidget" name="tabWidgetLogPage">
        <attribute name="title">
-        <string>Page</string>
+        <string>Logs</string>
        </attribute>
-       <widget class="QTableView" name="tableView_2"/>
-       <widget class="QTreeView" name="treeView"/>
-       <widget class="QLabel" name="Placeholder_for_Hexedit">
-        <property name="text">
-         <string>Placeholder for Hex Edit</string>
+       <layout class="QGridLayout" name="gridLayout_2">
+        <property name="leftMargin">
+         <number>0</number>
         </property>
-       </widget>
+        <property name="topMargin">
+         <number>0</number>
+        </property>
+        <property name="rightMargin">
+         <number>0</number>
+        </property>
+        <property name="bottomMargin">
+         <number>0</number>
+        </property>
+        <item row="0" column="0">
+         <widget class="QMainWindow" name="log_page_dockarea">
+          <widget class="QDockWidget" name="dockPacketList">
+           <property name="floating">
+            <bool>false</bool>
+           </property>
+           <property name="features">
+            <set>QDockWidget::DockWidgetClosable|QDockWidget::DockWidgetMovable</set>
+           </property>
+           <property name="allowedAreas">
+            <set>Qt::LeftDockWidgetArea</set>
+           </property>
+           <property name="windowTitle">
+            <string>Packet List</string>
+           </property>
+           <attribute name="dockWidgetArea">
+            <number>1</number>
+           </attribute>
+           <widget class="QWidget" name="dockWidgetContents_2">
+            <layout class="QGridLayout" name="gridLayout_3">
+             <property name="leftMargin">
+              <number>0</number>
+             </property>
+             <property name="topMargin">
+              <number>0</number>
+             </property>
+             <property name="rightMargin">
+              <number>0</number>
+             </property>
+             <property name="bottomMargin">
+              <number>0</number>
+             </property>
+             <item row="0" column="0">
+              <widget class="QTreeView" name="packetListTreeView"/>
+             </item>
+            </layout>
+           </widget>
+          </widget>
+          <widget class="QDockWidget" name="dockPacketDissection">
+           <property name="contextMenuPolicy">
+            <enum>Qt::PreventContextMenu</enum>
+           </property>
+           <property name="features">
+            <set>QDockWidget::DockWidgetClosable|QDockWidget::DockWidgetMovable</set>
+           </property>
+           <property name="allowedAreas">
+            <set>Qt::LeftDockWidgetArea</set>
+           </property>
+           <property name="windowTitle">
+            <string>Packet Dissection</string>
+           </property>
+           <attribute name="dockWidgetArea">
+            <number>1</number>
+           </attribute>
+           <widget class="QWidget" name="dockWidgetContents_3">
+            <layout class="QGridLayout" name="gridLayout_4">
+             <property name="leftMargin">
+              <number>0</number>
+             </property>
+             <property name="topMargin">
+              <number>0</number>
+             </property>
+             <property name="rightMargin">
+              <number>0</number>
+             </property>
+             <property name="bottomMargin">
+              <number>0</number>
+             </property>
+             <item row="0" column="0">
+              <widget class="QTreeView" name="packetDissectionTreeView"/>
+             </item>
+            </layout>
+           </widget>
+          </widget>
+          <widget class="QDockWidget" name="dockPacketHex">
+           <property name="contextMenuPolicy">
+            <enum>Qt::PreventContextMenu</enum>
+           </property>
+           <property name="features">
+            <set>QDockWidget::DockWidgetClosable|QDockWidget::DockWidgetMovable</set>
+           </property>
+           <property name="allowedAreas">
+            <set>Qt::LeftDockWidgetArea</set>
+           </property>
+           <property name="windowTitle">
+            <string>Raw Data</string>
+           </property>
+           <attribute name="dockWidgetArea">
+            <number>1</number>
+           </attribute>
+           <widget class="QWidget" name="dockWidgetContents_4">
+            <layout class="QGridLayout" name="gridLayout_5">
+             <property name="leftMargin">
+              <number>0</number>
+             </property>
+             <property name="topMargin">
+              <number>0</number>
+             </property>
+             <property name="rightMargin">
+              <number>0</number>
+             </property>
+             <property name="bottomMargin">
+              <number>0</number>
+             </property>
+             <item row="0" column="0">
+              <widget class="QTextEdit" name="packetHexEdit"/>
+             </item>
+            </layout>
+           </widget>
+          </widget>
+         </widget>
+        </item>
+       </layout>
       </widget>
       <widget class="QWidget" name="tabWidgetValidatorPage">
        <attribute name="title">
@@ -89,12 +205,6 @@
          </widget>
         </item>
        </layout>
-      </widget>
-      <widget class="QWidget" name="tabWidgetTestPage">
-       <attribute name="title">
-        <string>TestPage</string>
-       </attribute>
-       <layout class="QGridLayout" name="gridLayout_3"/>
       </widget>
      </widget>
     </item>

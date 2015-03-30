@@ -57,3 +57,29 @@ void MainWindow::aboutSlot()
                "The data can originate either from a pre-recorded file gathered "
                "in offline mode or in online mode by connecting the wldumper"));
 }
+
+void MainWindow::pinDockToTopSlot()
+{
+    pinDockToArea(qobject_cast<QDockWidget *>(sender()->parent()), Qt::TopDockWidgetArea);
+}
+
+void MainWindow::pinDockToLeftSlot()
+{
+    pinDockToArea(qobject_cast<QDockWidget *>(sender()->parent()), Qt::LeftDockWidgetArea);
+}
+
+void MainWindow::pinDockToRightSlot()
+{
+    pinDockToArea(qobject_cast<QDockWidget *>(sender()->parent()), Qt::RightDockWidgetArea);
+}
+
+void MainWindow::pinDockToBottomSlot()
+{
+    pinDockToArea(qobject_cast<QDockWidget *>(sender()->parent()), Qt::BottomDockWidgetArea);
+}
+
+void MainWindow::pinDockToArea(QDockWidget* dock, Qt::DockWidgetArea area)
+{
+    Q_ASSERT(dock);
+    qDebug()<< "pin:" << dock << " to:" << area;
+}

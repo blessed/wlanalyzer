@@ -20,7 +20,14 @@ private slots:
 	void openSlot();
 	void aboutSlot();
 
+    // dock widget pin to area logic
+    void pinDockToTopSlot();
+    void pinDockToLeftSlot();
+    void pinDockToRightSlot();
+    void pinDockToBottomSlot();
+
 private:
+    void pinDockToArea(QDockWidget* dock, Qt::DockWidgetArea area);
     Ui::MainWindow *ui;
 };
 

@@ -70,6 +70,9 @@
         <item row="0" column="0">
          <widget class="QMainWindow" name="log_page_dockarea">
           <widget class="QDockWidget" name="dockPacketList">
+           <property name="contextMenuPolicy">
+            <enum>Qt::ActionsContextMenu</enum>
+           </property>
            <property name="floating">
             <bool>false</bool>
            </property>
@@ -104,10 +107,34 @@
              </item>
             </layout>
            </widget>
+           <action name="actionDockPacketListPinLeft">
+            <property name="text">
+             <string>Pin to left</string>
+            </property>
+           </action>
+           <action name="actionDockPacketListPinTop">
+            <property name="text">
+             <string>Pin to top</string>
+            </property>
+           </action>
+           <action name="actionDockPacketListPinRight">
+            <property name="text">
+             <string>Pin to right</string>
+            </property>
+           </action>
+           <action name="actionDockPacketListPinBottom">
+            <property name="text">
+             <string>Pin to bottom</string>
+            </property>
+           </action>
+           <addaction name="actionDockPacketListPinLeft"/>
+           <addaction name="actionDockPacketListPinTop"/>
+           <addaction name="actionDockPacketListPinRight"/>
+           <addaction name="actionDockPacketListPinBottom"/>
           </widget>
           <widget class="QDockWidget" name="dockPacketDissection">
            <property name="contextMenuPolicy">
-            <enum>Qt::PreventContextMenu</enum>
+            <enum>Qt::ActionsContextMenu</enum>
            </property>
            <property name="features">
             <set>QDockWidget::DockWidgetClosable|QDockWidget::DockWidgetMovable</set>
@@ -140,10 +167,34 @@
              </item>
             </layout>
            </widget>
+           <action name="actionDockPacketDissectionPinLeft">
+            <property name="text">
+             <string>Pin to left</string>
+            </property>
+           </action>
+           <action name="actionDockPacketDissectionPinTop">
+            <property name="text">
+             <string>Pin to top</string>
+            </property>
+           </action>
+           <action name="actionDockPacketDissectionPinRight">
+            <property name="text">
+             <string>Pin to right</string>
+            </property>
+           </action>
+           <action name="actionDockPacketDissectionPinBottom">
+            <property name="text">
+             <string>Pin to bottom</string>
+            </property>
+           </action>
+           <addaction name="actionDockPacketDissectionPinLeft"/>
+           <addaction name="actionDockPacketDissectionPinTop"/>
+           <addaction name="actionDockPacketDissectionPinRight"/>
+           <addaction name="actionDockPacketDissectionPinBottom"/>
           </widget>
           <widget class="QDockWidget" name="dockPacketHex">
            <property name="contextMenuPolicy">
-            <enum>Qt::PreventContextMenu</enum>
+            <enum>Qt::ActionsContextMenu</enum>
            </property>
            <property name="features">
             <set>QDockWidget::DockWidgetClosable|QDockWidget::DockWidgetMovable</set>
@@ -176,6 +227,30 @@
              </item>
             </layout>
            </widget>
+           <action name="actionDockPacketHexPinLeft">
+            <property name="text">
+             <string>Pin to left</string>
+            </property>
+           </action>
+           <action name="actionDockPacketHexPinTop">
+            <property name="text">
+             <string>Pin to top</string>
+            </property>
+           </action>
+           <action name="actionDockPacketHexPinRight">
+            <property name="text">
+             <string>Pin to right</string>
+            </property>
+           </action>
+           <action name="actionDockPacketHexPinBottom">
+            <property name="text">
+             <string>Pin to bottom</string>
+            </property>
+           </action>
+           <addaction name="actionDockPacketHexPinLeft"/>
+           <addaction name="actionDockPacketHexPinTop"/>
+           <addaction name="actionDockPacketHexPinRight"/>
+           <addaction name="actionDockPacketHexPinBottom"/>
           </widget>
          </widget>
         </item>
@@ -341,21 +416,87 @@
    <signal>triggered()</signal>
    <receiver>MainWindow</receiver>
    <slot>openSlot()</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>-1</x>
-     <y>-1</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>399</x>
-     <y>299</y>
-    </hint>
-   </hints>
+  </connection>
+  <connection>
+   <sender>actionDockPacketListPinLeft</sender>
+   <signal>triggered()</signal>
+   <receiver>MainWindow</receiver>
+   <slot>pinDockToLeftSlot()</slot>
+  </connection>
+  <connection>
+   <sender>actionDockPacketListPinRight</sender>
+   <signal>triggered()</signal>
+   <receiver>MainWindow</receiver>
+   <slot>pinDockToRightSlot()</slot>
+  </connection>
+  <connection>
+   <sender>actionDockPacketListPinTop</sender>
+   <signal>triggered()</signal>
+   <receiver>MainWindow</receiver>
+   <slot>pinDockToTopSlot()</slot>
+  </connection>
+  <connection>
+   <sender>actionDockPacketListPinBottom</sender>
+   <signal>triggered()</signal>
+   <receiver>MainWindow</receiver>
+   <slot>pinDockToBottomSlot()</slot>
+  </connection>
+  <connection>
+   <sender>actionDockPacketDissectionPinLeft</sender>
+   <signal>triggered()</signal>
+   <receiver>MainWindow</receiver>
+   <slot>pinDockToLeftSlot()</slot>
+  </connection>
+  <connection>
+   <sender>actionDockPacketDissectionPinRight</sender>
+   <signal>triggered()</signal>
+   <receiver>MainWindow</receiver>
+   <slot>pinDockToRightSlot()</slot>
+  </connection>
+  <connection>
+   <sender>actionDockPacketDissectionPinTop</sender>
+   <signal>triggered()</signal>
+   <receiver>MainWindow</receiver>
+   <slot>pinDockToTopSlot()</slot>
+  </connection>
+  <connection>
+   <sender>actionDockPacketDissectionPinBottom</sender>
+   <signal>triggered()</signal>
+   <receiver>MainWindow</receiver>
+   <slot>pinDockToBottomSlot()</slot>
+  </connection>
+  <connection>
+   <sender>actionDockPacketHexPinLeft</sender>
+   <signal>triggered()</signal>
+   <receiver>MainWindow</receiver>
+   <slot>pinDockToLeftSlot()</slot>
+  </connection>
+  <connection>
+   <sender>actionDockPacketHexPinRight</sender>
+   <signal>triggered()</signal>
+   <receiver>MainWindow</receiver>
+   <slot>pinDockToRightSlot()</slot>
+  </connection>
+  <connection>
+   <sender>actionDockPacketHexPinTop</sender>
+   <signal>triggered()</signal>
+   <receiver>MainWindow</receiver>
+   <slot>pinDockToTopSlot()</slot>
+  </connection>
+  <connection>
+   <sender>actionDockPacketHexPinBottom</sender>
+   <signal>triggered()</signal>
+   <receiver>MainWindow</receiver>
+   <slot>pinDockToBottomSlot()</slot>
   </connection>
  </connections>
  <slots>
   <slot>aboutSlot()</slot>
   <slot>connectSlot()</slot>
   <slot>openSlot()</slot>
+  <slot>pinDockToLeftSlot()</slot>
+  <slot>pinDockToRightSlot()</slot>
+  <slot>pinDockToTopSlot()</slot>
+  <slot>pinDockToBottomSlot()</slot>
  </slots>
 </ui>

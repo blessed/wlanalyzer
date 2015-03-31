@@ -81,7 +81,12 @@ void MainWindow::pinDockToBottomSlot()
 void MainWindow::pinDockToArea(QDockWidget* dock, Qt::DockWidgetArea area)
 {
     Q_ASSERT(dock);
-    dock->setAllowedAreas(area);
     QMainWindow *mainWindow = qobject_cast<QMainWindow *>(dock->parentWidget());
+    Q_ASSERT(mainWindow);
+    // prevent slight gui movement when we try to pin to area in which the dock
+    // already resides
+    if(mainWindow->dockWidgetArea(dock) == area)
+        return;
+    dock->setAllowedAreas(area);
     mainWindow->addDockWidget(area, dock);
 }

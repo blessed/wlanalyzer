@@ -21,7 +21,7 @@ class IpField : public QFrame
 	Q_OBJECT
 
 public:
-	IpField(IP_VERSION ver = IP_VERSION::IPV4, QWidget *parent = 0);
+	IpField(QWidget *parent = 0, IP_VERSION ver = IP_VERSION::IPV4);
 	~IpField();
 
 	virtual bool eventFilter( QObject *obj, QEvent *event );

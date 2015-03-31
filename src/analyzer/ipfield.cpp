@@ -7,7 +7,7 @@
 #include "ipfield.h"
 #include "ipfield.moc"
 
-IpField::IpField(IP_VERSION ver, QWidget *parent) : QFrame(parent), isFilled(false)
+IpField::IpField(QWidget *parent, IP_VERSION ver) : QFrame(parent), isFilled(false)
 {
 	IP_SIZE = ver == IP_VERSION::IPV4 ? 4 : 6;
 	ipLine = new QLineEdit*[IP_SIZE];

@@ -80,7 +80,7 @@
             <set>QDockWidget::DockWidgetClosable|QDockWidget::DockWidgetMovable</set>
            </property>
            <property name="allowedAreas">
-            <set>Qt::LeftDockWidgetArea</set>
+            <set>Qt::AllDockWidgetAreas</set>
            </property>
            <property name="windowTitle">
             <string>Packet List</string>
@@ -140,7 +140,7 @@
             <set>QDockWidget::DockWidgetClosable|QDockWidget::DockWidgetMovable</set>
            </property>
            <property name="allowedAreas">
-            <set>Qt::LeftDockWidgetArea</set>
+            <set>Qt::AllDockWidgetAreas</set>
            </property>
            <property name="windowTitle">
             <string>Packet Dissection</string>
@@ -200,7 +200,7 @@
             <set>QDockWidget::DockWidgetClosable|QDockWidget::DockWidgetMovable</set>
            </property>
            <property name="allowedAreas">
-            <set>Qt::LeftDockWidgetArea</set>
+            <set>Qt::AllDockWidgetAreas</set>
            </property>
            <property name="windowTitle">
             <string>Raw Data</string>

@@ -87,6 +87,5 @@ void MainWindow::pinDockToArea(QDockWidget* dock, Qt::DockWidgetArea area)
     // already resides
     if(mainWindow->dockWidgetArea(dock) == area)
         return;
-    dock->setAllowedAreas(area);
     mainWindow->addDockWidget(area, dock);
 }

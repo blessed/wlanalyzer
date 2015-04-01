@@ -13,7 +13,278 @@
   <property name="windowTitle">
    <string>MainWindow</string>
   </property>
-  <widget class="QWidget" name="centralwidget"/>
+  <widget class="QWidget" name="centralwidget">
+   <layout class="QVBoxLayout" name="verticalLayout">
+    <property name="leftMargin">
+     <number>0</number>
+    </property>
+    <property name="topMargin">
+     <number>0</number>
+    </property>
+    <property name="rightMargin">
+     <number>0</number>
+    </property>
+    <property name="bottomMargin">
+     <number>0</number>
+    </property>
+    <item>
+     <widget class="QTabWidget" name="tabWidget">
+      <property name="enabled">
+       <bool>true</bool>
+      </property>
+      <property name="sizePolicy">
+       <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+        <horstretch>0</horstretch>
+        <verstretch>0</verstretch>
+       </sizepolicy>
+      </property>
+      <property name="tabPosition">
+       <enum>QTabWidget::North</enum>
+      </property>
+      <property name="tabShape">
+       <enum>QTabWidget::Rounded</enum>
+      </property>
+      <property name="currentIndex">
+       <number>0</number>
+      </property>
+      <property name="movable">
+       <bool>true</bool>
+      </property>
+      <widget class="QWidget" name="tabWidgetLogPage">
+       <attribute name="title">
+        <string>Logs</string>
+       </attribute>
+       <layout class="QGridLayout" name="gridLayout_2">
+        <property name="leftMargin">
+         <number>0</number>
+        </property>
+        <property name="topMargin">
+         <number>0</number>
+        </property>
+        <property name="rightMargin">
+         <number>0</number>
+        </property>
+        <property name="bottomMargin">
+         <number>0</number>
+        </property>
+        <item row="0" column="0">
+         <widget class="QMainWindow" name="log_page_dockarea">
+          <widget class="QDockWidget" name="dockPacketList">
+           <property name="contextMenuPolicy">
+            <enum>Qt::ActionsContextMenu</enum>
+           </property>
+           <property name="floating">
+            <bool>false</bool>
+           </property>
+           <property name="features">
+            <set>QDockWidget::DockWidgetClosable|QDockWidget::DockWidgetMovable</set>
+           </property>
+           <property name="allowedAreas">
+            <set>Qt::AllDockWidgetAreas</set>
+           </property>
+           <property name="windowTitle">
+            <string>Packet List</string>
+           </property>
+           <attribute name="dockWidgetArea">
+            <number>1</number>
+           </attribute>
+           <widget class="QWidget" name="dockWidgetContents_2">
+            <layout class="QGridLayout" name="gridLayout_3">
+             <property name="leftMargin">
+              <number>0</number>
+             </property>
+             <property name="topMargin">
+              <number>0</number>
+             </property>
+             <property name="rightMargin">
+              <number>0</number>
+             </property>
+             <property name="bottomMargin">
+              <number>0</number>
+             </property>
+             <item row="0" column="0">
+              <widget class="QTreeView" name="packetListTreeView"/>
+             </item>
+            </layout>
+           </widget>
+           <action name="actionDockPacketListPinLeft">
+            <property name="text">
+             <string>Pin to left</string>
+            </property>
+           </action>
+           <action name="actionDockPacketListPinTop">
+            <property name="text">
+             <string>Pin to top</string>
+            </property>
+           </action>
+           <action name="actionDockPacketListPinRight">
+            <property name="text">
+             <string>Pin to right</string>
+            </property>
+           </action>
+           <action name="actionDockPacketListPinBottom">
+            <property name="text">
+             <string>Pin to bottom</string>
+            </property>
+           </action>
+           <addaction name="actionDockPacketListPinLeft"/>
+           <addaction name="actionDockPacketListPinTop"/>
+           <addaction name="actionDockPacketListPinRight"/>
+           <addaction name="actionDockPacketListPinBottom"/>
+          </widget>
+          <widget class="QDockWidget" name="dockPacketDissection">
+           <property name="contextMenuPolicy">
+            <enum>Qt::ActionsContextMenu</enum>
+           </property>
+           <property name="features">
+            <set>QDockWidget::DockWidgetClosable|QDockWidget::DockWidgetMovable</set>
+           </property>
+           <property name="allowedAreas">
+            <set>Qt::AllDockWidgetAreas</set>
+           </property>
+           <property name="windowTitle">
+            <string>Packet Dissection</string>
+           </property>
+           <attribute name="dockWidgetArea">
+            <number>1</number>
+           </attribute>
+           <widget class="QWidget" name="dockWidgetContents_3">
+            <layout class="QGridLayout" name="gridLayout_4">
+             <property name="leftMargin">
+              <number>0</number>
+             </property>
+             <property name="topMargin">
+              <number>0</number>
+             </property>
+             <property name="rightMargin">
+              <number>0</number>
+             </property>
+             <property name="bottomMargin">
+              <number>0</number>
+             </property>
+             <item row="0" column="0">
+              <widget class="QTreeView" name="packetDissectionTreeView"/>
+             </item>
+            </layout>
+           </widget>
+           <action name="actionDockPacketDissectionPinLeft">
+            <property name="text">
+             <string>Pin to left</string>
+            </property>
+           </action>
+           <action name="actionDockPacketDissectionPinTop">
+            <property name="text">
+             <string>Pin to top</string>
+            </property>
+           </action>
+           <action name="actionDockPacketDissectionPinRight">
+            <property name="text">
+             <string>Pin to right</string>
+            </property>
+           </action>
+           <action name="actionDockPacketDissectionPinBottom">
+            <property name="text">
+             <string>Pin to bottom</string>
+            </property>
+           </action>
+           <addaction name="actionDockPacketDissectionPinLeft"/>
+           <addaction name="actionDockPacketDissectionPinTop"/>
+           <addaction name="actionDockPacketDissectionPinRight"/>
+           <addaction name="actionDockPacketDissectionPinBottom"/>
+          </widget>
+          <widget class="QDockWidget" name="dockPacketHex">
+           <property name="contextMenuPolicy">
+            <enum>Qt::ActionsContextMenu</enum>
+           </property>
+           <property name="features">
+            <set>QDockWidget::DockWidgetClosable|QDockWidget::DockWidgetMovable</set>
+           </property>
+           <property name="allowedAreas">
+            <set>Qt::AllDockWidgetAreas</set>
+           </property>
+           <property name="windowTitle">
+            <string>Raw Data</string>
+           </property>
+           <attribute name="dockWidgetArea">
+            <number>1</number>
+           </attribute>
+           <widget class="QWidget" name="dockWidgetContents_4">
+            <layout class="QGridLayout" name="gridLayout_5">
+             <property name="leftMargin">
+              <number>0</number>
+             </property>
+             <property name="topMargin">
+              <number>0</number>
+             </property>
+             <property name="rightMargin">
+              <number>0</number>
+             </property>
+             <property name="bottomMargin">
+              <number>0</number>
+             </property>
+             <item row="0" column="0">
+              <widget class="QTextEdit" name="packetHexEdit"/>
+             </item>
+            </layout>
+           </widget>
+           <action name="actionDockPacketHexPinLeft">
+            <property name="text">
+             <string>Pin to left</string>
+            </property>
+           </action>
+           <action name="actionDockPacketHexPinTop">
+            <property name="text">
+             <string>Pin to top</string>
+            </property>
+           </action>
+           <action name="actionDockPacketHexPinRight">
+            <property name="text">
+             <string>Pin to right</string>
+            </property>
+           </action>
+           <action name="actionDockPacketHexPinBottom">
+            <property name="text">
+             <string>Pin to bottom</string>
+            </property>
+           </action>
+           <addaction name="actionDockPacketHexPinLeft"/>
+           <addaction name="actionDockPacketHexPinTop"/>
+           <addaction name="actionDockPacketHexPinRight"/>
+           <addaction name="actionDockPacketHexPinBottom"/>
+          </widget>
+         </widget>
+        </item>
+       </layout>
+      </widget>
+      <widget class="QWidget" name="tabWidgetValidatorPage">
+       <attribute name="title">
+        <string>Validator</string>
+       </attribute>
+       <layout class="QGridLayout" name="gridLayout">
+        <item row="0" column="0">
+         <widget class="QLabel" name="label">
+          <property name="sizePolicy">
+           <sizepolicy hsizetype="Maximum" vsizetype="Maximum">
+            <horstretch>0</horstretch>
+            <verstretch>0</verstretch>
+           </sizepolicy>
+          </property>
+          <property name="font">
+           <font>
+            <pointsize>20</pointsize>
+           </font>
+          </property>
+          <property name="text">
+           <string>These are not the droids you are looking for</string>
+          </property>
+         </widget>
+        </item>
+       </layout>
+      </widget>
+     </widget>
+    </item>
+   </layout>
+  </widget>
   <widget class="QStatusBar" name="statusbar"/>
   <widget class="QMenuBar" name="menubar">
    <property name="geometry">
@@ -42,7 +313,19 @@
     </property>
     <addaction name="action_About"/>
    </widget>
+   <widget class="QMenu" name="menu_View">
+    <property name="title">
+     <string>&amp;View</string>
+    </property>
+    <widget class="QMenu" name="menu_Logs">
+     <property name="title">
+      <string>&amp;Logs</string>
+     </property>
+    </widget>
+    <addaction name="menu_Logs"/>
+   </widget>
    <addaction name="menuFile"/>
+   <addaction name="menu_View"/>
    <addaction name="menuAbout"/>
   </widget>
   <action name="actionConnect">
@@ -133,21 +416,87 @@
    <signal>triggered()</signal>
    <receiver>MainWindow</receiver>
    <slot>openSlot()</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>-1</x>
-     <y>-1</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>399</x>
-     <y>299</y>
-    </hint>
-   </hints>
+  </connection>
+  <connection>
+   <sender>actionDockPacketListPinLeft</sender>
+   <signal>triggered()</signal>
+   <receiver>MainWindow</receiver>
+   <slot>pinDockToLeftSlot()</slot>
+  </connection>
+  <connection>
+   <sender>actionDockPacketListPinRight</sender>
+   <signal>triggered()</signal>
+   <receiver>MainWindow</receiver>
+   <slot>pinDockToRightSlot()</slot>
+  </connection>
+  <connection>
+   <sender>actionDockPacketListPinTop</sender>
+   <signal>triggered()</signal>
+   <receiver>MainWindow</receiver>
+   <slot>pinDockToTopSlot()</slot>
+  </connection>
+  <connection>
+   <sender>actionDockPacketListPinBottom</sender>
+   <signal>triggered()</signal>
+   <receiver>MainWindow</receiver>
+   <slot>pinDockToBottomSlot()</slot>
+  </connection>
+  <connection>
+   <sender>actionDockPacketDissectionPinLeft</sender>
+   <signal>triggered()</signal>
+   <receiver>MainWindow</receiver>
+   <slot>pinDockToLeftSlot()</slot>
+  </connection>
+  <connection>
+   <sender>actionDockPacketDissectionPinRight</sender>
+   <signal>triggered()</signal>
+   <receiver>MainWindow</receiver>
+   <slot>pinDockToRightSlot()</slot>
+  </connection>
+  <connection>
+   <sender>actionDockPacketDissectionPinTop</sender>
+   <signal>triggered()</signal>
+   <receiver>MainWindow</receiver>
+   <slot>pinDockToTopSlot()</slot>
+  </connection>
+  <connection>
+   <sender>actionDockPacketDissectionPinBottom</sender>
+   <signal>triggered()</signal>
+   <receiver>MainWindow</receiver>
+   <slot>pinDockToBottomSlot()</slot>
+  </connection>
+  <connection>
+   <sender>actionDockPacketHexPinLeft</sender>
+   <signal>triggered()</signal>
+   <receiver>MainWindow</receiver>
+   <slot>pinDockToLeftSlot()</slot>
+  </connection>
+  <connection>
+   <sender>actionDockPacketHexPinRight</sender>
+   <signal>triggered()</signal>
+   <receiver>MainWindow</receiver>
+   <slot>pinDockToRightSlot()</slot>
+  </connection>
+  <connection>
+   <sender>actionDockPacketHexPinTop</sender>
+   <signal>triggered()</signal>
+   <receiver>MainWindow</receiver>
+   <slot>pinDockToTopSlot()</slot>
+  </connection>
+  <connection>
+   <sender>actionDockPacketHexPinBottom</sender>
+   <signal>triggered()</signal>
+   <receiver>MainWindow</receiver>
+   <slot>pinDockToBottomSlot()</slot>
   </connection>
  </connections>
  <slots>
   <slot>aboutSlot()</slot>
   <slot>connectSlot()</slot>
   <slot>openSlot()</slot>
+  <slot>pinDockToLeftSlot()</slot>
+  <slot>pinDockToRightSlot()</slot>
+  <slot>pinDockToTopSlot()</slot>
+  <slot>pinDockToBottomSlot()</slot>
  </slots>
 </ui>

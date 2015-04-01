@@ -9,6 +9,15 @@ MainWindow::MainWindow(QWidget *parent) :
     ui(new Ui::MainWindow)
 {
     ui->setupUi(this);
+
+    //QMainWindow acting as dockarea is asked to acta as a widget instead of
+    //top level window. There is no way to set it from designer
+    ui->log_page_dockarea->setWindowFlags(Qt::Widget);
+
+    //Show toggle menu actions for all docks in main window menubar
+    ui->menu_Logs->addAction(ui->dockPacketList->toggleViewAction());
+    ui->menu_Logs->addAction(ui->dockPacketDissection->toggleViewAction());
+    ui->menu_Logs->addAction(ui->dockPacketHex->toggleViewAction());
 }
 
 MainWindow::~MainWindow()
@@ -47,4 +56,36 @@ void MainWindow::aboutSlot()
             tr("This is a GUI analyzer that can analyze acquired wayland traffic.\n"
                "The data can originate either from a pre-recorded file gathered "
                "in offline mode or in online mode by connecting the wldumper"));
+}
+
+void MainWindow::pinDockToTopSlot()
+{
+    pinDockToArea(qobject_cast<QDockWidget *>(sender()->parent()), Qt::TopDockWidgetArea);
+}
+
+void MainWindow::pinDockToLeftSlot()
+{
+    pinDockToArea(qobject_cast<QDockWidget *>(sender()->parent()), Qt::LeftDockWidgetArea);
+}
+
+void MainWindow::pinDockToRightSlot()
+{
+    pinDockToArea(qobject_cast<QDockWidget *>(sender()->parent()), Qt::RightDockWidgetArea);
+}
+
+void MainWindow::pinDockToBottomSlot()
+{
+    pinDockToArea(qobject_cast<QDockWidget *>(sender()->parent()), Qt::BottomDockWidgetArea);
+}
+
+void MainWindow::pinDockToArea(QDockWidget* dock, Qt::DockWidgetArea area)
+{
+    Q_ASSERT(dock);
+    QMainWindow *mainWindow = qobject_cast<QMainWindow *>(dock->parentWidget());
+    Q_ASSERT(mainWindow);
+    // prevent slight gui movement when we try to pin to area in which the dock
+    // already resides
+    if(mainWindow->dockWidgetArea(dock) == area)
+        return;
+    mainWindow->addDockWidget(area, dock);
 }

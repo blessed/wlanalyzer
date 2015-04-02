@@ -26,8 +26,8 @@
 #include <string>
 #include <string.h>
 #include <QApplication>
-#include "mainwindow.h"
-#include "mainwindow.moc"
+#include "gui/mainwindow.h"
+#include "gui/mainwindow.moc"
 #include "../wlanalyzer_base/common.h"
 #include "../wlanalyzer_base/parser.h"
 

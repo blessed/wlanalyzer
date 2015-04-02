@@ -3,7 +3,7 @@
 
 #include <QHostAddress>
 #include <QtWidgets>
-#include "ipfield.h"
+#include "gui/ipfield.h"
 
 class IpDialog : public QDialog
 {

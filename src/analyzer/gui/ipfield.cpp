@@ -4,8 +4,8 @@
 //#include <QHBoxLayout>
 //#include <QVBoxLayout>
 #include <QtWidgets>
-#include "ipfield.h"
-#include "ipfield.moc"
+#include "gui/ipfield.h"
+#include "gui/ipfield.moc"
 
 IpField::IpField(QWidget *parent, IP_VERSION ver) : QFrame(parent), isFilled(false)
 {

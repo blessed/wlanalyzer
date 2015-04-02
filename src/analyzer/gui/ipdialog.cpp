@@ -22,8 +22,8 @@
  * SOFTWARE.
  */
 
-#include "ipdialog.h"
-#include "ipdialog.moc"
+#include "gui/ipdialog.h"
+#include "gui/ipdialog.moc"
 
 IpDialog::IpDialog(QWidget *parent) : QDialog(parent)
 {

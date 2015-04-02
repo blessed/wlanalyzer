@@ -1,8 +1,8 @@
 #include <QFileDialog>
 #include <QMessageBox>
-#include "mainwindow.h"
+#include "gui/mainwindow.h"
 #include "ui_mainwindow.h"
-#include "ipdialog.h"
+#include "gui/ipdialog.h"
 
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),

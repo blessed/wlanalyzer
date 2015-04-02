@@ -28,8 +28,8 @@
 #include <QApplication>
 #include "gui/mainwindow.h"
 #include "gui/mainwindow.moc"
-#include "../wlanalyzer_base/common.h"
-#include "../wlanalyzer_base/parser.h"
+#include "wlanalyzer_base/common.h"
+#include "wlanalyzer_base/parser.h"
 
 using namespace std;
 

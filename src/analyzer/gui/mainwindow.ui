@@ -223,7 +223,21 @@
               <number>0</number>
              </property>
              <item row="0" column="0">
-              <widget class="QTextEdit" name="packetHexEdit"/>
+              <widget class="HexWidget" name="packetHexEdit">
+               <property name="widgetResizable">
+                <bool>true</bool>
+               </property>
+               <widget class="QWidget" name="scrollAreaWidgetContents">
+                <property name="geometry">
+                 <rect>
+                  <x>0</x>
+                  <y>0</y>
+                  <width>794</width>
+                  <height>79</height>
+                 </rect>
+                </property>
+               </widget>
+              </widget>
              </item>
             </layout>
            </widget>
@@ -361,6 +375,14 @@
    </property>
   </action>
  </widget>
+ <customwidgets>
+  <customwidget>
+   <class>HexWidget</class>
+   <extends>QScrollArea</extends>
+   <header>gui/hexwidget.h</header>
+   <container>1</container>
+  </customwidget>
+ </customwidgets>
  <resources/>
  <connections>
   <connection>

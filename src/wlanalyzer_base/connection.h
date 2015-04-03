@@ -27,24 +27,31 @@
 
 #include <pthread.h>
 #include <stack>
+#include <vector>
 #include <ev++.h>
 #include "socket.h"
 #include "common.h"
 #include "message.h"
+#include "wayland_raw_source.h"
 
-class WldDumper;
+using namespace::WlAnalyzer;
+
+class WldMessageSink;
 class WlaIODumper;
 class WlaProxyServer;
 
 class WlaConnection
 {
 public:
-    WlaConnection(WlaProxyServer *parent, WldDumper *dumper = NULL);
+    WlaConnection(WlaProxyServer *parent, WldMessageSink *dumper = NULL);
     ~WlaConnection();
 
     void createConnection(WldSocket client, WldSocket server);
     void closeConnection();
-    void setDumper(WldDumper *dumper);
+    void setDumper(WldMessageSink *dumper);
+
+    void setSink(const shared_ptr<RawMessageSink> &sink);
+
 
 private:
     void handleConnection(ev::io &watcher, int revents);
@@ -59,10 +66,16 @@ private:
 
     WlaProxyServer *parent;
 //    WlaIODumper *writer;
-    WldDumper *dumper;
+    WldMessageSink *dumper;
 
     std::stack<WlaMessageBuffer *> events;
     std::stack<WlaMessageBuffer *> requests;
+
+    WaylandRawSource request_source_;
+    WaylandRawSource event_source_;
+
+    shared_ptr<RawMessageSink> sink_;
 };
+
 
 #endif // CONNECTION_H

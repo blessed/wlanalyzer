@@ -22,14 +22,21 @@
  * SOFTWARE.
  */
 
+#include "connection.h"
+
+#include <algorithm>
+#include <cassert>
+
 #include "common.h"
 #include "proxy.h"
 #include "dumper.h"
-#include "connection.h"
+#include "raw_message.h"
+
 
 using namespace std;
 
-WlaConnection::WlaConnection(WlaProxyServer *parent, WldDumper *writer)
+WlaConnection::WlaConnection(WlaProxyServer *parent, WldMessageSink *writer) :
+    request_source_(true), event_source_(false)
 {
     running = false;
     this->parent = parent;
@@ -59,9 +66,16 @@ void WlaConnection::createConnection(WldSocket cli, WldSocket server)
               wayland.getSocketDescriptor());
 }
 
-void WlaConnection::setDumper(WldDumper *dumper)
+void WlaConnection::setDumper(WldMessageSink *dumper)
 {
     this->dumper = dumper;
+}
+
+void WlaConnection::setSink(const shared_ptr<RawMessageSink> &sink)
+{
+    sink_ = sink;
+    request_source_.setSink(sink_);
+    event_source_.setSink(sink_);
 }
 
 void WlaConnection::handleConnection(ev::io &watcher, int revents)
@@ -84,9 +98,11 @@ void WlaConnection::handleConnection(ev::io &watcher, int revents)
                 return;
             }
 
+            request_source_.processBuffer(msg->getTimeStamp()->tv_sec, msg->getTimeStamp()->tv_usec, msg->getMsg(), msg->getMsgSize());
+
             msg->setType(WlaMessageBuffer::REQUEST_TYPE);
-            if (dumper)
-                dumper->dump(*msg);
+//            if (dumper)
+//                dumper->dump(*msg);
             requests.push(msg);
         }
         else
@@ -98,10 +114,11 @@ void WlaConnection::handleConnection(ev::io &watcher, int revents)
                 delete this;
                 return;
             }
+            event_source_.processBuffer(msg->getTimeStamp()->tv_sec, msg->getTimeStamp()->tv_usec, msg->getMsg(), msg->getMsgSize());
 
             msg->setType(WlaMessageBuffer::EVENT_TYPE);
-            if (dumper)
-                dumper->dump(*msg);
+//            if (dumper)
+//                dumper->dump(*msg);
             events.push(msg);
         }
     }

@@ -3,13 +3,15 @@
 target = 'wldumper'
 
 def options(ctx):
-	ctx.load('compiler_cxx')
+        ctx.load('compiler_cxx')
 
 
 def configure(ctx):
-	ctx.load('compiler_cxx')
+        ctx.load('compiler_cxx')
 
 
 def build(bld):
-	source_files = bld.path.ant_glob('*.cpp')
-	bld.program(source=source_files, target=target, use=['wlanalyzer_base'])
+        source_files = bld.path.ant_glob('wldump.cpp')
+        bld.program(source=source_files, target='wldumper',
+                    use=['wlanalyzer_base'])
+        bld.program(source=['wlread.cpp'], target='wlread', use=['wlanalyzer_base'])

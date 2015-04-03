@@ -33,16 +33,15 @@
 
 class WlaMessageBuffer;
 
-class WldDumper
+class WldMessageSink
 {
 public:
-    virtual ~WldDumper() {}
+    virtual ~WldMessageSink() {}
 
-    virtual int open(const std::string &resource) = 0;
     virtual int dump(WlaMessageBuffer &msg) = 0;
 };
 
-class WldIODumper : public WldDumper
+class WldIODumper : public WldMessageSink
 {
 public:
     WldIODumper() { filefd = -1; }
@@ -56,7 +55,7 @@ private:
     static int seq;
 };
 
-class WldNetDumper : public WldDumper
+class WldNetDumper : public WldMessageSink
 {
 public:
     WldNetDumper();

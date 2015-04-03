@@ -97,7 +97,7 @@ void WlaProxyServer::closeConnection(WlaConnection *conn)
         stopServer();
 }
 
-void WlaProxyServer::setDumper(WldDumper *dumper)
+void WlaProxyServer::setDumper(WldMessageSink *dumper)
 {
     std::set<WlaConnection *>::const_iterator it = _connections.begin();
     for (; it != _connections.end(); it++)
@@ -160,7 +160,18 @@ void WlaProxyServer::connectClient(ev::io &watcher, int revents)
         stopServer();
         return;
     }
+    connection->setSink(sink_);
     connection->createConnection(client, wayland);
 
     _connections.insert(connection);
 }
+
+void WlaProxyServer::setSink(const shared_ptr<RawMessageSink> &sink)
+{
+    sink_ = sink;
+    std::set<WlaConnection *>::iterator it;
+    for (it = _connections.begin(); it != _connections.end(); ++it) {
+        (*it)->setSink(sink);
+    }
+}
+

@@ -36,9 +36,12 @@
 #include "parser.h"
 #include "analyzer.h"
 
+#include "raw_message_sink.h"
+
 class WlaProxyServer
 {
 public:
+
     WlaProxyServer();
     virtual ~WlaProxyServer();
 
@@ -48,13 +51,15 @@ public:
 
     void closeConnection(WlaConnection *conn);
 
-    void setDumper(WldDumper *dumper);
+    void setDumper(WldMessageSink *dumper);
 	void setParser(WldParser *parser);
 //    void setAnalyzer(WldProtocolAnalyzer *an);
 
+    void setSink(const shared_ptr<RawMessageSink> &value);
+
 private:
     void connectClient(ev::io &watcher, int revents);
-//    void handleCommunication(ev::io &watcher, int revents);
+    //    void handleCommunication(ev::io &watcher, int revents);
 
 private:
     WldServer _serverSocket;
@@ -62,11 +67,12 @@ private:
     ev::default_loop _loop;
 
 //    WlaIODumper writer;
-    WldDumper *dumper;
+    WldMessageSink *dumper;
 //    WldIODumper writer;
 	WldParser *parser;
 
     std::set<WlaConnection *> _connections;
+    shared_ptr<RawMessageSink> sink_;
 };
 
 #endif // PROXY_H

@@ -119,6 +119,7 @@ int WldIODumper::dump(WlaMessageBuffer &msg)
         ::write(filefd, msg.getControlMsg(), sizeof(uint8_t) * msg.getControlMsgSize());
 
     delete [] buf;
+    ::fsync(filefd);
 
     return 0;
 }

@@ -8,6 +8,37 @@
 #include "gui/hexwidget.h"
 #include "gui/hexwidget.moc"
 
+
+const char *HEX_PATTERN = "0123456789abcdef";
+
+template <typename T>
+QString numToHexStr(T val)
+{
+    // buffer is the size of number of nibbles in number + trailing '\0'
+    const unsigned NUM_NIBBLES = sizeof(T) * 2;
+    char buf[NUM_NIBBLES + 1] = {false,};
+    for(int i = NUM_NIBBLES -1; i >= 0; --i)
+    {
+        buf[i] = HEX_PATTERN[val & 0xf];
+        val >>= 4;
+    }
+    return QString(buf);
+}
+
+template <typename T>
+QString numToBinStr(T val)
+{
+    // buffer is the size of number of bits in number + trailing '\0'
+    const unsigned NUM_BITS = sizeof(T) * 8;
+    char buf[NUM_BITS + 1] = {false,};
+    for(int i = NUM_BITS -1; i >= 0; --i)
+    {
+        buf[i] = '0' + (val & 0x1);
+        val >>= 1;
+    }
+    return QString(buf);
+}
+
 HexWidget::HexWidget(QWidget *parent) :
     QAbstractScrollArea(parent), m_highlightColor(Qt::blue),
     m_format(DisplayFormat::HEX),
@@ -35,7 +66,6 @@ HexWidget::HexWidget(QWidget *parent) :
 
 void HexWidget::recalculateFontMetrics()
 {
-    // TODO precalculate line heights / widths, scrollbar ranges, etc.
     const QFontMetrics &fm = fontMetrics();
     m_lineHeight = fm.lineSpacing();
     int dsize = m_data.size();
@@ -51,12 +81,13 @@ void HexWidget::recalculateFontMetrics()
         m_numBytesInLine = 8;
         rawColumnChars = m_numBytesInLine * 9;
     }
-    m_numLines = dsize / m_numBytesInLine;
+    m_numLines = dsize / m_numBytesInLine + 1;
+    m_numVisibleLines = viewport()->height() / m_lineHeight;
 
     // calculate number of characters requred to represent the address
     m_numAddressChars = 4;
     while((dsize >> 16) > 0)
-        m_numAddressChars += 4;
+        m_numAddressChars += 5; // plus 1 char inter word spacing
 
     int colMargin = 2 * m_textMargin;
     m_characterWidth = fm.width(QChar('M'));
@@ -67,6 +98,12 @@ void HexWidget::recalculateFontMetrics()
     m_printableColumnWidth = colMargin + m_characterWidth * m_numBytesInLine;
 
     m_lineWidth = m_addrColumnWidth + m_rawColumnWidth + m_printableColumnWidth;
+
+    // manage correct scroll and scrollbar ranges
+    horizontalScrollBar()->setRange(0, m_lineWidth + m_textMargin - viewport()->width());
+    horizontalScrollBar()->setPageStep(viewport()->width());
+    verticalScrollBar()->setRange(0, m_numLines - m_numVisibleLines);
+    verticalScrollBar()->setPageStep(m_numVisibleLines);
 }
 
 void HexWidget::setData(QByteArray data)
@@ -111,20 +148,23 @@ void HexWidget::paintEvent(QPaintEvent *event)
     QPainter painter(viewport());
     const int x = horizontalScrollBar()->value();
     const int y = verticalScrollBar()->value();
+    const int viewport_h = viewport()->height();
+    const int viewport_w = viewport()->width();
+
     const int addrColumnPos = -x;
     const int rawColumnPos = addrColumnPos + m_addrColumnWidth;
     const int printableColumnPos = rawColumnPos + m_rawColumnWidth;
     const int printableColumnEnd = printableColumnPos + m_printableColumnWidth;
 
-    painter.drawLine(addrColumnPos, 0, addrColumnPos, viewport()->height());
-    painter.drawLine(rawColumnPos, 0, rawColumnPos, viewport()->height());
-    painter.drawLine(printableColumnPos, 0, printableColumnPos, viewport()->height());
-    painter.drawLine(printableColumnEnd, 0, printableColumnEnd, viewport()->height());
+    painter.fillRect(QRectF(0.0, 0.0, viewport_w, viewport_h), palette().background());
+    painter.fillRect(QRectF(addrColumnPos, 0.0, m_addrColumnWidth, viewport_h), palette().dark());
+    painter.fillRect(QRectF(printableColumnPos, 0.0, m_printableColumnWidth, viewport_h), palette().dark());
 
-    if(m_format == DisplayFormat::HEX)
-        painter.drawText(QRectF(0.0, 0.0 -y, 150., 50. -y), QString("HEX: 0f0f0f"));
-    else
-        painter.drawText(QRectF(0.0, 0.0 -y, 150., 50. -y), QString("Bit Field: 1010101"));
+    painter.drawLine(addrColumnPos, 0, addrColumnPos, viewport_h);
+    painter.drawLine(rawColumnPos, 0, rawColumnPos, viewport_h);
+    painter.drawLine(printableColumnPos, 0, printableColumnPos, viewport_h);
+    painter.drawLine(printableColumnEnd, 0, printableColumnEnd, viewport_h);
+
     // TODO
 }
 
@@ -138,7 +178,8 @@ void HexWidget::wheelEvent(QWheelEvent *event)
 
 void HexWidget::resizeEvent(QResizeEvent *event)
 {
-    // TODO
+    recalculateFontMetrics();
+    QAbstractScrollArea::resizeEvent(event);
 }
 
 void HexWidget::resizeFont(int sizeIncrement)

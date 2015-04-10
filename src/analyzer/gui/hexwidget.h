@@ -16,6 +16,9 @@ public:
     // How should we represent the binary data
     enum class DisplayFormat { BIT_FIELD, HEX};
 
+    // Column identifiers for hit tests
+    enum class RegionId {INVALID, ADDRESS, RAW, PRINTABLE};
+
     explicit HexWidget(QWidget *parent = 0);
     ~HexWidget();
 
@@ -39,6 +42,21 @@ private slots:
     // select if the view should be in Hex or Binary
     void setRawDataDisplayFormat(QAction *action);
 
+protected:
+    // calculate column widths, line heights, etc.
+    void recalculateFontMetrics();
+    qint64 dataSize() const;
+    QByteArray dataLineAtAddr(qint64 addr) const;
+    // return column address/raw data/ascii pointed in viewport by pos
+    // or INVALID if outside
+    RegionId regionAtPos(QPoint pos) const;
+    // return address pointed by pos in the widget viewport
+    // if pos is invalid then ok==false
+    qint64 addrAtPos(QPoint pos, bool& ok) const;
+    // return address pointed by pos in the widget viewport
+    // if pos is invalid ok==false and returns 0x0
+    QPoint posAtAddr(qint64 addr, RegionId reg, bool& ok) const;
+
 private:
     // show our context menu with display format options
     void contextMenuEvent(QContextMenuEvent *event);
@@ -47,11 +65,9 @@ private:
     void paintEvent(QPaintEvent *event);
     void wheelEvent(QWheelEvent *event);
     void resizeEvent(QResizeEvent *event);
-
-    // calculate column widths, line heights, etc.
-    void recalculateFontMetrics();
-    qint64 dataSize();
-    QByteArray dataLineAtAddr(qint64 addr);
+    // mostly for debuging purposes
+    void mouseMoveEvent(QMouseEvent *e);
+    void drawDebug(QPainter& painter);
 
     QIODevice* m_data;
     QMenu m_contextMenu;
@@ -68,6 +84,7 @@ private:
     int m_lineHeight;
     qint64 m_numLines;
     qint64 m_numVisibleLines;
+    QPoint m_cursorPos;
 };
 
 Q_DECLARE_METATYPE(HexWidget::DisplayFormat);

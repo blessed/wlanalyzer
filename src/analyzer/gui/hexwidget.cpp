@@ -129,7 +129,7 @@ void HexWidget::recalculateFontMetrics()
     verticalScrollBar()->setPageStep(m_numVisibleLines);
 }
 
-qint64 HexWidget::dataSize()
+qint64 HexWidget::dataSize() const
 {
     //XXX - QAbstractScrollView is not able to handle larger viewport sizes so
     // for now the datasize 0xffffffff seams to be the limit of what we can display.
@@ -139,7 +139,7 @@ qint64 HexWidget::dataSize()
     return 0;
 }
 
-QByteArray HexWidget::dataLineAtAddr(qint64 addr)
+QByteArray HexWidget::dataLineAtAddr(qint64 addr) const
 {
     Q_ASSERT(m_data);
     Q_ASSERT(m_data->size() > addr);
@@ -152,6 +152,34 @@ QByteArray HexWidget::dataLineAtAddr(qint64 addr)
         m_data->seek(addr);
 
     return m_data->read(m_numBytesInLine);
+}
+
+HexWidget::RegionId HexWidget::regionAtPos(QPoint pos) const
+{
+    //TODO move this to private members recalculated in one place. No reason to repeat onself.
+    const QPoint vpos(horizontalScrollBar()->value(), verticalScrollBar()->value());
+    const int addrColumnPos = 0;//-vpos.x();
+    const int rawColumnPos = addrColumnPos + m_addrColumnWidth;
+    const int printableColumnPos = rawColumnPos + m_rawColumnWidth;
+    const int printableColumnEnd = printableColumnPos + m_printableColumnWidth;
+    if(pos.x() < addrColumnPos || pos.x() > printableColumnEnd)
+        return RegionId::INVALID;
+    if(pos.x() > printableColumnPos)
+        return RegionId::PRINTABLE;
+    if(pos.x() > rawColumnPos)
+        return RegionId::RAW;
+    else
+        return RegionId::ADDRESS;
+}
+
+qint64 HexWidget::addrAtPos(QPoint pos, bool& ok) const
+{
+    //TODO
+}
+
+QPoint HexWidget::posAtAddr(qint64 addr, RegionId reg, bool& ok) const
+{
+    //TODO
 }
 
 void HexWidget::highlight(quint32 offset, quint32 len)
@@ -250,3 +278,43 @@ void HexWidget::resizeFont(int sizeIncrement)
     recalculateFontMetrics();
 }
 
+void HexWidget::mouseMoveEvent(QMouseEvent *e)
+{
+    const QPoint pos(horizontalScrollBar()->value(),verticalScrollBar()->value());
+    m_cursorPos = e->pos() + pos;
+    viewport()->update();
+}
+
+void HexWidget::drawDebug(QPainter& painter)
+{
+    //TODO move this to private members recalculated in one place. No reason to repeat onself.
+    const QPoint pos(horizontalScrollBar()->value(), verticalScrollBar()->value());
+    const int viewport_h = viewport()->height();
+    const int viewport_w = viewport()->width();
+    const int addrColumnPos = -pos.x();
+    const int rawColumnPos = addrColumnPos + m_addrColumnWidth;
+    const int printableColumnPos = rawColumnPos + m_rawColumnWidth;
+
+    painter.drawText(m_cursorPos - pos, QString("<%1:%2>").arg(m_cursorPos.x()).arg(m_cursorPos.y()));
+    const QColor color_g(116,214,0, 50);
+    const QColor color_r(239,65,53, 100);
+    RegionId reg = regionAtPos(m_cursorPos);
+    switch(reg)
+    {
+        case RegionId::INVALID:
+            painter.fillRect(QRectF(0.0, 0.0, viewport_w, viewport_h), color_r);
+            break;
+        case RegionId::ADDRESS:
+            painter.fillRect(QRectF(addrColumnPos, 0.0, m_addrColumnWidth, viewport_h),  color_g);
+            break;
+        case RegionId::RAW:
+            painter.fillRect(QRectF(rawColumnPos, 0.0, m_rawColumnWidth, viewport_h), color_g);
+            break;
+        case RegionId::PRINTABLE:
+            painter.fillRect(QRectF(printableColumnPos, 0.0, m_printableColumnWidth, viewport_h), color_g);
+            break;
+        default:
+            Q_ASSERT(false);
+    }
+
+}

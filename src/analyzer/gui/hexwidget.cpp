@@ -40,7 +40,8 @@ QString numToBinStr(T val)
 }
 
 HexWidget::HexWidget(QWidget *parent) :
-    QAbstractScrollArea(parent), m_highlightColor(Qt::blue),
+    QAbstractScrollArea(parent),
+    m_data(nullptr),
     m_format(DisplayFormat::HEX),
     m_numBytesInLine(16),
     m_numAddressChars(4)
@@ -64,11 +65,33 @@ HexWidget::HexWidget(QWidget *parent) :
     recalculateFontMetrics();
 }
 
+HexWidget::~HexWidget()
+{
+    delete m_data;
+}
+
+void HexWidget::setData(QIODevice* data)
+{
+    Q_ASSERT(data);
+    //only random access QIODevices have semantics reasonable for this widget
+    Q_ASSERT(data->isSequential() == false);
+    Q_ASSERT(data->isReadable());
+    m_data = data;
+    recalculateFontMetrics();
+}
+
+void HexWidget::setData(const QByteArray& data)
+{
+    auto buf = new QBuffer();
+    buf->setData(data);
+    setData(buf);
+}
+
 void HexWidget::recalculateFontMetrics()
 {
     const QFontMetrics &fm = fontMetrics();
     m_lineHeight = fm.lineSpacing();
-    int dsize = m_data.size();
+    qint64 dsize = dataSize();
 
     // calculate number of characters in raw view plus spaces every octet
     int rawColumnChars = 0;
@@ -82,12 +105,12 @@ void HexWidget::recalculateFontMetrics()
         rawColumnChars = m_numBytesInLine * 9;
     }
     m_numLines = dsize / m_numBytesInLine + 1;
-    m_numVisibleLines = viewport()->height() / m_lineHeight;
+    m_numVisibleLines = qMin(static_cast<qint64>(viewport()->height() / m_lineHeight), m_numLines);
 
     // calculate number of characters requred to represent the address
     m_numAddressChars = 4;
-    while((dsize >> 16) > 0)
-        m_numAddressChars += 5; // plus 1 char inter word spacing
+    while((dsize >>= 16) > 0)
+        m_numAddressChars += 4; // plus 1 char inter word spacing
 
     int colMargin = 2 * m_textMargin;
     m_characterWidth = fm.width(QChar('M'));
@@ -106,16 +129,29 @@ void HexWidget::recalculateFontMetrics()
     verticalScrollBar()->setPageStep(m_numVisibleLines);
 }
 
-void HexWidget::setData(QByteArray data)
+qint64 HexWidget::dataSize()
 {
-    m_data = data;
-    // TODO should use less heavyweight function
-    recalculateFontMetrics();
+    //XXX - QAbstractScrollView is not able to handle larger viewport sizes so
+    // for now the datasize 0xffffffff seams to be the limit of what we can display.
+    if(m_data)
+        return m_data->size();
+
+    return 0;
 }
 
-void HexWidget::setHighlightColor(QColor color)
+QByteArray HexWidget::dataLineAtAddr(qint64 addr)
 {
-    m_highlightColor = color;
+    Q_ASSERT(m_data);
+    Q_ASSERT(m_data->size() > addr);
+    Q_ASSERT(addr >= 0);
+    Q_ASSERT(addr % m_numBytesInLine == 0);
+    if(!m_data)
+        return QByteArray();
+
+    if(m_data->pos() != addr)
+        m_data->seek(addr);
+
+    return m_data->read(m_numBytesInLine);
 }
 
 void HexWidget::highlight(quint32 offset, quint32 len)
@@ -142,6 +178,13 @@ void HexWidget::contextMenuEvent(QContextMenuEvent *event)
     m_contextMenu.exec(event->globalPos());
 }
 
+void HexWidget::scrollContentsBy(int dx, int dy)
+{
+    // scroll vertically only by full line increments
+    viewport()->scroll(dx, dy * m_lineHeight);
+    viewport()->update();
+}
+
 void HexWidget::paintEvent(QPaintEvent *event)
 {
     Q_UNUSED(event);
@@ -160,12 +203,26 @@ void HexWidget::paintEvent(QPaintEvent *event)
     painter.fillRect(QRectF(addrColumnPos, 0.0, m_addrColumnWidth, viewport_h), palette().dark());
     painter.fillRect(QRectF(printableColumnPos, 0.0, m_printableColumnWidth, viewport_h), palette().dark());
 
+    for(int j = 0; j <= m_numVisibleLines; ++j)
+    {
+        // y viewport offset is indexed starting from 1 thus y-1
+        quint64 address = (y - 1+j) * m_numBytesInLine;
+        // paint the address values
+        painter.drawText(QPointF(addrColumnPos + m_textMargin, m_lineHeight * j),
+                         numToHexStr(address).right(m_numAddressChars));
+
+        // paint the actual values
+        for(int i = 0; i < m_numBytesInLine; ++i)
+        {
+            // TODO paint the actual values - possibly with nice spacing and
+            // alternating background
+            // TODO implement highlighting logic
+        }
+    }
     painter.drawLine(addrColumnPos, 0, addrColumnPos, viewport_h);
     painter.drawLine(rawColumnPos, 0, rawColumnPos, viewport_h);
     painter.drawLine(printableColumnPos, 0, printableColumnPos, viewport_h);
     painter.drawLine(printableColumnEnd, 0, printableColumnEnd, viewport_h);
-
-    // TODO
 }
 
 void HexWidget::wheelEvent(QWheelEvent *event)
@@ -192,3 +249,4 @@ void HexWidget::resizeFont(int sizeIncrement)
     setFont(font);
     recalculateFontMetrics();
 }
+

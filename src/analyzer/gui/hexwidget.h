@@ -3,8 +3,11 @@
 
 #include <QAbstractScrollArea>
 #include <QMenu>
-#include <QByteArray>
 #include <QColor>
+#include <QByteArray>
+#include <QFile>
+#include <QBuffer>
+#include <QSharedPointer>
 
 class HexWidget : public QAbstractScrollArea
 {
@@ -14,9 +17,14 @@ public:
     enum class DisplayFormat { BIT_FIELD, HEX};
 
     explicit HexWidget(QWidget *parent = 0);
+    ~HexWidget();
 
-    void setData(QByteArray data);
-    void setHighlightColor(QColor color);
+    void setData(const QByteArray& data);
+    //interface is limmited to Random-access QIODevices
+    void setData(QIODevice* data);
+    inline void setData(QBuffer* data) { setData(static_cast<QIODevice*>(data));}
+    inline void setData(QFile* data) { setData(static_cast<QIODevice*>(data));}
+
     // set smaller or bigger font
     void resizeFont(int sizeIncrement);
 
@@ -34,6 +42,7 @@ private slots:
 private:
     // show our context menu with display format options
     void contextMenuEvent(QContextMenuEvent *event);
+    void scrollContentsBy(int dx, int dy);
     // draw the data contents of the widget
     void paintEvent(QPaintEvent *event);
     void wheelEvent(QWheelEvent *event);
@@ -41,9 +50,10 @@ private:
 
     // calculate column widths, line heights, etc.
     void recalculateFontMetrics();
+    qint64 dataSize();
+    QByteArray dataLineAtAddr(qint64 addr);
 
-    QByteArray m_data;
-    QColor m_highlightColor;
+    QIODevice* m_data;
     QMenu m_contextMenu;
     DisplayFormat m_format;
 
@@ -56,8 +66,8 @@ private:
     int m_printableColumnWidth;
     int m_lineWidth;
     int m_lineHeight;
-    int m_numLines;
-    int m_numVisibleLines;
+    qint64 m_numLines;
+    qint64 m_numVisibleLines;
 };
 
 Q_DECLARE_METATYPE(HexWidget::DisplayFormat);

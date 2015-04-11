@@ -3,7 +3,6 @@
 
 #include <QAbstractScrollArea>
 #include <QMenu>
-#include <QColor>
 #include <QByteArray>
 #include <QFile>
 #include <QBuffer>
@@ -23,7 +22,7 @@ public:
     ~HexWidget();
 
     void setData(const QByteArray& data);
-    //interface is limmited to Random-access QIODevices
+    //interface is limited to Random-access QIODevices
     void setData(QIODevice* data);
     inline void setData(QBuffer* data) { setData(static_cast<QIODevice*>(data));}
     inline void setData(QFile* data) { setData(static_cast<QIODevice*>(data));}
@@ -36,7 +35,7 @@ signals:
 
 public slots:
     // ask for highlighting on data region
-    void highlight(quint32 offset, quint32 len);
+    void highlight(qint64 start_addr, qint64 len);
 
 private slots:
     // select if the view should be in Hex or Binary
@@ -49,12 +48,13 @@ protected:
     QByteArray dataLineAtAddr(qint64 addr) const;
     // return column address/raw data/ascii pointed in viewport by pos
     // or INVALID if outside
-    RegionId regionAtPos(QPoint pos) const;
-    // return address pointed by pos in the widget viewport
-    // if pos is invalid then ok==false
-    qint64 addrAtPos(QPoint pos, bool& ok) const;
+    RegionId regionAtPos(const QPoint& pos) const;
     // return address pointed by pos in the widget viewport
     // if pos is invalid ok==false and returns 0x0
+    qint64 addrAtPos(const QPoint& pos, bool& ok) const;
+    // return Top Left boundary position occupied by data at given addr and reg
+    // calculated in absolute viewport coordinates
+    // if pos is invalid ok==false and returns QPoint()
     QPoint posAtAddr(qint64 addr, RegionId reg, bool& ok) const;
 
 private:
@@ -65,9 +65,9 @@ private:
     void paintEvent(QPaintEvent *event);
     void wheelEvent(QWheelEvent *event);
     void resizeEvent(QResizeEvent *event);
-    // mostly for debuging purposes
+    // mostly for debugging purposes
     void mouseMoveEvent(QMouseEvent *e);
-    void drawDebug(QPainter& painter);
+    void drawDebug(QPainter& painter) const;
 
     QIODevice* m_data;
     QMenu m_contextMenu;
@@ -77,13 +77,17 @@ private:
     int m_numAddressChars;
     int m_textMargin;
     int m_characterWidth;
-    int m_addrColumnWidth;
-    int m_rawColumnWidth;
-    int m_printableColumnWidth;
-    int m_lineWidth;
+    QRect m_addrColumn;
+    QRect m_rawColumn;
+    QRect m_printableColumn;
+    // viewport geometry: width, height
+    // topLeft represents current position of the viewport top left corner
+    // relative to absolute viewport coordinates.
+    QRect m_vp;
     int m_lineHeight;
     qint64 m_numLines;
     qint64 m_numVisibleLines;
+    // current position of the cursor for Debugging purposes
     QPoint m_cursorPos;
 };
 

@@ -46,6 +46,12 @@ HexWidget::HexWidget(QWidget *parent) :
     m_numBytesInLine(16),
     m_numAddressChars(4)
 {
+
+#ifdef DEBUG_BUILD
+    // trigger mouseMoveEvent also without mouse down
+    setMouseTracking(true);
+#endif
+
     // setup context menu with required options
     auto group = new QActionGroup(this);
     auto action = group->addAction(tr("Display data as Bit Field"));
@@ -112,21 +118,27 @@ void HexWidget::recalculateFontMetrics()
     while((dsize >>= 16) > 0)
         m_numAddressChars += 4; // plus 1 char inter word spacing
 
-    int colMargin = 2 * m_textMargin;
+    const int colMargin = 2 * m_textMargin;
     m_characterWidth = fm.width(QChar('M'));
     m_textMargin = m_characterWidth;
 
-    m_addrColumnWidth = colMargin + m_characterWidth * m_numAddressChars;
-    m_rawColumnWidth = colMargin + m_characterWidth * rawColumnChars;
-    m_printableColumnWidth = colMargin + m_characterWidth * m_numBytesInLine;
-
-    m_lineWidth = m_addrColumnWidth + m_rawColumnWidth + m_printableColumnWidth;
+    const int addrColumnWidth = colMargin + m_characterWidth * m_numAddressChars;
+    const int rawColumnWidth = colMargin + m_characterWidth * rawColumnChars;
+    const int printableColumnWidth = colMargin + m_characterWidth * m_numBytesInLine;
+    const int lineWidth = addrColumnWidth + rawColumnWidth + printableColumnWidth;
 
     // manage correct scroll and scrollbar ranges
-    horizontalScrollBar()->setRange(0, m_lineWidth + m_textMargin - viewport()->width());
+    horizontalScrollBar()->setRange(0, lineWidth + m_textMargin - viewport()->width());
     horizontalScrollBar()->setPageStep(viewport()->width());
     verticalScrollBar()->setRange(0, m_numLines - m_numVisibleLines);
     verticalScrollBar()->setPageStep(m_numVisibleLines);
+
+    m_vp.setRect(horizontalScrollBar()->value(), verticalScrollBar()->value(),
+                 viewport()->width(), viewport()->height());
+
+    m_addrColumn.setRect( -m_vp.x(), 0, addrColumnWidth, m_vp.height());
+    m_rawColumn.setRect( m_addrColumn.right(),0, rawColumnWidth, m_vp.height());
+    m_printableColumn.setRect(m_rawColumn.right(),0, printableColumnWidth, m_vp.height());
 }
 
 qint64 HexWidget::dataSize() const
@@ -154,37 +166,40 @@ QByteArray HexWidget::dataLineAtAddr(qint64 addr) const
     return m_data->read(m_numBytesInLine);
 }
 
-HexWidget::RegionId HexWidget::regionAtPos(QPoint pos) const
+HexWidget::RegionId HexWidget::regionAtPos(const QPoint& pos) const
 {
-    //TODO move this to private members recalculated in one place. No reason to repeat onself.
-    const QPoint vpos(horizontalScrollBar()->value(), verticalScrollBar()->value());
-    const int addrColumnPos = 0;//-vpos.x();
-    const int rawColumnPos = addrColumnPos + m_addrColumnWidth;
-    const int printableColumnPos = rawColumnPos + m_rawColumnWidth;
-    const int printableColumnEnd = printableColumnPos + m_printableColumnWidth;
-    if(pos.x() < addrColumnPos || pos.x() > printableColumnEnd)
+    if(pos.x() < m_addrColumn.left() || pos.x() > m_printableColumn.right())
         return RegionId::INVALID;
-    if(pos.x() > printableColumnPos)
+    if(pos.x() > m_printableColumn.left())
         return RegionId::PRINTABLE;
-    if(pos.x() > rawColumnPos)
+    if(pos.x() > m_rawColumn.left())
         return RegionId::RAW;
     else
         return RegionId::ADDRESS;
 }
 
-qint64 HexWidget::addrAtPos(QPoint pos, bool& ok) const
+qint64 HexWidget::addrAtPos(const QPoint& pos, bool& ok) const
 {
     //TODO
+    Q_UNUSED(pos);
+    Q_UNUSED(ok);
+    return 0x0;
 }
 
 QPoint HexWidget::posAtAddr(qint64 addr, RegionId reg, bool& ok) const
 {
     //TODO
+    Q_UNUSED(addr);
+    Q_UNUSED(reg);
+    Q_UNUSED(ok);
+    return QPoint();
 }
 
-void HexWidget::highlight(quint32 offset, quint32 len)
+void HexWidget::highlight(qint64 start_addr, qint64 len)
 {
     //TODO
+    Q_UNUSED(start_addr);
+    Q_UNUSED(len);
 }
 
 void HexWidget::setRawDataDisplayFormat(QAction *action)
@@ -210,6 +225,7 @@ void HexWidget::scrollContentsBy(int dx, int dy)
 {
     // scroll vertically only by full line increments
     viewport()->scroll(dx, dy * m_lineHeight);
+    recalculateFontMetrics(); // TODO - use lighter version of this call
     viewport()->update();
 }
 
@@ -217,26 +233,16 @@ void HexWidget::paintEvent(QPaintEvent *event)
 {
     Q_UNUSED(event);
     QPainter painter(viewport());
-    const int x = horizontalScrollBar()->value();
-    const int y = verticalScrollBar()->value();
-    const int viewport_h = viewport()->height();
-    const int viewport_w = viewport()->width();
-
-    const int addrColumnPos = -x;
-    const int rawColumnPos = addrColumnPos + m_addrColumnWidth;
-    const int printableColumnPos = rawColumnPos + m_rawColumnWidth;
-    const int printableColumnEnd = printableColumnPos + m_printableColumnWidth;
-
-    painter.fillRect(QRectF(0.0, 0.0, viewport_w, viewport_h), palette().background());
-    painter.fillRect(QRectF(addrColumnPos, 0.0, m_addrColumnWidth, viewport_h), palette().dark());
-    painter.fillRect(QRectF(printableColumnPos, 0.0, m_printableColumnWidth, viewport_h), palette().dark());
+    painter.fillRect(QRect(QPoint(0, 0), m_vp.size()), palette().background());
+    painter.fillRect(m_addrColumn, palette().dark());
+    painter.fillRect(m_printableColumn, palette().dark());
 
     for(int j = 0; j <= m_numVisibleLines; ++j)
     {
         // y viewport offset is indexed starting from 1 thus y-1
-        quint64 address = (y - 1+j) * m_numBytesInLine;
+        quint64 address = (m_vp.y() - 1+j) * m_numBytesInLine;
         // paint the address values
-        painter.drawText(QPointF(addrColumnPos + m_textMargin, m_lineHeight * j),
+        painter.drawText(QPointF(m_addrColumn.left() + m_textMargin, m_lineHeight * j),
                          numToHexStr(address).right(m_numAddressChars));
 
         // paint the actual values
@@ -247,10 +253,15 @@ void HexWidget::paintEvent(QPaintEvent *event)
             // TODO implement highlighting logic
         }
     }
-    painter.drawLine(addrColumnPos, 0, addrColumnPos, viewport_h);
-    painter.drawLine(rawColumnPos, 0, rawColumnPos, viewport_h);
-    painter.drawLine(printableColumnPos, 0, printableColumnPos, viewport_h);
-    painter.drawLine(printableColumnEnd, 0, printableColumnEnd, viewport_h);
+
+#ifdef DEBUG_BUILD
+    drawDebug(painter);
+#endif
+
+    painter.drawLine(m_addrColumn.left(), m_addrColumn.top(), m_addrColumn.left(), m_rawColumn.bottom());
+    painter.drawLine(m_rawColumn.left(), m_rawColumn.top(), m_rawColumn.left(), m_rawColumn.bottom());
+    painter.drawLine(m_printableColumn.left(), m_printableColumn.top(), m_printableColumn.left(), m_printableColumn.bottom());
+    painter.drawLine(m_printableColumn.right(), m_printableColumn.top(), m_printableColumn.right(), m_printableColumn.bottom());
 }
 
 void HexWidget::wheelEvent(QWheelEvent *event)
@@ -280,41 +291,33 @@ void HexWidget::resizeFont(int sizeIncrement)
 
 void HexWidget::mouseMoveEvent(QMouseEvent *e)
 {
-    const QPoint pos(horizontalScrollBar()->value(),verticalScrollBar()->value());
-    m_cursorPos = e->pos() + pos;
+#ifdef DEBUG_BUILD
+    m_cursorPos = e->pos();
     viewport()->update();
+#endif
 }
 
-void HexWidget::drawDebug(QPainter& painter)
+void HexWidget::drawDebug(QPainter& painter) const
 {
-    //TODO move this to private members recalculated in one place. No reason to repeat onself.
-    const QPoint pos(horizontalScrollBar()->value(), verticalScrollBar()->value());
-    const int viewport_h = viewport()->height();
-    const int viewport_w = viewport()->width();
-    const int addrColumnPos = -pos.x();
-    const int rawColumnPos = addrColumnPos + m_addrColumnWidth;
-    const int printableColumnPos = rawColumnPos + m_rawColumnWidth;
-
-    painter.drawText(m_cursorPos - pos, QString("<%1:%2>").arg(m_cursorPos.x()).arg(m_cursorPos.y()));
+    painter.drawText(m_cursorPos, QString("<%1:%2>").arg(m_cursorPos.x()).arg(m_cursorPos.y()));
     const QColor color_g(116,214,0, 50);
     const QColor color_r(239,65,53, 100);
     RegionId reg = regionAtPos(m_cursorPos);
     switch(reg)
     {
         case RegionId::INVALID:
-            painter.fillRect(QRectF(0.0, 0.0, viewport_w, viewport_h), color_r);
+            painter.fillRect(QRect(QPoint(0,0), m_vp.size()), color_r);
             break;
         case RegionId::ADDRESS:
-            painter.fillRect(QRectF(addrColumnPos, 0.0, m_addrColumnWidth, viewport_h),  color_g);
+            painter.fillRect(m_addrColumn,  color_g);
             break;
         case RegionId::RAW:
-            painter.fillRect(QRectF(rawColumnPos, 0.0, m_rawColumnWidth, viewport_h), color_g);
+            painter.fillRect(m_rawColumn, color_g);
             break;
         case RegionId::PRINTABLE:
-            painter.fillRect(QRectF(printableColumnPos, 0.0, m_printableColumnWidth, viewport_h), color_g);
+            painter.fillRect(m_printableColumn, color_g);
             break;
         default:
             Q_ASSERT(false);
     }
-
 }

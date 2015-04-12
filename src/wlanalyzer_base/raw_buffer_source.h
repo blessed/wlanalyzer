@@ -7,11 +7,22 @@
 
 namespace WlAnalyzer {
 
+/**
+ * @brief The RawBufferSource class
+ *        processes raw input and extracts
+ *        \see RawMessage objects from input
+ *        data.
+ */
 class RawBufferSource : public RawMessageSource
 {
 public:
     RawBufferSource() : message_complete_(true) {}
 
+    /**
+     * @brief processBuffer
+     * @param buffer data from which to extract \see RawMessage objects
+     * @param size size of the input buffer
+     */
     void processBuffer(const char *buffer, size_t size);
 
 private:

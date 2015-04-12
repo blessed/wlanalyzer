@@ -12,6 +12,11 @@ using std::tr1::uint8_t;
 using std::tr1::uint32_t;
 using std::tr1::uint64_t;
 
+/**
+ * @brief The RawMessage class
+ *        represents a parsed message intercepted
+ *        from the traffic between the client and the compositor.
+ */
 class RawMessage
 {
 public:

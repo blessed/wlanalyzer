@@ -32,8 +32,8 @@
 #include "dumper.h"
 #include "raw_message.h"
 
-
 using namespace std;
+using namespace WlAnalyzer;
 
 WlaConnection::WlaConnection(WlaProxyServer *parent, WldMessageSink *writer) :
     request_source_(true), event_source_(false)
@@ -133,16 +133,9 @@ void WlaConnection::handleConnection(ev::io &watcher, int revents)
 
 WlaMessageBuffer *WlaConnection::handleRead(WldSocket &src, WldSocket &dst)
 {
-    WlaMessageBuffer *msg = new WlaMessageBuffer;
-    int len = msg->receiveMessage(src);
-    if (len < 0)
+    WlaMessageBuffer *msg = WldMessageBufferSocket::receiveMessage(src);
+    if (msg == NULL)
     {
-        delete msg;
-        return NULL;
-    }
-    else if (len == 0)
-    {
-        delete msg;
         return NULL;
     }
 
@@ -157,9 +150,7 @@ void WlaConnection::handleWrite(WldSocket &dst, std::stack<WlaMessageBuffer *> &
     while (!msgStack.empty())
     {
         WlaMessageBuffer *msg = msgStack.top();
-
-        msg->sendMessage(dst);;
-
+        WldMessageBufferSocket::sendMessage(msg, dst);
         msgStack.pop();
         delete msg;
     }

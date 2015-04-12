@@ -23,19 +23,10 @@
  */
 
 #include "message.h"
+#include <cassert>
 
 WlaMessageBuffer::WlaMessageBuffer()
 {
-    iov.iov_base = buf;
-    iov.iov_len = MAX_BUF_SIZE;
-
-    msg.msg_name = NULL;
-    msg.msg_namelen = 0;
-    msg.msg_iov = &iov;
-    msg.msg_iovlen = 1;
-    msg.msg_control = cmsg;
-    msg.msg_controllen = CMSG_LEN(MAX_FDS * sizeof(int));
-
     hdr.flags = 0;
     hdr.msg_len = 0;
     hdr.cmsg_len = 0;
@@ -45,48 +36,6 @@ WlaMessageBuffer::WlaMessageBuffer()
 
 WlaMessageBuffer::~WlaMessageBuffer()
 {
-}
-
-int WlaMessageBuffer::sendMessage(WldSocket &socket)
-{
-    if (hdr.msg_len == 0)
-    {
-        DEBUG_LOG("message is size 0");
-        return -1;
-    }
-
-    iov.iov_len = hdr.msg_len;
-
-    int len = socket.writeMsg(&msg);
-    if (len < 0)
-    {
-        DEBUG_LOG("failed to write message");
-        perror(NULL);
-    }
-
-    return len;
-}
-
-int WlaMessageBuffer::receiveMessage(WldSocket &socket)
-{
-    iov.iov_len = MAX_BUF_SIZE;
-    int len = socket.readMsg(&msg);
-    if (len < 0)
-    {
-        DEBUG_LOG("failed to read message");
-        perror(NULL);
-        hdr.msg_len = 0;
-    }
-    else if (len > 0)
-    {
-        gettimeofday(&hdr.timestamp, NULL);
-        hdr.msg_len = len;
-        hdr.cmsg_len = msg.msg_controllen;
-        if (hdr.cmsg_len > 0)
-            set_bit(&hdr.flags, CMESSAGE_PRESENT_BIT, true);
-    }
-
-    return len;
 }
 
 void WlaMessageBuffer::setHeader(const WlaMessageBufferHeader *hdr)
@@ -124,4 +73,85 @@ void WlaMessageBuffer::setMsg(const char *msg, int size)
 void WlaMessageBuffer::setControlMsg(const char *cmsg, int size)
 {
     memcpy(this->cmsg, cmsg, size);
+}
+
+
+WldMessageBufferSocket::WldMessageBufferSocket()
+{
+}
+
+WldMessageBufferSocket::~WldMessageBufferSocket()
+{
+}
+
+WlaMessageBuffer *WldMessageBufferSocket::receiveMessage(WldSocket &socket)
+{
+    WlaMessageBuffer *msgbuffer = new WlaMessageBuffer;
+    if (!msgbuffer)
+    {
+        Logger::getInstance()->log("Error: Memory allocation failed\n");
+        return NULL;
+    }
+
+    iovec iov;
+    iov.iov_base = msgbuffer->getMsg();
+    iov.iov_len = MAX_BUF_SIZE;
+
+    msghdr msg;
+    msg.msg_name = NULL;
+    msg.msg_namelen = 0;
+    msg.msg_iov = &iov;
+    msg.msg_iovlen = 1;
+    msg.msg_control = msgbuffer->getControlMsg();
+    msg.msg_controllen = CMSG_LEN(MAX_FDS * sizeof(int));
+
+    int len = socket.readMsg(&msg);
+    if (len < 0)
+    {
+        DEBUG_LOG("Failed to read msg");
+        perror(NULL);
+        delete msgbuffer;
+        return NULL;
+    }
+    else if (len > 0)
+    {
+        WlaMessageBufferHeader *hdr = msgbuffer->getHeader();
+        gettimeofday(&hdr->timestamp, NULL);
+        hdr->msg_len = len;
+        hdr->cmsg_len = msg.msg_controllen;
+        if (hdr->cmsg_len > 0)
+            set_bit(&hdr->flags, CMESSAGE_PRESENT_BIT, true);
+    }
+    else
+    {
+        delete msgbuffer;
+        return NULL;
+    }
+
+    return msgbuffer;
+}
+
+bool WldMessageBufferSocket::sendMessage(WlaMessageBuffer *msgbuffer, WldSocket &socket)
+{
+    iovec iov;
+    iov.iov_base = msgbuffer->getMsg();
+    iov.iov_len = msgbuffer->getMsgSize();
+
+    msghdr msg;
+    msg.msg_name = NULL;
+    msg.msg_namelen = 0;
+    msg.msg_iov = &iov;
+    msg.msg_iovlen = 1;
+    msg.msg_control = msgbuffer->getControlMsg();
+    msg.msg_controllen = msgbuffer->getControlMsgSize();
+
+    int len = socket.writeMsg(&msg);
+    if (len < 0)
+    {
+        DEBUG_LOG("Error: Failed to send message\n");
+        perror(NULL);
+        return false;
+    }
+
+    return true;
 }

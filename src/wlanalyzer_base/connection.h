@@ -34,7 +34,7 @@
 #include "message.h"
 #include "wayland_raw_source.h"
 
-using namespace::WlAnalyzer;
+namespace WlAnalyzer {
 
 class WldMessageSink;
 class WlaIODumper;
@@ -51,7 +51,6 @@ public:
     void setDumper(WldMessageSink *dumper);
 
     void setSink(const shared_ptr<RawMessageSink> &sink);
-
 
 private:
     void handleConnection(ev::io &watcher, int revents);
@@ -77,5 +76,6 @@ private:
     shared_ptr<RawMessageSink> sink_;
 };
 
+} // namespace WlAnalyzer
 
 #endif // CONNECTION_H

@@ -31,6 +31,7 @@
 #include <unistd.h>
 #include <sys/types.h>
 #include <sys/wait.h>
+#include <tr1/memory>
 
 #include "../wlanalyzer_base/common.h"
 #include "../wlanalyzer_base/proxy.h"
@@ -42,8 +43,8 @@
 #include "../wlanalyzer_base/raw_fd_sink.h"
 
 using namespace std;
+using std::tr1::shared_ptr;
 using namespace WlAnalyzer;
-
 
 struct options_t
 {
@@ -217,8 +218,6 @@ int main(int argc, char *argv[])
     composite->AddSink(dummysink);
     shared_ptr<RawMessageSink> file1sink(new RawFdSink(open("file1.wldump", O_WRONLY | O_CREAT | O_TRUNC, S_IRUSR | S_IWUSR)));
     composite->AddSink(file1sink);
-    shared_ptr<RawMessageSink> file2sink(new RawFdSink(open("file2.wldump", O_WRONLY | O_CREAT | O_TRUNC, S_IRUSR | S_IWUSR)));
-    composite->AddSink(file2sink);
 
     if (options.coreProtocol.size())
     {
@@ -234,26 +233,26 @@ int main(int argc, char *argv[])
             }
         }
 
-        WldIODumper *dumper = new WldIODumper;
-        dumper->open("dump");
-        proxy.setDumper(dumper);
+//        WldIODumper *dumper = new WldIODumper;
+//        dumper->open("dump");
+//        proxy.setDumper(dumper);
 
 //        WldNetDumper *netDump = new WldNetDumper;
 //        if (netDump->open("5000"))
 //            DEBUG_LOG("Failed to open port 5000");
 //        proxy.setDumper(netDump);
 
-        WlaBinParser *parser = new WlaBinParser;
-        parser->openResource("dump");
-        parser->attachAnalyzer(analyzer);
-        proxy.setParser(parser);
+//        WlaBinParser *parser = new WlaBinParser;
+//        parser->openResource("dump");
+//        parser->attachAnalyzer(analyzer);
+//        proxy.setParser(parser);
     }
     else if (options.port_number.size())
     {
         WldNetDumper *netDump = new WldNetDumper;
         if (netDump->open(options.port_number))
             DEBUG_LOG("Failed to open port %s", options.port_number.c_str());
-        proxy.setDumper(netDump);
+//        proxy.setDumper(netDump);
     }
 
     if ((ppid = fork()) == 0)

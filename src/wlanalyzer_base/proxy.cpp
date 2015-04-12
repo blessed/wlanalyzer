@@ -27,6 +27,8 @@
 #include "common.h"
 #include "proxy.h"
 
+using namespace WlAnalyzer;
+
 WlaProxyServer::WlaProxyServer() : _loop(EVBACKEND_SELECT), dumper(NULL), parser(NULL)
 {
     DEBUG_LOG("_loop.backend %d", _loop.backend());

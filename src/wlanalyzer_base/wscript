@@ -3,21 +3,21 @@
 target_name = 'wlanalyzer_base'
 
 def options(ctx):
-        ctx.load('compiler_cxx')
+    ctx.load('compiler_cxx')
 
 
 def configure(ctx):
-        ctx.load('compiler_cxx')
-	# Check for libev
-	ctx.check_cxx(header_name='ev++.h')
-	ctx.check_cxx(lib='ev', uselib_store='EV')
-	# Check for pugixml
-	ctx.check_cxx(lib='pugixml', uselib_store='PUGI')
-	ctx.env.RPATH += [ ctx.env.LIBDIR ]
+    ctx.load('compiler_cxx')
+    # Check for libev
+    ctx.check_cxx(header_name='ev++.h')
+    ctx.check_cxx(lib='ev', uselib_store='EV')
+    # Check for pugixml
+    ctx.check_cxx(lib='pugixml', uselib_store='PUGI')
+    ctx.env.RPATH += [ ctx.env.LIBDIR ]
 
 
 def build(bld):
-	source_files = bld.path.ant_glob('**/*.cpp')
-	header_files = bld.path.ant_glob('**/*.h')
-	bld.shlib(source=source_files, use=['EV', 'PUGI'], target=target_name)
-	bld.install_files(bld.env.PREFIX + '/include', header_files, relative_trick=True)
+    source_files = bld.path.ant_glob('**/*.cpp')
+    header_files = bld.path.ant_glob('**/*.h')
+    bld.shlib(source=source_files, use=['EV', 'PUGI'], target=target_name)
+    bld.install_files(bld.env.PREFIX + '/include', header_files, relative_trick=True)

@@ -120,9 +120,6 @@ public:
     WlaMessageBuffer();
     ~WlaMessageBuffer();
 
-    int sendMessage(WldSocket &socket);
-    int receiveMessage(WldSocket &socket);
-
     void setHeader(const WlaMessageBufferHeader *hdr);
     WlaMessageBufferHeader *getHeader() { return &hdr; }
 
@@ -132,11 +129,11 @@ public:
 
     uint32_t getMsgSize() const { return hdr.msg_len; }
     void setMsg(const char *msg, int size);
-    const char *getMsg() const { return buf; }
+    char *getMsg() { return buf; }
 
     uint32_t getControlMsgSize() const { return hdr.cmsg_len; }
     void setControlMsg(const char *cmsg, int size);
-    const char *getControlMsg() const { return cmsg; }
+    char *getControlMsg() { return cmsg; }
 
 private:
     static const int MAX_BUF_SIZE = 4096;
@@ -146,9 +143,21 @@ private:
 
     char buf[MAX_BUF_SIZE];
 
-    msghdr msg;
     char cmsg[CMSG_LEN(MAX_FDS * sizeof(int))];
-    iovec iov;
+};
+
+class WldMessageBufferSocket
+{
+public:
+    WldMessageBufferSocket();
+    virtual ~WldMessageBufferSocket();
+
+    static WlaMessageBuffer *receiveMessage(WldSocket &socket);
+    static bool sendMessage(WlaMessageBuffer *msgbuffer, WldSocket &socket);
+
+private:
+    static const int MAX_BUF_SIZE = 4096;
+    static const int MAX_FDS = 28;
 };
 
 #endif // MESSAGE_H

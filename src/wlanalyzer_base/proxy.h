@@ -38,6 +38,8 @@
 
 #include "raw_message_sink.h"
 
+namespace WlAnalyzer {
+
 class WlaProxyServer
 {
 public:
@@ -74,5 +76,7 @@ private:
     std::set<WlaConnection *> _connections;
     shared_ptr<RawMessageSink> sink_;
 };
+
+} // namespace WlAnalyzer
 
 #endif // PROXY_H

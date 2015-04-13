@@ -92,25 +92,11 @@ bool WldServer::listen(const string &name)
         return false;
     }
 
-//    sockaddr_un addr;
-//    memset(&addr, 0, sizeof(sockaddr_un));
-//    addr.sun_family = domain;
-//    strncpy(addr.sun_path, name.c_str(), name.length());
-
     if (!bind(name))
     {
         ::close(_fd);
         return false;
     }
-
-//    err = ::bind(_fd, (sockaddr *)&addr, sizeof(sockaddr_un));
-//    if (err)
-//    {
-//        wld_log("bind() failed\n");
-//        perror(NULL);
-//        ::close(_fd);
-//        return false;
-//    }
 
     ::listen(_fd, _maxPendingConnections);
 

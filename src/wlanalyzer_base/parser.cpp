@@ -167,7 +167,6 @@ void WlaBinParser::timerEvent(ev::timer &timer, int revents)
     }
 
     filewtch.start(file, EV_READ);
-//    DEBUG_LOG("timer callback");
 
     timer.stop();
 }

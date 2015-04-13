@@ -60,7 +60,6 @@ public:
     ~WlaBinParser();
 
     int openResource(const std::string &path);
-//    void attachAnalyzer(WldProtocolAnalyzer *analyzer);
     void enable(bool state = true);
 
 private:

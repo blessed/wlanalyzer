@@ -181,18 +181,7 @@ int WldProtocolAnalyzer::analyzeMessage(const WldInterface &intf, const WldMessa
             Logger::getInstance()->log("%s.", msg.intf_name.c_str());
             Logger::getInstance()->log("%s(", msg.signature.c_str());
             Logger::getInstance()->log("%u, \"%s\", %u, new id@%u)\n", id, prot_intf->name.c_str(), ver, new_id);
-//            Logger::getInstance()->log("id %d, new_id %d, name %s, ver %d\n", id, new_id, intf->name.c_str(), ver);
         }
-
-        // print available objects
-        /*
-        DEBUG_LOG("Available objects:");
-        objects_t::const_iterator it = objects.begin();
-        for (; it != objects.end(); it++)
-        {
-            DEBUG_LOG("%u: %s", it->first, it->second.name.c_str());
-        }
-        */
     }
     else if (msg.signature == "destroy")
     {

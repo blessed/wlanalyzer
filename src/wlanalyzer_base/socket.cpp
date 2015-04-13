@@ -62,8 +62,6 @@ SocketError WldSocket::connectToServer(const char *path)
 
 SocketError WldSocket::connectToServer(const std::string &path)
 {
-//    int err;
-
     if (path.empty())
         return ServerNotFoundError;
 
@@ -76,30 +74,6 @@ SocketError WldSocket::connectToServer(const std::string &path)
         disconnectFromServer();
         return err;
     }
-
-//    sockaddr_un address;
-//    memset(&address, 0, sizeof(sockaddr_un));
-//    address.sun_family = AF_UNIX;
-//    strncpy(address.sun_path, path.c_str(), path.size());
-//    err = ::connect(_fd, (sockaddr *)&address, sizeof(sockaddr_un));
-//    if (err == -1)
-//    {
-//        disconnectFromServer();
-
-//        switch (errno)
-//        {
-//        case EINVAL:
-//        case ECONNREFUSED:
-//            return ConnectionRefusedError;
-//        case ENOENT:
-//            return ServerNotFoundError;
-//        case ETIMEDOUT:
-//            return SocketTimeoutError;
-
-//        default:
-//            return UnknownSocketError;
-//        }
-//    }
 
     Logger::getInstance()->log("Connected to %s\n", path.c_str());
     _connected = true;

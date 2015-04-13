@@ -70,21 +70,17 @@ union WldArgVal
         uint32_t len;
         const char *data;
     };
-//    const char *s;
     uint32_t o;
     struct
     {
         uint32_t id;
         const char *interface;
-//        std::string interface;
     } n;
-//    uint32_t n;
     struct
     {
         uint32_t size;
         const char *data;
     } a;
-//    const void *a;
     int32_t h;
 };
 

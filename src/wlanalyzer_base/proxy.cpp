@@ -64,9 +64,6 @@ int WlaProxyServer::init(const std::string &socketPath)
 
 int WlaProxyServer::startServer()
 {
-//    std::string path = "dump.log";
-//    parser.openFile(path);
-
     _loop.run();
 
     return 0;
@@ -154,7 +151,6 @@ void WlaProxyServer::connectClient(ev::io &watcher, int revents)
     WldSocket client;
     client.setSocketDescriptor(fd);
 
-//    WlaConnection *connection = new WlaConnection(this, &writer);
     WlaConnection *connection = new WlaConnection(this, dumper);
     if (!connection)
     {

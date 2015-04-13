@@ -55,22 +55,18 @@ public:
 
     void setDumper(WldMessageSink *dumper);
 	void setParser(WldParser *parser);
-//    void setAnalyzer(WldProtocolAnalyzer *an);
 
     void setSink(const shared_ptr<RawMessageSink> &value);
 
 private:
     void connectClient(ev::io &watcher, int revents);
-    //    void handleCommunication(ev::io &watcher, int revents);
 
 private:
     WldServer _serverSocket;
     ev::io _io;
     ev::default_loop _loop;
 
-//    WlaIODumper writer;
     WldMessageSink *dumper;
-//    WldIODumper writer;
 	WldParser *parser;
 
     std::set<WlaConnection *> _connections;

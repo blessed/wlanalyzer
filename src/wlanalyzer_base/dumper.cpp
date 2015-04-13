@@ -161,46 +161,10 @@ int WldNetDumper::open(const std::string &resource)
     if (!server_socket.listen(resource))
         return false;
 
-//    socket_watcher.set<WldNetDumper, &WldNetDumper::acceptClient>(this);
-//    socket_watcher.start(server_socket.getFd(), EV_READ);
-
     bool timedout;
     server_socket.waitForConnection(0, &timedout);
     socket_watcher.fd = server_socket.getFd();
     acceptClient(socket_watcher, EV_READ);
-
-//    socket_fd = socket(AF_INET, SOCK_STREAM, 0);
-//    if (socket_fd < 0)
-//    {
-//        DEBUG_LOG("failed to create socket");
-//        return -1;
-//    }
-
-//    int val = 1;
-//    setsockopt(socket_fd, SOL_SOCKET, SO_REUSEADDR, &val, sizeof val);
-
-//    sockaddr_in srv_addr;
-//    memset(&srv_addr, 0, sizeof(sockaddr_in));
-//    srv_addr.sin_family = AF_INET;
-//    srv_addr.sin_addr.s_addr = htonl(INADDR_ANY);
-//    srv_addr.sin_port = htons(atoi(resource.c_str()));
-
-//    if (bind(socket_fd, (sockaddr *)&srv_addr, sizeof(sockaddr_in)) < 0)
-//    {
-//        DEBUG_LOG("Failed to bind socket to port %s", resource.c_str());
-//        close(socket_fd);
-//        return -1;
-//    }
-
-//    if (listen(socket_fd, 5) < 0)
-//    {
-//        DEBUG_LOG("Failed to listen on server socket");
-//        close(socket_fd);
-//        return -1;
-//    }
-
-//    socket_watcher.set<WldNetDumper, &WldNetDumper::acceptClient>(this);
-//    socket_watcher.start(socket_fd, EV_READ);
 
     return 0;
 }
@@ -242,51 +206,6 @@ int WldNetDumper::dump(WlaMessageBuffer &msg)
             return -1;
     }
 
-//    if (client <= 0)
-//    {
-//        DEBUG_LOG("");
-
-//        WlaMessageBuffer *new_msg = new WlaMessageBuffer;
-//        *new_msg = msg;
-//        message_queue.push_back(new_msg);
-//        return 0;
-//    }
-
-//    int sequence_no = seq++;
-//    if (!sendData((char *)&sequence_no, sizeof(seq)))
-//        return -1;
-
-//    char *buf = new char[WlaMessageBufferHeader::getSerializeSize()];
-//    memset(buf, 0, WlaMessageBufferHeader::getSerializeSize());
-//    int len = msg.getHeader()->serializeToBuf(buf, WlaMessageBufferHeader::getSerializeSize());
-
-//    if (!sendData(buf, len))
-//        return -1;
-
-//    if (!sendData(msg.getMsg(), msg.getMsgSize()))
-//        return -1;
-
-//    if (msg.getControlMsgSize() > 0)
-//    {
-//        if (!sendData(msg.getControlMsg(), msg.getControlMsgSize()))
-//            return -1;
-//    }
-
-//    int len;
-//    do
-//    {
-//        len = send(client, msg.getMsg(), msg.getMsgSize(), 0);
-//    } while (len < 0 && errno == EINTR || errno == EWOULDBLOCK);
-
-//    DEBUG_LOG("");
-
-//    if (len < 0 && errno == EPIPE)
-//    {
-//        Logger::getInstance()->log("Connection with analyzer broken, closing socket\n");
-//        ::close(client);
-//        client = -1;
-//    }
-
     return 0;
 }
 
@@ -305,8 +224,6 @@ void WldNetDumper::acceptClient(ev::io &watcher, int revents)
 
     DEBUG_LOG("");
 
-//    bool timedout;
-//    server_socket.waitForConnection(1000, &timedout);
     client_socket = server_socket.nextPendingConnection();
     socket_watcher.stop();
 
@@ -360,68 +277,6 @@ void WldNetDumper::acceptClient(ev::io &watcher, int revents)
             it = message_queue.erase(it);
         }
     }
-
-//    int fd = accept(socket_fd, (sockaddr *)NULL, NULL);
-//    if (fd < 0)
-//    {
-//        DEBUG_LOG("Failed to accept connection");
-//        return;
-//    }
-
-//    socket_watcher.stop();
-//    client = fd;
-
-//    if (message_queue.size() > 0)
-//    {
-//        DEBUG_LOG("");
-
-//        std::vector<WlaMessageBuffer *>::iterator it = message_queue.begin();
-//        for (; it != message_queue.end(); it++)
-//        {
-//            DEBUG_LOG("%d", message_queue.size());
-
-//            int ret;
-
-//            int sequence_no = seq++;
-//            if (!sendData((char *)&sequence_no, sizeof(seq)))
-//            {
-//                DEBUG_LOG("");
-//                return;
-//            }
-
-//            char *buf = new char[WlaMessageBufferHeader::getSerializeSize()];
-//            memset(buf, 0, WlaMessageBufferHeader::getSerializeSize());
-//            int len = (*it)->getHeader()->serializeToBuf(buf, WlaMessageBufferHeader::getSerializeSize());
-
-//            ret = sendData(buf, len);
-//            delete [] buf;
-
-//            if (!ret)
-//            {
-//                DEBUG_LOG("");
-//                return;
-//            }
-
-//            if (!sendData((*it)->getMsg(), (*it)->getMsgSize()))
-//            {
-//                DEBUG_LOG("");
-//                return;
-//            }
-
-//            if ((*it)->getControlMsgSize() > 0)
-//            {
-//                if (!sendData((*it)->getControlMsg(), (*it)->getControlMsgSize()))
-//                {
-//                    DEBUG_LOG("");
-//                    return;
-//                }
-//            }
-
-//            delete *it;
-//        }
-
-//        message_queue.clear();
-//    }
 }
 
 int WldNetDumper::sendData(const char *data, size_t size)

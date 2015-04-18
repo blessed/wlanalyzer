@@ -39,9 +39,16 @@ QString numToBinStr(T val)
     return QString(buf);
 }
 
+// only base ASCII printable chars are interesting
+static char ascii(char c)
+{
+    if(c < ' ' || c > '~')
+        return '.';
+    return c;
+}
+
 HexWidget::HexWidget(QWidget *parent) :
     QAbstractScrollArea(parent),
-    m_data(nullptr),
     m_format(DisplayFormat::HEX),
     m_numBytesInLine(16),
     m_numAddressChars(4)
@@ -71,18 +78,13 @@ HexWidget::HexWidget(QWidget *parent) :
     recalculateFontMetrics();
 }
 
-HexWidget::~HexWidget()
-{
-    delete m_data;
-}
-
 void HexWidget::setData(QIODevice* data)
 {
     Q_ASSERT(data);
     //only random access QIODevices have semantics reasonable for this widget
     Q_ASSERT(data->isSequential() == false);
     Q_ASSERT(data->isReadable());
-    m_data = data;
+    m_data.reset(data);
     recalculateFontMetrics();
 }
 
@@ -104,11 +106,11 @@ void HexWidget::recalculateFontMetrics()
     if(m_format == DisplayFormat::HEX)
     {
         m_numBytesInLine = 16;
-        rawColumnChars = m_numBytesInLine * 3;
+        rawColumnChars = m_numBytesInLine * 3 - 1;
     }else
     {
-        m_numBytesInLine = 8;
-        rawColumnChars = m_numBytesInLine * 9;
+        m_numBytesInLine = 6;
+        rawColumnChars = m_numBytesInLine * 9 - 1;
     }
     m_numLines = dsize / m_numBytesInLine + 1;
     m_numVisibleLines = qMin(static_cast<qint64>(viewport()->height() / m_lineHeight), m_numLines);
@@ -118,9 +120,9 @@ void HexWidget::recalculateFontMetrics()
     while((dsize >>= 16) > 0)
         m_numAddressChars += 4; // plus 1 char inter word spacing
 
-    const int colMargin = 2 * m_textMargin;
-    m_characterWidth = fm.width(QChar('M'));
+    m_characterWidth = fm.width(QChar('W'));
     m_textMargin = m_characterWidth;
+    const int colMargin = 2 * m_textMargin;
 
     const int addrColumnWidth = colMargin + m_characterWidth * m_numAddressChars;
     const int rawColumnWidth = colMargin + m_characterWidth * rawColumnChars;
@@ -154,7 +156,7 @@ qint64 HexWidget::dataSize() const
 QByteArray HexWidget::dataLineAtAddr(qint64 addr) const
 {
     Q_ASSERT(m_data);
-    Q_ASSERT(m_data->size() > addr);
+    Q_ASSERT(m_data->size() >= addr);
     Q_ASSERT(addr >= 0);
     Q_ASSERT(addr % m_numBytesInLine == 0);
     if(!m_data)
@@ -180,10 +182,32 @@ HexWidget::RegionId HexWidget::regionAtPos(const QPoint& pos) const
 
 qint64 HexWidget::addrAtPos(const QPoint& pos, bool& ok) const
 {
-    //TODO
-    Q_UNUSED(pos);
-    Q_UNUSED(ok);
-    return 0x0;
+    RegionId reg = regionAtPos(pos);
+    ok = true;
+
+    int line_num = pos.y() / m_lineHeight + m_vp.y();
+    int column_num = 0;
+    switch(reg)
+    {
+        case RegionId::INVALID: break;
+        case RegionId::ADDRESS: break;
+        case RegionId::RAW:
+            column_num =  (pos.x() - m_rawColumn.left()) * m_numBytesInLine / m_rawColumn.width();
+            break;
+        case RegionId::PRINTABLE:
+            column_num =  (pos.x() - m_printableColumn.left()) * m_numBytesInLine / m_printableColumn.width();
+            break;
+        default:
+            Q_ASSERT(false);
+    }
+
+    qint64 addr = line_num * m_numBytesInLine + column_num;
+    if (reg == RegionId::INVALID || addr < 0 || addr > dataSize())
+    {
+        ok = false;
+        addr = 0;
+    }
+    return addr;
 }
 
 QPoint HexWidget::posAtAddr(qint64 addr, RegionId reg, bool& ok) const
@@ -237,19 +261,39 @@ void HexWidget::paintEvent(QPaintEvent *event)
     painter.fillRect(m_addrColumn, palette().dark());
     painter.fillRect(m_printableColumn, palette().dark());
 
+    int raw_entry_w = m_rawColumn.width() / m_numBytesInLine;
+    int print_entry_w = m_printableColumn.width() / m_numBytesInLine;
+
     for(int j = 0; j <= m_numVisibleLines; ++j)
     {
-        // y viewport offset is indexed starting from 1 thus y-1
-        quint64 address = (m_vp.y() - 1+j) * m_numBytesInLine;
+        // Viewport y scrollbar minimal value i 1 unfortunately so we shift
+        // display by one line down
+        int line_y = m_lineHeight * (j + 1);
+        qint64 address = (m_vp.y() + j) * m_numBytesInLine;
+
+        if(address > m_data->size())
+            break;
+
         // paint the address values
-        painter.drawText(QPointF(m_addrColumn.left() + m_textMargin, m_lineHeight * j),
+        painter.drawText(QPointF(m_addrColumn.left() + m_textMargin, line_y),
                          numToHexStr(address).right(m_numAddressChars));
 
+        QByteArray arr = dataLineAtAddr(address);
         // paint the actual values
-        for(int i = 0; i < m_numBytesInLine; ++i)
+        for(int i = 0; i < arr.size(); ++i)
         {
-            // TODO paint the actual values - possibly with nice spacing and
-            // alternating background
+            QString text;
+            char c = arr.at(i);
+            if(m_format == DisplayFormat::HEX)
+                text = numToHexStr(c);
+            else
+                text = numToBinStr(c);
+
+            painter.drawText(QPointF(m_rawColumn.left() + m_textMargin + raw_entry_w * i, line_y), text);
+            painter.drawText(QPointF(m_printableColumn.left() + m_textMargin + print_entry_w * i, line_y),
+                             QString(ascii(c)));
+            // XXX column size is off on some zoom levels - should implement non monospace fallback
+            // TODO paint alternating background
             // TODO implement highlighting logic
         }
     }
@@ -294,12 +338,15 @@ void HexWidget::mouseMoveEvent(QMouseEvent *e)
 #ifdef DEBUG_BUILD
     m_cursorPos = e->pos();
     viewport()->update();
+#else
+    Q_UNUSED(e);
 #endif
 }
 
 void HexWidget::drawDebug(QPainter& painter) const
 {
-    painter.drawText(m_cursorPos, QString("<%1:%2>").arg(m_cursorPos.x()).arg(m_cursorPos.y()));
+    bool ok;
+    painter.drawText(m_cursorPos, QString("0x%1 : %2").arg(numToHexStr((quint16)addrAtPos(m_cursorPos, ok))).arg((quint16)addrAtPos(m_cursorPos, ok)));
     const QColor color_g(116,214,0, 50);
     const QColor color_r(239,65,53, 100);
     RegionId reg = regionAtPos(m_cursorPos);

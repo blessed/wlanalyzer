@@ -19,7 +19,6 @@ public:
     enum class RegionId {INVALID, ADDRESS, RAW, PRINTABLE};
 
     explicit HexWidget(QWidget *parent = 0);
-    ~HexWidget();
 
     void setData(const QByteArray& data);
     //interface is limited to Random-access QIODevices
@@ -69,7 +68,7 @@ private:
     void mouseMoveEvent(QMouseEvent *e);
     void drawDebug(QPainter& painter) const;
 
-    QIODevice* m_data;
+    QSharedPointer<QIODevice> m_data;
     QMenu m_contextMenu;
     DisplayFormat m_format;
 
@@ -83,6 +82,7 @@ private:
     // viewport geometry: width, height
     // topLeft represents current position of the viewport top left corner
     // relative to absolute viewport coordinates.
+    // Note that x is in pixels ans y is in whole lines due to how this widget is drawn.
     QRect m_vp;
     int m_lineHeight;
     qint64 m_numLines;

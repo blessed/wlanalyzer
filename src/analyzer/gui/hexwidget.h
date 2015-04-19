@@ -30,7 +30,7 @@ public:
     void resizeFont(int sizeIncrement);
 
 signals:
-    void selectionChanged(quint32 offset);
+    void addressSelected(qint64 offset);
 
 public slots:
     // ask for highlighting on data region
@@ -64,6 +64,7 @@ private:
     void paintEvent(QPaintEvent *event);
     void wheelEvent(QWheelEvent *event);
     void resizeEvent(QResizeEvent *event);
+    void mousePressEvent(QMouseEvent *e);
     // mostly for debugging purposes
     void mouseMoveEvent(QMouseEvent *e);
     void drawDebug(QPainter& painter) const;
@@ -87,6 +88,8 @@ private:
     int m_lineHeight;
     qint64 m_numLines;
     qint64 m_numVisibleLines;
+    qint64 m_highlight_addr;
+    qint64 m_highlight_len;
     // current position of the cursor for Debugging purposes
     QPoint m_cursorPos;
 };

@@ -19,6 +19,7 @@ private slots:
 	void connectSlot();
 	void openSlot();
 	void aboutSlot();
+	void addressSelected(qint64 addr);
 
     // dock widget pin to area logic
     void pinDockToTopSlot();

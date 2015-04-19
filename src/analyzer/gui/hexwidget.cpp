@@ -51,7 +51,9 @@ HexWidget::HexWidget(QWidget *parent) :
     QAbstractScrollArea(parent),
     m_format(DisplayFormat::HEX),
     m_numBytesInLine(16),
-    m_numAddressChars(4)
+    m_numAddressChars(4),
+    m_highlight_addr(0),
+    m_highlight_len(0)
 {
 
 #ifdef DEBUG_BUILD
@@ -85,6 +87,8 @@ void HexWidget::setData(QIODevice* data)
     Q_ASSERT(data->isSequential() == false);
     Q_ASSERT(data->isReadable());
     m_data.reset(data);
+    // previous highlight has no meaning now so reset it
+    m_highlight_addr = m_highlight_len = 0;
     recalculateFontMetrics();
 }
 
@@ -221,9 +225,11 @@ QPoint HexWidget::posAtAddr(qint64 addr, RegionId reg, bool& ok) const
 
 void HexWidget::highlight(qint64 start_addr, qint64 len)
 {
-    //TODO
-    Q_UNUSED(start_addr);
-    Q_UNUSED(len);
+    Q_ASSERT(start_addr >=0 && start_addr <= m_data->size());
+    Q_ASSERT(len >=0);
+    m_highlight_addr = start_addr;
+    m_highlight_len = len;
+    viewport()->update();
 }
 
 void HexWidget::setRawDataDisplayFormat(QAction *action)
@@ -262,20 +268,19 @@ void HexWidget::paintEvent(QPaintEvent *event)
     painter.fillRect(m_printableColumn, palette().dark());
 
     int raw_entry_w = m_rawColumn.width() / m_numBytesInLine;
-    int print_entry_w = m_printableColumn.width() / m_numBytesInLine;
+    int print_entry_w = m_characterWidth;
 
     for(int j = 0; j <= m_numVisibleLines; ++j)
     {
-        // Viewport y scrollbar minimal value i 1 unfortunately so we shift
-        // display by one line down
-        int line_y = m_lineHeight * (j + 1);
+        int line_y = m_lineHeight * j;
         qint64 address = (m_vp.y() + j) * m_numBytesInLine;
 
         if(address > m_data->size())
             break;
 
-        // paint the address values
-        painter.drawText(QPointF(m_addrColumn.left() + m_textMargin, line_y),
+        // paint the address values - remember that text is drawn from baseline
+        // upwards so we need to shift it down by one line for nicer spacing
+        painter.drawText(QPointF(m_addrColumn.left() + m_textMargin, line_y + m_lineHeight),
                          numToHexStr(address).right(m_numAddressChars));
 
         QByteArray arr = dataLineAtAddr(address);
@@ -289,12 +294,21 @@ void HexWidget::paintEvent(QPaintEvent *event)
             else
                 text = numToBinStr(c);
 
-            painter.drawText(QPointF(m_rawColumn.left() + m_textMargin + raw_entry_w * i, line_y), text);
-            painter.drawText(QPointF(m_printableColumn.left() + m_textMargin + print_entry_w * i, line_y),
+            if(m_highlight_len > 0 && (address + i) >= m_highlight_addr && (address + i) <= (m_highlight_addr + m_highlight_len))
+            {
+                // TODO refactor thiese rects and offsets
+                // XXX highlight does not look natural need to shift it xy by ascent
+                // XXX highlight bleeds from raw column in BIN variant to printable collumn
+                 painter.fillRect(QRectF(QPointF(m_rawColumn.left() + m_textMargin + raw_entry_w * i, line_y), QSizeF(raw_entry_w, m_lineHeight)), palette().highlight());
+                 painter.fillRect(QRectF(QPointF(m_printableColumn.left() + m_textMargin + print_entry_w * i, line_y), QSizeF(print_entry_w, m_lineHeight)), palette().highlight());
+            }
+            // text is displayed starting from baseline so we need to shift it
+            // downwards by one line for nice spacing
+            painter.drawText(QPointF(m_rawColumn.left() + m_textMargin + raw_entry_w * i, line_y + m_lineHeight), text);
+            painter.drawText(QPointF(m_printableColumn.left() + m_textMargin + print_entry_w * i, line_y + m_lineHeight),
                              QString(ascii(c)));
             // XXX column size is off on some zoom levels - should implement non monospace fallback
             // TODO paint alternating background
-            // TODO implement highlighting logic
         }
     }
 
@@ -331,6 +345,17 @@ void HexWidget::resizeFont(int sizeIncrement)
     font.setPointSize(newSize);
     setFont(font);
     recalculateFontMetrics();
+}
+
+void HexWidget::mousePressEvent(QMouseEvent *e)
+{
+    if(e->button() != Qt::LeftButton)
+        return;
+
+    bool ok = false;
+    qint64 addr = addrAtPos(e->pos(), ok);
+    if(ok)
+        emit addressSelected(addr);
 }
 
 void HexWidget::mouseMoveEvent(QMouseEvent *e)

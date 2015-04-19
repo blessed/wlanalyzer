@@ -18,6 +18,9 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->menu_Logs->addAction(ui->dockPacketList->toggleViewAction());
     ui->menu_Logs->addAction(ui->dockPacketDissection->toggleViewAction());
     ui->menu_Logs->addAction(ui->dockPacketHex->toggleViewAction());
+
+    connect(ui->packetHexEdit, SIGNAL(addressSelected(qint64)),
+			this, SLOT(addressSelected(qint64)));
 }
 
 MainWindow::~MainWindow()
@@ -48,6 +51,16 @@ void MainWindow::openSlot()
 	}
 	else
 		qDebug("Pressed cancel");
+}
+
+void MainWindow::addressSelected(qint64 addr)
+{
+#ifdef DEBUG_BUILD
+    qDebug() << "address selected: " << addr;
+    ui->packetHexEdit->highlight(addr, 5);
+#else
+    Q_UNUSED(addr)
+#endif
 }
 
 void MainWindow::aboutSlot()

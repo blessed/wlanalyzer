@@ -107,14 +107,16 @@ void HexWidget::recalculateFontMetrics()
 
     // calculate number of characters in raw view plus spaces every octet
     int rawColumnChars = 0;
+
+    // XXX factor this out elsewhere - rawByteWidth() and printableByteWidth()
     if(m_format == DisplayFormat::HEX)
     {
         m_numBytesInLine = 16;
-        rawColumnChars = m_numBytesInLine * 3 - 1;
+        rawColumnChars = m_numBytesInLine * 3;
     }else
     {
         m_numBytesInLine = 6;
-        rawColumnChars = m_numBytesInLine * 9 - 1;
+        rawColumnChars = m_numBytesInLine * 9;
     }
     m_numLines = dsize / m_numBytesInLine + 1;
     m_numVisibleLines = qMin(static_cast<qint64>(viewport()->height() / m_lineHeight), m_numLines);
@@ -124,12 +126,12 @@ void HexWidget::recalculateFontMetrics()
     while((dsize >>= 16) > 0)
         m_numAddressChars += 4; // plus 1 char inter word spacing
 
-    m_characterWidth = fm.width(QChar('W'));
+    m_characterWidth = fm.boundingRect(QChar('W')).width();
     m_textMargin = m_characterWidth;
     const int colMargin = 2 * m_textMargin;
 
     const int addrColumnWidth = colMargin + m_characterWidth * m_numAddressChars;
-    const int rawColumnWidth = colMargin + m_characterWidth * rawColumnChars;
+    const int rawColumnWidth = m_textMargin + m_characterWidth * rawColumnChars;
     const int printableColumnWidth = colMargin + m_characterWidth * m_numBytesInLine;
     const int lineWidth = addrColumnWidth + rawColumnWidth + printableColumnWidth;
 
@@ -196,17 +198,18 @@ qint64 HexWidget::addrAtPos(const QPoint& pos, bool& ok) const
         case RegionId::INVALID: break;
         case RegionId::ADDRESS: break;
         case RegionId::RAW:
-            column_num =  (pos.x() - m_rawColumn.left()) * m_numBytesInLine / m_rawColumn.width();
+            column_num =  (pos.x() - m_rawColumn.left() - m_textMargin) * m_numBytesInLine / (m_rawColumn.width() - m_textMargin); /* XXX rawByteWidth() */
             break;
         case RegionId::PRINTABLE:
-            column_num =  (pos.x() - m_printableColumn.left()) * m_numBytesInLine / m_printableColumn.width();
+            column_num =  (pos.x() - m_printableColumn.left() - m_textMargin) / m_characterWidth; /* XXX printableByteWidth() */
             break;
         default:
             Q_ASSERT(false);
     }
 
     qint64 addr = line_num * m_numBytesInLine + column_num;
-    if (reg == RegionId::INVALID || addr < 0 || addr > dataSize())
+    if (reg == RegionId::INVALID || column_num >= m_numBytesInLine
+            || addr < 0 || addr > dataSize())
     {
         ok = false;
         addr = 0;
@@ -267,20 +270,23 @@ void HexWidget::paintEvent(QPaintEvent *event)
     painter.fillRect(m_addrColumn, palette().dark());
     painter.fillRect(m_printableColumn, palette().dark());
 
-    int raw_entry_w = m_rawColumn.width() / m_numBytesInLine;
-    int print_entry_w = m_characterWidth;
+    // XXX generalize subtraction of margins - also do this in selection logic
+    int raw_entry_w = (m_rawColumn.width() - m_textMargin)/ m_numBytesInLine; /* XXX rawByteWidth() */
+    int print_entry_w = m_characterWidth; /* XXX printableByteWidth() */
 
     for(int j = 0; j <= m_numVisibleLines; ++j)
     {
         int line_y = m_lineHeight * j;
+        // Text is drawn from baseline upwards so we need to shift it down
+        // by one line and up by font descent for nicer spacing
+        // TODO factor out m_text_y_offset
+        int text_line_y = line_y + m_lineHeight - fontMetrics().descent();
         qint64 address = (m_vp.y() + j) * m_numBytesInLine;
 
         if(address > m_data->size())
             break;
 
-        // paint the address values - remember that text is drawn from baseline
-        // upwards so we need to shift it down by one line for nicer spacing
-        painter.drawText(QPointF(m_addrColumn.left() + m_textMargin, line_y + m_lineHeight),
+        painter.drawText(QPointF(m_addrColumn.left() + m_textMargin, text_line_y),
                          numToHexStr(address).right(m_numAddressChars));
 
         QByteArray arr = dataLineAtAddr(address);
@@ -294,20 +300,16 @@ void HexWidget::paintEvent(QPaintEvent *event)
             else
                 text = numToBinStr(c);
 
-            if(m_highlight_len > 0 && (address + i) >= m_highlight_addr && (address + i) <= (m_highlight_addr + m_highlight_len))
+            if(m_highlight_len > 0 && (address + i) >= m_highlight_addr && (address + i) < (m_highlight_addr + m_highlight_len))
             {
+                // TODO change text color under highlight
                 // TODO refactor thiese rects and offsets
-                // XXX highlight does not look natural need to shift it xy by ascent
-                // XXX highlight bleeds from raw column in BIN variant to printable collumn
-                 painter.fillRect(QRectF(QPointF(m_rawColumn.left() + m_textMargin + raw_entry_w * i, line_y), QSizeF(raw_entry_w, m_lineHeight)), palette().highlight());
+                 painter.fillRect(QRectF(QPointF(m_rawColumn.left() + raw_entry_w * i, line_y), QSizeF(raw_entry_w + m_textMargin, m_lineHeight)), palette().highlight());
                  painter.fillRect(QRectF(QPointF(m_printableColumn.left() + m_textMargin + print_entry_w * i, line_y), QSizeF(print_entry_w, m_lineHeight)), palette().highlight());
             }
-            // text is displayed starting from baseline so we need to shift it
-            // downwards by one line for nice spacing
-            painter.drawText(QPointF(m_rawColumn.left() + m_textMargin + raw_entry_w * i, line_y + m_lineHeight), text);
-            painter.drawText(QPointF(m_printableColumn.left() + m_textMargin + print_entry_w * i, line_y + m_lineHeight),
+            painter.drawText(QPointF(m_rawColumn.left() + m_textMargin + raw_entry_w * i, text_line_y), text);
+            painter.drawText(QPointF(m_printableColumn.left() + m_textMargin + print_entry_w * i, text_line_y),
                              QString(ascii(c)));
-            // XXX column size is off on some zoom levels - should implement non monospace fallback
             // TODO paint alternating background
         }
     }

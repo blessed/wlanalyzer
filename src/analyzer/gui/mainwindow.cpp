@@ -19,6 +19,11 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->menu_Logs->addAction(ui->dockPacketDissection->toggleViewAction());
     ui->menu_Logs->addAction(ui->dockPacketHex->toggleViewAction());
 
+#ifdef DEBUG_BUILD
+    auto debug_file = new QFile("/var/log/syslog");
+    debug_file->open(QIODevice::ReadOnly);
+    ui->packetHexEdit->setData(debug_file);
+#endif
     connect(ui->packetHexEdit, SIGNAL(addressSelected(qint64)),
 			this, SLOT(addressSelected(qint64)));
 }
@@ -57,7 +62,7 @@ void MainWindow::addressSelected(qint64 addr)
 {
 #ifdef DEBUG_BUILD
     qDebug() << "address selected: " << addr;
-    ui->packetHexEdit->highlight(addr, 5);
+    ui->packetHexEdit->highlight(addr, 11);
 #else
     Q_UNUSED(addr)
 #endif

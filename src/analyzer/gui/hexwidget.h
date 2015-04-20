@@ -69,6 +69,7 @@ private:
     void mousePressEvent(QMouseEvent *e);
     // mostly for debugging purposes
     void mouseMoveEvent(QMouseEvent *e);
+    void ensureMonospacedFont();
     void drawDebug(QPainter& painter) const;
 
     QSharedPointer<QIODevice> m_data;

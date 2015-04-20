@@ -69,9 +69,7 @@ HexWidget::HexWidget(QWidget *parent) :
 
     connect(group, SIGNAL(triggered(QAction*)), this, SLOT(setRawDataDisplayFormat(QAction*)));
 
-    // setup monospaced font and fontmetrics
-    auto font = QFontDatabase::systemFont(QFontDatabase::FixedFont);
-    setFont(font);
+    ensureMonospacedFont();
     recalculateFontMetrics();
 }
 
@@ -365,6 +363,19 @@ void HexWidget::mousePressEvent(QMouseEvent *e)
 void HexWidget::mouseMoveEvent(QMouseEvent *e)
 {
     Q_UNUSED(e);
+}
+
+void HexWidget::ensureMonospacedFont()
+{
+    // setup monospaced font and fontmetrics
+#if QT_VERSION >= 0x050200
+    QFont font = QFontDatabase::systemFont(QFontDatabase::FixedFont);
+#else
+    QFont font("monospace");
+#endif
+    font.setStyleHint(QFont::Monospace);
+    font.setFixedPitch(true);
+    setFont(font);
 }
 
 void HexWidget::drawDebug(QPainter& painter) const

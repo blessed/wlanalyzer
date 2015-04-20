@@ -56,11 +56,6 @@ HexWidget::HexWidget(QWidget *parent) :
     m_highlight_len(0)
 {
 
-#ifdef DEBUG_BUILD
-    // trigger mouseMoveEvent also without mouse down
-    setMouseTracking(true);
-#endif
-
     // setup context menu with required options
     auto group = new QActionGroup(this);
     auto action = group->addAction(tr("Display data as Bit Field"));
@@ -161,8 +156,7 @@ qint64 HexWidget::dataSize() const
 
 QByteArray HexWidget::dataLineAtAddr(qint64 addr) const
 {
-    Q_ASSERT(m_data);
-    Q_ASSERT(m_data->size() >= addr);
+    Q_ASSERT(dataSize() >= addr);
     Q_ASSERT(addr >= 0);
     Q_ASSERT(addr % m_numBytesInLine == 0);
     if(!m_data)
@@ -209,7 +203,7 @@ qint64 HexWidget::addrAtPos(const QPoint& pos, bool& ok) const
 
     qint64 addr = line_num * m_numBytesInLine + column_num;
     if (reg == RegionId::INVALID || column_num >= m_numBytesInLine
-            || addr < 0 || addr > dataSize())
+            || !addrValid(addr))
     {
         ok = false;
         addr = 0;
@@ -226,9 +220,17 @@ QPoint HexWidget::posAtAddr(qint64 addr, RegionId reg, bool& ok) const
     return QPoint();
 }
 
+bool HexWidget::addrValid(qint64 addr) const
+{
+    return m_data && addr >= 0 && addr < dataSize();
+}
+
 void HexWidget::highlight(qint64 start_addr, qint64 len)
 {
-    Q_ASSERT(start_addr >=0 && start_addr <= m_data->size());
+    if(!addrValid(start_addr))
+        return;
+
+    Q_ASSERT(start_addr >=0 && start_addr <= dataSize());
     Q_ASSERT(len >=0);
     m_highlight_addr = start_addr;
     m_highlight_len = len;
@@ -283,7 +285,7 @@ void HexWidget::paintEvent(QPaintEvent *event)
         int text_line_y = line_y + m_lineHeight - fontMetrics().descent();
         qint64 address = (m_vp.y() + j) * m_numBytesInLine;
 
-        if(address > m_data->size())
+        if(!addrValid(address))
             break;
 
         painter.drawText(QPointF(m_addrColumn.left() + m_textMargin, text_line_y),
@@ -300,23 +302,22 @@ void HexWidget::paintEvent(QPaintEvent *event)
             else
                 text = numToBinStr(c);
 
+            painter.save();
             if(m_highlight_len > 0 && (address + i) >= m_highlight_addr && (address + i) < (m_highlight_addr + m_highlight_len))
             {
-                // TODO change text color under highlight
                 // TODO refactor thiese rects and offsets
                  painter.fillRect(QRectF(QPointF(m_rawColumn.left() + raw_entry_w * i, line_y), QSizeF(raw_entry_w + m_textMargin, m_lineHeight)), palette().highlight());
                  painter.fillRect(QRectF(QPointF(m_printableColumn.left() + m_textMargin + print_entry_w * i, line_y), QSizeF(print_entry_w, m_lineHeight)), palette().highlight());
+                 painter.setPen(palette().highlightedText().color());
             }
+
             painter.drawText(QPointF(m_rawColumn.left() + m_textMargin + raw_entry_w * i, text_line_y), text);
             painter.drawText(QPointF(m_printableColumn.left() + m_textMargin + print_entry_w * i, text_line_y),
                              QString(ascii(c)));
+            painter.restore();
             // TODO paint alternating background
         }
     }
-
-#ifdef DEBUG_BUILD
-    drawDebug(painter);
-#endif
 
     painter.drawLine(m_addrColumn.left(), m_addrColumn.top(), m_addrColumn.left(), m_rawColumn.bottom());
     painter.drawLine(m_rawColumn.left(), m_rawColumn.top(), m_rawColumn.left(), m_rawColumn.bottom());
@@ -328,6 +329,7 @@ void HexWidget::wheelEvent(QWheelEvent *event)
 {
     if (event->modifiers() & Qt::ControlModifier) {
         resizeFont(event->delta() > 0 ? 1 : -1 );
+        return; // avoid scrolling when we zoom
     }
     QAbstractScrollArea::wheelEvent(event);
 }
@@ -356,18 +358,13 @@ void HexWidget::mousePressEvent(QMouseEvent *e)
 
     bool ok = false;
     qint64 addr = addrAtPos(e->pos(), ok);
-    if(ok)
+    if(ok && addrValid(addr))
         emit addressSelected(addr);
 }
 
 void HexWidget::mouseMoveEvent(QMouseEvent *e)
 {
-#ifdef DEBUG_BUILD
-    m_cursorPos = e->pos();
-    viewport()->update();
-#else
     Q_UNUSED(e);
-#endif
 }
 
 void HexWidget::drawDebug(QPainter& painter) const

@@ -55,6 +55,8 @@ protected:
     // calculated in absolute viewport coordinates
     // if pos is invalid ok==false and returns QPoint()
     QPoint posAtAddr(qint64 addr, RegionId reg, bool& ok) const;
+    // check if address is within range of the data contained in the widget
+    bool addrValid(qint64 addr) const;
 
 private:
     // show our context menu with display format options

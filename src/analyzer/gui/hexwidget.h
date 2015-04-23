@@ -22,6 +22,7 @@ public:
 
     void setData(const QByteArray& data);
     //interface is limited to Random-access QIODevices
+    //Takes ownership of the passed pointers!!!
     void setData(QIODevice* data);
     inline void setData(QBuffer* data) { setData(static_cast<QIODevice*>(data));}
     inline void setData(QFile* data) { setData(static_cast<QIODevice*>(data));}
@@ -51,14 +52,17 @@ protected:
     // return address pointed by pos in the widget viewport
     // if pos is invalid ok==false and returns 0x0
     qint64 addrAtPos(const QPoint& pos, bool& ok) const;
+    qint64 addrAtLineAndColumn(qint64 line, int column) const;
     // return Top Left boundary position occupied by data at given addr and reg
     // calculated in absolute viewport coordinates
     // if pos is invalid ok==false and returns QPoint()
     QPoint posAtAddr(qint64 addr, RegionId reg, bool& ok) const;
     // check if address is within range of the data contained in the widget
     bool addrValid(qint64 addr) const;
+    // how much horizontal space will one byte take in raw column depending on format
+    int rawByteDisplayWidth() const;
+    int printableByteDisplayWidth() const;
 
-private:
     // show our context menu with display format options
     void contextMenuEvent(QContextMenuEvent *event);
     void scrollContentsBy(int dx, int dy);
@@ -89,6 +93,9 @@ private:
     // Note that x is in pixels ans y is in whole lines due to how this widget is drawn.
     QRect m_vp;
     int m_lineHeight;
+    // Text is drawn from baseline upwards so we need to shift it down
+    // by one line and up by font descent for nicer spacing
+    int m_textYOffset;
     qint64 m_numLines;
     qint64 m_numVisibleLines;
     qint64 m_highlight_addr;

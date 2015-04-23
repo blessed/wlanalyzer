@@ -89,6 +89,7 @@ void HexWidget::setData(const QByteArray& data)
 {
     auto buf = new QBuffer();
     buf->setData(data);
+    buf->open(QIODevice::ReadOnly);
     setData(buf);
 }
 
@@ -96,21 +97,14 @@ void HexWidget::recalculateFontMetrics()
 {
     const QFontMetrics &fm = fontMetrics();
     m_lineHeight = fm.lineSpacing();
+    m_textYOffset =  m_lineHeight - fm.descent();
     qint64 dsize = dataSize();
 
-    // calculate number of characters in raw view plus spaces every octet
-    int rawColumnChars = 0;
-
-    // XXX factor this out elsewhere - rawByteWidth() and printableByteWidth()
     if(m_format == DisplayFormat::HEX)
-    {
         m_numBytesInLine = 16;
-        rawColumnChars = m_numBytesInLine * 3;
-    }else
-    {
+    else
         m_numBytesInLine = 6;
-        rawColumnChars = m_numBytesInLine * 9;
-    }
+
     m_numLines = dsize / m_numBytesInLine + 1;
     m_numVisibleLines = qMin(static_cast<qint64>(viewport()->height() / m_lineHeight), m_numLines);
 
@@ -124,8 +118,10 @@ void HexWidget::recalculateFontMetrics()
     const int colMargin = 2 * m_textMargin;
 
     const int addrColumnWidth = colMargin + m_characterWidth * m_numAddressChars;
-    const int rawColumnWidth = m_textMargin + m_characterWidth * rawColumnChars;
-    const int printableColumnWidth = colMargin + m_characterWidth * m_numBytesInLine;
+    // TODO in case we would like to implement variable byte spacing/grouping
+    // this needs rewriting
+    const int rawColumnWidth = m_textMargin + rawByteDisplayWidth() * m_numBytesInLine;
+    const int printableColumnWidth = colMargin + printableByteDisplayWidth() * m_numBytesInLine;
     const int lineWidth = addrColumnWidth + rawColumnWidth + printableColumnWidth;
 
     // manage correct scroll and scrollbar ranges
@@ -185,21 +181,13 @@ qint64 HexWidget::addrAtPos(const QPoint& pos, bool& ok) const
 
     int line_num = pos.y() / m_lineHeight + m_vp.y();
     int column_num = 0;
-    switch(reg)
-    {
-        case RegionId::INVALID: break;
-        case RegionId::ADDRESS: break;
-        case RegionId::RAW:
-            column_num =  (pos.x() - m_rawColumn.left() - m_textMargin) * m_numBytesInLine / (m_rawColumn.width() - m_textMargin); /* XXX rawByteWidth() */
-            break;
-        case RegionId::PRINTABLE:
-            column_num =  (pos.x() - m_printableColumn.left() - m_textMargin) / m_characterWidth; /* XXX printableByteWidth() */
-            break;
-        default:
-            Q_ASSERT(false);
-    }
 
-    qint64 addr = line_num * m_numBytesInLine + column_num;
+    if( reg == RegionId::RAW)
+        column_num =  (pos.x() - m_rawColumn.left() - m_textMargin) / rawByteDisplayWidth();
+    else if(reg == RegionId::PRINTABLE)
+        column_num =  (pos.x() - m_printableColumn.left() - m_textMargin) / printableByteDisplayWidth();
+
+    qint64 addr = addrAtLineAndColumn(line_num, column_num);
     if (reg == RegionId::INVALID || column_num >= m_numBytesInLine
             || !addrValid(addr))
     {
@@ -209,9 +197,15 @@ qint64 HexWidget::addrAtPos(const QPoint& pos, bool& ok) const
     return addr;
 }
 
+qint64 HexWidget::addrAtLineAndColumn(qint64 line, int column) const
+{
+    return line * m_numBytesInLine + column;
+}
+
 QPoint HexWidget::posAtAddr(qint64 addr, RegionId reg, bool& ok) const
 {
-    //TODO
+    //TODO this will be needed when we would like to scroll to line/column on
+    //outside selection
     Q_UNUSED(addr);
     Q_UNUSED(reg);
     Q_UNUSED(ok);
@@ -221,6 +215,24 @@ QPoint HexWidget::posAtAddr(qint64 addr, RegionId reg, bool& ok) const
 bool HexWidget::addrValid(qint64 addr) const
 {
     return m_data && addr >= 0 && addr < dataSize();
+}
+
+// TODO rewrite this with bye index variable in case we would like
+// to implement variable byte spacing/grouping
+int HexWidget::rawByteDisplayWidth() const
+{
+    if(m_format == DisplayFormat::HEX)
+    {
+        return m_characterWidth * 3;
+    }else
+    {
+        return m_characterWidth * 9;
+    }
+}
+
+int HexWidget::printableByteDisplayWidth() const
+{
+    return m_characterWidth;
 }
 
 void HexWidget::highlight(qint64 start_addr, qint64 len)
@@ -270,18 +282,15 @@ void HexWidget::paintEvent(QPaintEvent *event)
     painter.fillRect(m_addrColumn, palette().dark());
     painter.fillRect(m_printableColumn, palette().dark());
 
-    // XXX generalize subtraction of margins - also do this in selection logic
-    int raw_entry_w = (m_rawColumn.width() - m_textMargin)/ m_numBytesInLine; /* XXX rawByteWidth() */
-    int print_entry_w = m_characterWidth; /* XXX printableByteWidth() */
+    int raw_entry_w = rawByteDisplayWidth();
+    int print_entry_w = printableByteDisplayWidth();
 
+    // paint consecutive lines
     for(int j = 0; j <= m_numVisibleLines; ++j)
     {
         int line_y = m_lineHeight * j;
-        // Text is drawn from baseline upwards so we need to shift it down
-        // by one line and up by font descent for nicer spacing
-        // TODO factor out m_text_y_offset
-        int text_line_y = line_y + m_lineHeight - fontMetrics().descent();
-        qint64 address = (m_vp.y() + j) * m_numBytesInLine;
+        int text_line_y = line_y + m_textYOffset;
+        qint64 address = addrAtLineAndColumn(m_vp.y() + j, 0);
 
         if(!addrValid(address))
             break;
@@ -303,20 +312,20 @@ void HexWidget::paintEvent(QPaintEvent *event)
             painter.save();
             if(m_highlight_len > 0 && (address + i) >= m_highlight_addr && (address + i) < (m_highlight_addr + m_highlight_len))
             {
-                // TODO refactor thiese rects and offsets
-                 painter.fillRect(QRectF(QPointF(m_rawColumn.left() + raw_entry_w * i, line_y), QSizeF(raw_entry_w + m_textMargin, m_lineHeight)), palette().highlight());
-                 painter.fillRect(QRectF(QPointF(m_printableColumn.left() + m_textMargin + print_entry_w * i, line_y), QSizeF(print_entry_w, m_lineHeight)), palette().highlight());
-                 painter.setPen(palette().highlightedText().color());
+                // XXX refactor thiese rects and offsets once implementing variable byte spacing / grouping
+                painter.fillRect(QRectF(QPointF(m_rawColumn.left() + raw_entry_w * i, line_y), QSizeF(raw_entry_w + m_textMargin, m_lineHeight)), palette().highlight());
+                painter.fillRect(QRectF(QPointF(m_printableColumn.left() + m_textMargin + print_entry_w * i, line_y), QSizeF(print_entry_w, m_lineHeight)), palette().highlight());
+                painter.setPen(palette().highlightedText().color());
             }
 
             painter.drawText(QPointF(m_rawColumn.left() + m_textMargin + raw_entry_w * i, text_line_y), text);
             painter.drawText(QPointF(m_printableColumn.left() + m_textMargin + print_entry_w * i, text_line_y),
                              QString(ascii(c)));
             painter.restore();
-            // TODO paint alternating background
         }
     }
 
+    // draw vertical lines separating the widget columns
     painter.drawLine(m_addrColumn.left(), m_addrColumn.top(), m_addrColumn.left(), m_rawColumn.bottom());
     painter.drawLine(m_rawColumn.left(), m_rawColumn.top(), m_rawColumn.left(), m_rawColumn.bottom());
     painter.drawLine(m_printableColumn.left(), m_printableColumn.top(), m_printableColumn.left(), m_printableColumn.bottom());

@@ -44,6 +44,10 @@ private slots:
     // control zoom level of widget with context menu
     void zoomIn();
     void zoomOut();
+#ifdef DEBUG_BUILD
+    // allow for opening files directly from context menu in debug builds
+    void debugFileOpen();
+#endif
 
 protected:
     // calculate column widths, line heights, etc.

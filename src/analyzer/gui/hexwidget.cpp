@@ -5,6 +5,10 @@
 #include <QVariant>
 #include <QFontDatabase>
 #include <QScrollBar>
+#ifdef DEBUG_BUILD
+#   include<QFileDialog>
+#   include<QMessageBox>
+#endif
 #include "gui/hexwidget.h"
 #include "gui/hexwidget.moc"
 
@@ -76,6 +80,14 @@ HexWidget::HexWidget(QWidget *parent) :
     action = new QAction(QIcon::fromTheme("zoom-out"), tr("Zoom out"), this);
     m_contextMenu.addAction(action);
     connect(action, SIGNAL(triggered(bool)), this, SLOT(zoomOut()));
+
+#ifdef DEBUG_BUILD
+    // setup direct file opening context menu option
+    m_contextMenu.addSeparator();
+    action = new QAction(QIcon::fromTheme("document-open"), tr("[Debug] Open File"), this);
+    m_contextMenu.addAction(action);
+    connect(action, SIGNAL(triggered(bool)), this, SLOT(debugFileOpen()));
+#endif
 
     ensureMonospacedFont();
     recalculateFontMetrics();
@@ -278,6 +290,30 @@ void HexWidget::zoomOut()
 {
     resizeFont(-1);
 }
+
+#ifdef DEBUG_BUILD
+void HexWidget::debugFileOpen()
+{
+    QFileDialog dialog(this, tr("[Debug] Open File"));
+    dialog.setFileMode(QFileDialog::ExistingFile);
+    dialog.setOption(QFileDialog::ReadOnly);
+    if(dialog.exec())
+    {
+        QString name = dialog.selectedFiles()[0];
+        auto debug_file = new QFile(name);
+        debug_file->open(QIODevice::ReadOnly);
+        if(debug_file->isReadable())
+        {
+            setData(debug_file);
+        }
+        else
+        {
+            delete debug_file;
+            QMessageBox::warning(this, tr("Cannot read file"), name);
+        }
+    }
+}
+#endif
 
 void HexWidget::contextMenuEvent(QContextMenuEvent *event)
 {

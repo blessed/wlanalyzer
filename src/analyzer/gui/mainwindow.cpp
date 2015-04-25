@@ -19,11 +19,6 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->menu_Logs->addAction(ui->dockPacketDissection->toggleViewAction());
     ui->menu_Logs->addAction(ui->dockPacketHex->toggleViewAction());
 
-#ifdef DEBUG_BUILD
-    auto debug_file = new QFile("/var/log/syslog");
-    debug_file->open(QIODevice::ReadOnly);
-    ui->packetHexEdit->setData(debug_file);
-#endif
     connect(ui->packetHexEdit, SIGNAL(addressSelected(qint64)),
 			this, SLOT(addressSelected(qint64)));
 }

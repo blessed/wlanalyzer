@@ -41,6 +41,10 @@ private slots:
     // select if the view should be in Hex or Binary
     void setRawDataDisplayFormat(QAction *action);
 
+    // control zoom level of widget with context menu
+    void zoomIn();
+    void zoomOut();
+
 protected:
     // calculate column widths, line heights, etc.
     void recalculateFontMetrics();

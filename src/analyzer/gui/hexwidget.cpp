@@ -66,8 +66,16 @@ HexWidget::HexWidget(QWidget *parent) :
     action->setChecked(true);
     action->setData(qVariantFromValue(DisplayFormat::HEX));
     m_contextMenu.addActions(group->actions());
-
     connect(group, SIGNAL(triggered(QAction*)), this, SLOT(setRawDataDisplayFormat(QAction*)));
+
+    // setup zoom controls
+    m_contextMenu.addSeparator();
+    action = new QAction(QIcon::fromTheme("zoom-in"), tr("Zoom in"), this);
+    m_contextMenu.addAction(action);
+    connect(action, SIGNAL(triggered(bool)), this, SLOT(zoomIn()));
+    action = new QAction(QIcon::fromTheme("zoom-out"), tr("Zoom out"), this);
+    m_contextMenu.addAction(action);
+    connect(action, SIGNAL(triggered(bool)), this, SLOT(zoomOut()));
 
     ensureMonospacedFont();
     recalculateFontMetrics();
@@ -259,6 +267,16 @@ void HexWidget::setRawDataDisplayFormat(QAction *action)
         recalculateFontMetrics();
         viewport()->update();
     }
+}
+
+void HexWidget::zoomIn()
+{
+    resizeFont(1);
+}
+
+void HexWidget::zoomOut()
+{
+    resizeFont(-1);
 }
 
 void HexWidget::contextMenuEvent(QContextMenuEvent *event)

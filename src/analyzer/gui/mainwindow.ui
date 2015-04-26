@@ -223,7 +223,8 @@
               <number>0</number>
              </property>
              <item row="0" column="0">
-              <widget class="QTextEdit" name="packetHexEdit"/>
+              <widget class="HexWidget" name="packetHexEdit">
+              </widget>
              </item>
             </layout>
            </widget>
@@ -361,6 +362,14 @@
    </property>
   </action>
  </widget>
+ <customwidgets>
+  <customwidget>
+   <class>HexWidget</class>
+   <extends>QAbstractScrollArea</extends>
+   <header>gui/hexwidget.h</header>
+   <container>1</container>
+  </customwidget>
+ </customwidgets>
  <resources/>
  <connections>
   <connection>

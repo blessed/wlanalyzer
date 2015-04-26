@@ -31,6 +31,8 @@
 #include "socket.h"
 #include "server_socket.h"
 
+namespace WlAnalyzer {
+
 class WlaMessageBuffer;
 
 class WldMessageSink
@@ -95,5 +97,7 @@ private:
     int filefd;
     static int seq;
 };
+
+} // namespace WlAnalyzer
 
 #endif // DUMPER_H

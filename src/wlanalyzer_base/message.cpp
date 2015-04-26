@@ -25,6 +25,8 @@
 #include "message.h"
 #include <cassert>
 
+using namespace WlAnalyzer;
+
 WlaMessageBuffer::WlaMessageBuffer()
 {
     hdr.flags = 0;

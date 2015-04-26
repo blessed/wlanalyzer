@@ -30,6 +30,8 @@
 #include "common.h"
 #include "socket.h"
 
+namespace WlAnalyzer {
+
 const int MESSAGE_EVENT_TYPE_BIT = 0x00;
 const int CMESSAGE_PRESENT_BIT = 0x01;
 
@@ -159,5 +161,7 @@ private:
     static const int MAX_BUF_SIZE = 4096;
     static const int MAX_FDS = 28;
 };
+
+} // namespace WlAnalyzer
 
 #endif // MESSAGE_H

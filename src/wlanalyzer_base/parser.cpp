@@ -28,6 +28,8 @@
 #include "dumper.h"
 #include "parser.h"
 
+using namespace WlAnalyzer;
+
 WldParser::WldParser() : analyzer(NULL)
 {
 }

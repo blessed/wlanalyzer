@@ -27,6 +27,8 @@
 #include "message.h"
 #include "dumper.h"
 
+using namespace WlAnalyzer;
+
 int WlaIODumper::seq = 0;
 int WldIODumper::seq = 0;
 int WldNetDumper::seq = 0;

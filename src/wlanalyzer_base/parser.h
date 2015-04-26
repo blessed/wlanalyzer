@@ -30,6 +30,8 @@
 #include "common.h"
 #include "analyzer.h"
 
+namespace WlAnalyzer {
+
 class WldParser
 {
 public:
@@ -89,5 +91,7 @@ private:
     WldNetSocket socket;
     ev::io socketwtch;
 };
+
+} // namespace WlAnalyzer
 
 #endif // PARSER_H

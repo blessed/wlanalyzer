@@ -43,7 +43,7 @@
 #include "../wlanalyzer_base/raw_fd_sink.h"
 
 using namespace std;
-using std::tr1::shared_ptr;
+//using std::tr1::shared_ptr;
 using namespace WlAnalyzer;
 
 struct options_t

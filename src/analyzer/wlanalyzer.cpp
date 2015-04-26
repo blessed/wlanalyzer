@@ -32,6 +32,7 @@
 #include "wlanalyzer_base/parser.h"
 
 using namespace std;
+using namespace WlAnalyzer;
 
 struct options_t
 {

@@ -32,8 +32,6 @@
 #include "socket.h"
 #include "server_socket.h"
 #include "connection.h"
-#include "dumper.h"
-#include "parser.h"
 #include "analyzer.h"
 
 #include "raw_message_sink.h"
@@ -54,8 +52,6 @@ public:
     void closeConnection(WlaConnection *conn);
 
     void setDumper(WldMessageSink *dumper);
-	void setParser(WldParser *parser);
-
     void setSink(const shared_ptr<RawMessageSink> &value);
 
 private:
@@ -67,7 +63,6 @@ private:
     ev::default_loop _loop;
 
     WldMessageSink *dumper;
-	WldParser *parser;
 
     std::set<WlaConnection *> _connections;
     shared_ptr<RawMessageSink> sink_;

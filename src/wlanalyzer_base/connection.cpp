@@ -29,11 +29,11 @@
 
 #include "common.h"
 #include "proxy.h"
-#include "dumper.h"
 #include "raw_message.h"
 
 using namespace std;
-using namespace WlAnalyzer;
+
+namespace WlAnalyzer {
 
 WlaConnection::WlaConnection(WlaProxyServer *parent, WldMessageSink *writer) :
     request_source_(true), event_source_(false)
@@ -101,8 +101,6 @@ void WlaConnection::handleConnection(ev::io &watcher, int revents)
             request_source_.processBuffer(msg->getTimeStamp()->tv_sec, msg->getTimeStamp()->tv_usec, msg->getMsg(), msg->getMsgSize());
 
             msg->setType(WlaMessageBuffer::REQUEST_TYPE);
-//            if (dumper)
-//                dumper->dump(*msg);
             requests.push(msg);
         }
         else
@@ -117,8 +115,6 @@ void WlaConnection::handleConnection(ev::io &watcher, int revents)
             event_source_.processBuffer(msg->getTimeStamp()->tv_sec, msg->getTimeStamp()->tv_usec, msg->getMsg(), msg->getMsgSize());
 
             msg->setType(WlaMessageBuffer::EVENT_TYPE);
-//            if (dumper)
-//                dumper->dump(*msg);
             events.push(msg);
         }
     }
@@ -183,3 +179,5 @@ void WlaConnection::closeConnection()
 
     running = false;
 }
+
+} // namespace WlAnalyzer

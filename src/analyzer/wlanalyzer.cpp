@@ -29,10 +29,10 @@
 #include "gui/mainwindow.h"
 #include "gui/mainwindow.moc"
 #include "wlanalyzer_base/common.h"
-#include "wlanalyzer_base/parser.h"
+#include "wlanalyzer_base/analyzer.h"
+#include <ev++.h>
 
 using namespace std;
-using namespace WlAnalyzer;
 
 struct options_t
 {
@@ -143,35 +143,11 @@ int main(int argc, char **argv)
 	window.show();
 	return app.exec();
 
-    if (parse_cmdline(argc, argv, &options))
-    {
-        Logger::getInstance()->log("Invalid command line\n");
-        return -1;
-    }
-
-    WldNetParser parser;
-    if (parser.openResource(options.address))
-    {
-        Logger::getInstance()->log("Failed to connecto to %s\n", options.address.c_str());
-        exit(EXIT_FAILURE);
-    }
-
-    WldProtocolAnalyzer *analyzer = new WldProtocolAnalyzer;
-    analyzer->coreProtocol(options.coreProtocol);
-
-    if (!options.extensions.empty())
-    {
-        std::vector<std::string>::const_iterator it = options.extensions.begin();
-        for (; it != options.extensions.end(); it++)
-        {
-            DEBUG_LOG("extension %s", it->c_str());
-            analyzer->addProtocolSpec(*it);
-        }
-    }
-
-    parser.attachAnalyzer(analyzer);
-
-    loop.run();
+	if (parse_cmdline(argc, argv, &options))
+	{
+		Logger::getInstance()->log("Invalid command line\n");
+		return -1;
+	}
 
     return 0;
 }

@@ -42,7 +42,13 @@ WldSocket::WldSocket(const WldSocket &copy)
     {
         _fd = dup(copy._fd);
         _connected = copy.isConnected();
-    }
+	}
+}
+
+WldSocket::WldSocket(int fd, bool connected)
+{
+	_fd = dup(fd);
+	_connected = connected;
 }
 
 WldSocket::~WldSocket()

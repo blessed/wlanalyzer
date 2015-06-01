@@ -49,9 +49,11 @@ void wld_log(const char *format, ...)
 void debug_print(const char *buf)
 {
     int errno_backup = errno;
-    write(2, buf, strlen(buf));
-    write(2, "\n", 1);
-    errno = errno_backup;
+	int ret;
+	ret = write(2, buf, strlen(buf));
+	ret = write(2, "\n", 1);
+	(void)ret;
+	errno = errno_backup;
 }
 
 int check_error(int error)

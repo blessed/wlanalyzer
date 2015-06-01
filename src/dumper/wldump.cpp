@@ -232,27 +232,13 @@ int main(int argc, char *argv[])
                 analyzer->addProtocolSpec(*it);
             }
         }
-
-//        WldIODumper *dumper = new WldIODumper;
-//        dumper->open("dump");
-//        proxy.setDumper(dumper);
-
-//        WldNetDumper *netDump = new WldNetDumper;
-//        if (netDump->open("5000"))
-//            DEBUG_LOG("Failed to open port 5000");
-//        proxy.setDumper(netDump);
-
-//        WlaBinParser *parser = new WlaBinParser;
-//        parser->openResource("dump");
-//        parser->attachAnalyzer(analyzer);
-//        proxy.setParser(parser);
     }
     else if (options.port_number.size())
     {
-        WldNetDumper *netDump = new WldNetDumper;
-        if (netDump->open(options.port_number))
-            DEBUG_LOG("Failed to open port %s", options.port_number.c_str());
-//        proxy.setDumper(netDump);
+		// TODO: add network raw message sink
+//        WldNetDumper *netDump = new WldNetDumper;
+//        if (netDump->open(options.port_number))
+//            DEBUG_LOG("Failed to open port %s", options.port_number.c_str());
     }
 
     if ((ppid = fork()) == 0)

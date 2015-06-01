@@ -29,7 +29,7 @@
 
 using namespace WlAnalyzer;
 
-WlaProxyServer::WlaProxyServer() : _loop(EVBACKEND_SELECT), dumper(NULL), parser(NULL)
+WlaProxyServer::WlaProxyServer() : _loop(EVBACKEND_SELECT), dumper(NULL)
 {
     DEBUG_LOG("_loop.backend %d", _loop.backend());
 }
@@ -76,9 +76,6 @@ void WlaProxyServer::stopServer()
     if (_serverSocket.isListening())
         _serverSocket.close();
 
-    if (parser)
-        parser->parse();
-
     std::set<WlaConnection *>::const_iterator it = _connections.begin();
     for (; it != _connections.end(); it++)
     {
@@ -108,15 +105,6 @@ void WlaProxyServer::setDumper(WldMessageSink *dumper)
         delete this->dumper;
 
     this->dumper = dumper;
-}
-
-void WlaProxyServer::setParser(WldParser *parser)
-{
-    if (this->parser)
-        delete this->parser;
-
-    this->parser = parser;
-    this->parser->enable(true);
 }
 
 void WlaProxyServer::connectClient(ev::io &watcher, int revents)

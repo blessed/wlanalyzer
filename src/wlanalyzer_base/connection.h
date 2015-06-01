@@ -37,7 +37,6 @@
 namespace WlAnalyzer {
 
 class WldMessageSink;
-class WlaIODumper;
 class WlaProxyServer;
 
 class WlaConnection
@@ -64,7 +63,6 @@ private:
     bool running;
 
     WlaProxyServer *parent;
-//    WlaIODumper *writer;
     WldMessageSink *dumper;
 
     std::stack<WlaMessageBuffer *> events;

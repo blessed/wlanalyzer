@@ -56,6 +56,7 @@ class WldSocket : public ev::io
 public:
     WldSocket();
     WldSocket(const WldSocket &copy);
+	explicit WldSocket(int fd, bool connected = true);
     virtual ~WldSocket();
 
     SocketError connectToServer(const char *path);

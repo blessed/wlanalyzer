@@ -15,7 +15,7 @@ def options(ctx):
 def configure(ctx):
     ctx.env.CXXFLAGS += ['-Wall', '-fPIC']
     if ctx.options.debug:
-        ctx.env.CXXFLAGS += ['-g', '-O2', '-DDEBUG_BUILD', '-Wall', '-Werror' ]
+        ctx.env.CXXFLAGS += ['-g', '-O2', '-DDEBUG_BUILD', '-Wall' ]
 
     if ctx.options.analyzer:
         ctx.env.analyzer = True

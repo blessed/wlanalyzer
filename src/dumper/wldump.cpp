@@ -219,8 +219,8 @@ int main(int argc, char *argv[])
     composite->AddSink(dummysink);
     shared_ptr<RawMessageSink> file1sink(new RawFdSink(open("file1.wldump", O_WRONLY | O_CREAT | O_TRUNC, S_IRUSR | S_IWUSR)));
     composite->AddSink(file1sink);
-	shared_ptr<RawMessageSink> parserSink(new RawMessageParser());
-	composite->AddSink(parserSink);
+    shared_ptr<RawMessageSink> parserSink(new RawMessageParser());
+    composite->AddSink(parserSink);
 
     if (options.coreProtocol.size())
     {

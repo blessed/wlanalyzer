@@ -38,6 +38,8 @@ namespace WlAnalyzer {
 WlaConnection::WlaConnection(WlaProxyServer *parent, WldMessageSink *writer) :
     request_source_(true), event_source_(false)
 {
+	_comp_link = nullptr;
+	_client_link = nullptr;
     running = false;
     this->parent = parent;
     this->dumper = writer;
@@ -51,24 +53,30 @@ WlaConnection::~WlaConnection()
 
 void WlaConnection::createConnection(WldSocket cli, WldSocket server)
 {
-    client = cli;
-    wayland = server;
+	_client_link = new WlaLink(cli, server, WlaMessageBuffer::REQUEST_TYPE);
+	_comp_link = new WlaLink(server, cli, WlaMessageBuffer::EVENT_TYPE);
+	_client_link->setConnection(this);
+	_comp_link->setConnection(this);
+	_client_link->start(EV_READ);
+	_comp_link->start(EV_READ);
 
-    client.set<WlaConnection, &WlaConnection::handleConnection>(this);
-    wayland.set<WlaConnection, &WlaConnection::handleConnection>(this);
-
-    wayland.start(EV_READ);
-    client.start(EV_READ);
-
-    running = true;
-
-    DEBUG_LOG("connected %d with %d", client.getSocketDescriptor(),
-              wayland.getSocketDescriptor());
+	DEBUG_LOG("connected %d with %d", cli.getSocketDescriptor(),
+			  server.getSocketDescriptor());
 }
 
 void WlaConnection::setDumper(WldMessageSink *dumper)
 {
-    this->dumper = dumper;
+	this->dumper = dumper;
+}
+
+void WlaConnection::processMessage(WlaMessageBuffer *msg)
+{
+	if (msg->getType() == WlaMessageBuffer::REQUEST_TYPE)
+		request_source_.processBuffer(msg->getTimeStamp()->tv_sec, msg->getTimeStamp()->tv_usec,
+									  msg->getMsg(), msg->getMsgSize());
+	else
+		event_source_.processBuffer(msg->getTimeStamp()->tv_sec, msg->getTimeStamp()->tv_usec,
+									  msg->getMsg(), msg->getMsgSize());
 }
 
 void WlaConnection::setSink(const shared_ptr<RawMessageSink> &sink)
@@ -78,90 +86,13 @@ void WlaConnection::setSink(const shared_ptr<RawMessageSink> &sink)
     event_source_.setSink(sink_);
 }
 
-void WlaConnection::handleConnection(ev::io &watcher, int revents)
-{
-    if (revents & EV_ERROR)
-    {
-        DEBUG_LOG("invalid event %s", strerror(errno));
-        return;
-    }
-
-    if (revents & EV_READ)
-    {
-        if (watcher.fd == client)
-        {
-            WlaMessageBuffer *msg = handleRead(client, wayland);
-            if (!msg)
-            {
-                DEBUG_LOG("peer disconnected");
-                delete this;
-                return;
-            }
-
-            request_source_.processBuffer(msg->getTimeStamp()->tv_sec, msg->getTimeStamp()->tv_usec, msg->getMsg(), msg->getMsgSize());
-
-            msg->setType(WlaMessageBuffer::REQUEST_TYPE);
-            requests.push(msg);
-        }
-        else
-        {
-            WlaMessageBuffer *msg = handleRead(wayland, client);
-            if (!msg)
-            {
-                DEBUG_LOG("peer disconnected");
-                delete this;
-                return;
-            }
-            event_source_.processBuffer(msg->getTimeStamp()->tv_sec, msg->getTimeStamp()->tv_usec, msg->getMsg(), msg->getMsgSize());
-
-            msg->setType(WlaMessageBuffer::EVENT_TYPE);
-            events.push(msg);
-        }
-    }
-    else if (revents & EV_WRITE)
-    {
-        if (watcher.fd == client)
-            handleWrite(client, events);
-        else
-            handleWrite(wayland, requests);
-    }
-}
-
-WlaMessageBuffer *WlaConnection::handleRead(WldSocket &src, WldSocket &dst)
-{
-    WlaMessageBuffer *msg = WldMessageBufferSocket::receiveMessage(src);
-    if (msg == NULL)
-    {
-        return NULL;
-    }
-
-    dst.stop();
-    dst.start(EV_READ | EV_WRITE);
-
-    return msg;
-}
-
-void WlaConnection::handleWrite(WldSocket &dst, std::stack<WlaMessageBuffer *> &msgStack)
-{
-    while (!msgStack.empty())
-    {
-        WlaMessageBuffer *msg = msgStack.top();
-        WldMessageBufferSocket::sendMessage(msg, dst);
-        msgStack.pop();
-        delete msg;
-    }
-
-    dst.stop();
-    dst.start(EV_READ);
-}
-
 void WlaConnection::closeConnection()
 {
     if (!running)
         return;
 
-    client.stop();
-    wayland.stop();
+	_client_link->stop();
+	_comp_link->stop();
 
     while (!requests.empty())
     {
@@ -177,7 +108,52 @@ void WlaConnection::closeConnection()
         events.pop();
     }
 
-    running = false;
+	running = false;
+}
+
+WlaLink::WlaLink(const WldSocket &src, const WldSocket &link, WlaMessageBuffer::MESSAGE_TYPE dir) : WldSocket(src),
+	_endpoint(link), _direction(dir)
+{
+	_connection = nullptr;
+
+	set<WlaLink, &WlaLink::receiveMessage>(this);
+	_endpoint.set<WlaLink, &WlaLink::transmitMessage>(this);
+}
+
+WlaLink::~WlaLink()
+{
+}
+
+void WlaLink::receiveMessage(ev::io &watcher, int revents)
+{
+	if (revents & EV_ERROR)
+		return;
+
+	WlaMessageBuffer *msg = WldMessageBufferSocket::receiveMessage(*this);
+	if (msg == nullptr) {
+		return;
+	}
+
+	if (_connection)
+		_connection->processMessage(msg);
+
+	msg->setType(_direction);
+	_messages.push(msg);
+	_endpoint.stop();
+	_endpoint.start(EV_READ | EV_WRITE);
+}
+
+void WlaLink::transmitMessage(ev::io &watcher, int revents)
+{
+	while (!_messages.empty()) {
+		WlaMessageBuffer *msg = _messages.top();
+		WldMessageBufferSocket::sendMessage(msg, _endpoint);
+		_messages.pop();
+		delete msg;
+	}
+
+	_endpoint.stop();
+	_endpoint.start(EV_READ);
 }
 
 } // namespace WlAnalyzer

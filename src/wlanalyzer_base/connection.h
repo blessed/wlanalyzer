@@ -33,11 +33,34 @@
 #include "common.h"
 #include "message.h"
 #include "wayland_raw_source.h"
+#include <tr1/unordered_map>
 
 namespace WlAnalyzer {
 
 class WldMessageSink;
 class WlaProxyServer;
+class WlaConnection;
+
+class WlaLink : public WldSocket
+{
+public:
+	WlaLink(const WldSocket &src, const WldSocket &link, WlaMessageBuffer::MESSAGE_TYPE dir);
+	virtual ~WlaLink();
+
+	void setConnection(WlaConnection *connection)
+	{
+		_connection = connection;
+	}
+
+private:
+	void receiveMessage(ev::io &watcher, int revents);
+	void transmitMessage(ev::io &watcher, int revents);
+
+	WldSocket _endpoint;
+	WlaMessageBuffer::MESSAGE_TYPE _direction;
+	WlaConnection *_connection;
+	std::stack<WlaMessageBuffer *> _messages;
+};
 
 class WlaConnection
 {
@@ -49,16 +72,13 @@ public:
     void closeConnection();
     void setDumper(WldMessageSink *dumper);
 
+	void processMessage(WlaMessageBuffer *msg);
+
     void setSink(const shared_ptr<RawMessageSink> &sink);
 
 private:
-    void handleConnection(ev::io &watcher, int revents);
-    WlaMessageBuffer *handleRead(WldSocket &src, WldSocket &dst);
-    void handleWrite(WldSocket &dst, std::stack<WlaMessageBuffer *> &msgStack);
-
-private:
-    WldSocket client;
-    WldSocket wayland;
+	WlaLink *_client_link;
+	WlaLink *_comp_link;
 
     bool running;
 

@@ -116,7 +116,12 @@ void WldSocket::setSocketDescriptor(int fd, int flags)
 
 void WldSocket::start(int eventMask)
 {
-    ev::io::start(_fd, eventMask);
+    _watcher.start(_fd, eventMask);
+}
+
+void WldSocket::stop()
+{
+    _watcher.stop();
 }
 
 WldSocket &WldSocket::operator=(const WldSocket &copy)

@@ -51,7 +51,7 @@ enum SocketError
     NoError
 };
 
-class WldSocket : public ev::io
+class WldSocket
 {
 public:
     WldSocket();
@@ -73,6 +73,13 @@ public:
     }
 
     void start(int eventMask);
+    void stop();
+
+    template<class K, void (K::*method)(ev::io &w, int)>
+    void set(K *object)
+    {
+        _watcher.set<K, method>(object);
+    }
 
     bool isConnected() const { return _connected; }
 
@@ -102,6 +109,7 @@ protected:
 private:
 //    int _fd;
     bool _connected;
+    ev::io _watcher;
 };
 bool operator==(int fd, const WldSocket &sock);
 

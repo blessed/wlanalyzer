@@ -5,6 +5,8 @@
 
 namespace WlAnalyzer {
 
+using std::shared_ptr;
+
 class DummySink : public RawMessageSink
 {
 public:

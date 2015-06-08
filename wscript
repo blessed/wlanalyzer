@@ -13,7 +13,7 @@ def options(ctx):
 
 
 def configure(ctx):
-    ctx.env.CXXFLAGS += ['-Wall', '-fPIC']
+    ctx.env.CXXFLAGS += ['-Wall', '-fPIC', '-std=c++11']
     if ctx.options.debug:
         ctx.env.CXXFLAGS += ['-g', '-O2', '-DDEBUG_BUILD', '-Wall' ]
 

@@ -3,9 +3,11 @@
 
 #include "raw_message_sink.h"
 
-#include <tr1/unordered_set>
+#include <unordered_set>
 
 namespace WlAnalyzer {
+
+using std::shared_ptr;
 
 class RawCompositeSink : public RawMessageSink
 {
@@ -18,11 +20,11 @@ public:
 private:
     struct Hasher {
         size_t operator()(const shared_ptr<RawMessageSink> &rms) const {
-            return std::tr1::hash<const RawMessageSink *>()(rms.get());
+			return std::hash<const RawMessageSink *>()(rms.get());
         }
     };
 
-    typedef std::tr1::unordered_set<shared_ptr<RawMessageSink>, Hasher > SinkSet;
+	typedef std::unordered_set<shared_ptr<RawMessageSink>, Hasher > SinkSet;
 
     SinkSet sinks_;
 };

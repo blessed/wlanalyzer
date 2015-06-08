@@ -42,7 +42,7 @@ WlaMessageBuffer::~WlaMessageBuffer()
 
 void WlaMessageBuffer::setHeader(const WlaMessageBufferHeader *hdr)
 {
-    memcpy(&hdr, hdr, sizeof(WlaMessageBufferHeader));
+	memcpy(&this->hdr, hdr, sizeof(WlaMessageBufferHeader));
 }
 
 void WlaMessageBuffer::setType(WlaMessageBuffer::MESSAGE_TYPE type)

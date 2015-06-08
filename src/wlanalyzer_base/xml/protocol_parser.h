@@ -25,7 +25,7 @@
 #ifndef PROTOCOL_PARSER_H
 #define PROTOCOL_PARSER_H
 
-#include <tr1/unordered_map>
+#include <unordered_map>
 #include <vector>
 #include <pugixml.hpp>
 
@@ -49,7 +49,7 @@ struct WldArgTypeHasher
     size_t
     operator()(WldArgType __val) const
     {
-        return std::tr1::hash<int>()(static_cast<int>(__val));
+		return std::hash<int>()(static_cast<int>(__val));
     }
 };
 
@@ -140,7 +140,7 @@ private:
 
 private:
     std::vector<WldInterface> interfaceList;
-    typedef std::tr1::unordered_map<WldArgType, size_t, WldArgTypeHasher> type_size_t;
+	typedef std::unordered_map<WldArgType, size_t, WldArgTypeHasher> type_size_t;
     static type_size_t type_size;
     static bool initialized;
 };
@@ -162,7 +162,7 @@ private:
 
 private:
     pugi::xml_document doc;
-    typedef std::tr1::unordered_map<std::string, WldArgType> types_t;
+	typedef std::unordered_map<std::string, WldArgType> types_t;
     static types_t types;
     static bool initialized;
 };

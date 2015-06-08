@@ -8,6 +8,7 @@
 
 namespace WlAnalyzer {
 
+using std::shared_ptr;
 
 class RawFdSink : public RawMessageSink
 {

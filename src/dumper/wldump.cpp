@@ -31,7 +31,7 @@
 #include <unistd.h>
 #include <sys/types.h>
 #include <sys/wait.h>
-#include <tr1/memory>
+#include <memory>
 
 #include "../wlanalyzer_base/common.h"
 #include "../wlanalyzer_base/proxy.h"
@@ -41,9 +41,10 @@
 #include "../wlanalyzer_base/dummy_sink.h"
 #include "../wlanalyzer_base/raw_composite_sink.h"
 #include "../wlanalyzer_base/raw_fd_sink.h"
+#include "../wlanalyzer_base/raw_message_parser.h"
 
 using namespace std;
-//using std::tr1::shared_ptr;
+using std::shared_ptr;
 using namespace WlAnalyzer;
 
 struct options_t
@@ -218,6 +219,8 @@ int main(int argc, char *argv[])
     composite->AddSink(dummysink);
     shared_ptr<RawMessageSink> file1sink(new RawFdSink(open("file1.wldump", O_WRONLY | O_CREAT | O_TRUNC, S_IRUSR | S_IWUSR)));
     composite->AddSink(file1sink);
+	shared_ptr<RawMessageSink> parserSink(new RawMessageParser());
+	composite->AddSink(parserSink);
 
     if (options.coreProtocol.size())
     {

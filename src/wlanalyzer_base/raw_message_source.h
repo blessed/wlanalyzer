@@ -1,11 +1,11 @@
 #ifndef RAW_MESSAGE_SOURCE_H
 #define RAW_MESSAGE_SOURCE_H
 
-#include <tr1/memory>
+#include <memory>
 
 namespace WlAnalyzer {
 
-using std::tr1::shared_ptr;
+using std::shared_ptr;
 
 class RawMessage;
 class RawMessageSink;

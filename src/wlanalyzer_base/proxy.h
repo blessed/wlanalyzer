@@ -48,21 +48,15 @@ public:
     int init(const std::string &socketPath);
     int startServer();
     void stopServer();
-
     void closeConnection(WlaConnection *conn);
-
-    void setDumper(WldMessageSink *dumper);
     void setSink(const shared_ptr<RawMessageSink> &value);
 
 private:
     void connectClient(ev::io &watcher, int revents);
 
-private:
     WldServer _serverSocket;
     ev::io _io;
     ev::default_loop _loop;
-
-    WldMessageSink *dumper;
 
     std::set<WlaConnection *> _connections;
     shared_ptr<RawMessageSink> sink_;

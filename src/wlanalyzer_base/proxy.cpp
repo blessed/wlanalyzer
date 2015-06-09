@@ -29,7 +29,7 @@
 
 using namespace WlAnalyzer;
 
-WlaProxyServer::WlaProxyServer() : _loop(EVBACKEND_SELECT), dumper(NULL)
+WlaProxyServer::WlaProxyServer() : _loop(EVBACKEND_SELECT)
 {
     DEBUG_LOG("_loop.backend %d", _loop.backend());
 }
@@ -37,7 +37,6 @@ WlaProxyServer::WlaProxyServer() : _loop(EVBACKEND_SELECT), dumper(NULL)
 WlaProxyServer::~WlaProxyServer()
 {
     stopServer();
-    setDumper(NULL);
 }
 
 int WlaProxyServer::init(const std::string &socketPath)
@@ -93,20 +92,6 @@ void WlaProxyServer::closeConnection(WlaConnection *conn)
         stopServer();
 }
 
-void WlaProxyServer::setDumper(WldMessageSink *dumper)
-{
-    std::set<WlaConnection *>::const_iterator it = _connections.begin();
-    for (; it != _connections.end(); it++)
-    {
-        (*it)->setDumper(dumper);
-    }
-
-    if (this->dumper)
-        delete this->dumper;
-
-    this->dumper = dumper;
-}
-
 void WlaProxyServer::connectClient(ev::io &watcher, int revents)
 {
     if (revents & EV_ERROR)
@@ -139,15 +124,15 @@ void WlaProxyServer::connectClient(ev::io &watcher, int revents)
     WldSocket client;
     client.setSocketDescriptor(fd);
 
-    WlaConnection *connection = new WlaConnection(this, dumper);
+    WlaConnection *connection = new WlaConnection(this);
     if (!connection)
     {
         DEBUG_LOG("Failed to create connection between client and compositor");
         stopServer();
         return;
     }
-    connection->setSink(sink_);
     connection->createConnection(client, wayland);
+    connection->setSink(sink_);
 
     _connections.insert(connection);
 }

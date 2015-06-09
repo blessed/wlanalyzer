@@ -37,20 +37,6 @@ RawMessageParser::RawMessageParser()
 
 void RawMessageParser::processMessage(const shared_ptr<const RawMessage> &message)
 {
-	auto &data = message->data();
-
-	if (!message_complete_)
-	{
-		/** @todo finish this part
-		 */
-	}
-
-	uint32_t obj_id;
-	memcpy(&obj_id, &data[0], sizeof(obj_id));
-	uint16_t msg_size;
-	memcpy(&msg_size, &data[6], sizeof(msg_size));
-
-	MessageAggregator::instance()->addObject(obj_id);
 }
 
 }

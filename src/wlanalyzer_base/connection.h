@@ -86,17 +86,6 @@ public:
     WlaLink(const WldSocket &src, const WldSocket &link, LinkType type);
     virtual ~WlaLink();
 
-    /**
-     * @brief setConnection
-     * @param connection
-     *
-     * Set the connection this link belongs to.
-     */
-    void setConnection(WlaConnection *connection)
-    {
-        _connection = connection;
-    }
-
     void setSink(const shared_ptr<RawMessageSink> &sink);
 
 private:
@@ -107,7 +96,6 @@ private:
 
     WldSocket _endpoint;
     LinkType _type;
-    WlaConnection *_connection;
     std::stack<WlaMessageBuffer *> _messages;
     WaylandRawSource _msgsource;
 };

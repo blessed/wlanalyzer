@@ -54,8 +54,6 @@ void WlaConnection::createConnection(WldSocket cli, WldSocket server)
 {
     _client_link = new WlaLink(cli, server, WlaLink::REQUEST_LINK);
     _comp_link = new WlaLink(server, cli, WlaLink::EVENT_LINK);
-    _client_link->setConnection(this);
-    _comp_link->setConnection(this);
     _client_link->start(EV_READ);
     _comp_link->start(EV_READ);
 
@@ -86,8 +84,6 @@ void WlaConnection::closeConnection()
 WlaLink::WlaLink(const WldSocket &src, const WldSocket &link, LinkType type) : WldSocket(src),
     _endpoint(link), _type(type), _msgsource(type == REQUEST_LINK)
 {
-    _connection = nullptr;
-
     set<WlaLink, &WlaLink::receiveEvent>(this);
     _endpoint.set<WlaLink, &WlaLink::transmitEvent>(this);
 }
@@ -113,7 +109,6 @@ void WlaLink::receiveEvent(ev::io &watcher, int revents)
 
     _msgsource.processBuffer(msg->timestamp.tv_sec, msg->timestamp.tv_usec, msg->msg, msg->msg_len);
 
-//    msg->setType(_type);
     _messages.push(msg);
     _endpoint.stop();
     _endpoint.start(EV_READ | EV_WRITE);

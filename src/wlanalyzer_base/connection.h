@@ -31,9 +31,7 @@
 #include <ev++.h>
 #include "socket.h"
 #include "common.h"
-#include "message.h"
 #include "wayland_raw_source.h"
-#include <tr1/unordered_map>
 
 namespace WlAnalyzer {
 
@@ -41,57 +39,122 @@ class WldMessageSink;
 class WlaProxyServer;
 class WlaConnection;
 
+/**
+ * @brief The WlaLink class
+ *
+ * Represents a unidirectional link between two wayland sockets.
+ * It is responsible for transmitting messages from source to destination
+ * socket.
+ * Depending on the direction of the link the class transmits
+ * either requests or events.
+ * Each link should belong to a WlaConnection object.
+ */
 class WlaLink : public WldSocket
 {
+    struct WlaMessageBuffer
+    {
+        WlaMessageBuffer()
+        {
+            msg_len = 0;
+            cmsg_len = 0;
+            timestamp.tv_sec = 0;
+            timestamp.tv_usec = 0;
+        }
+
+        static const int MAX_BUF_SIZE = 4096;
+        static const int MAX_FDS = 28;
+
+        timeval timestamp;
+        char msg[MAX_BUF_SIZE];
+        uint16_t msg_len;
+        char cmsg[CMSG_LEN(MAX_FDS * sizeof(int))];
+        uint16_t cmsg_len;
+    };
+
 public:
-	WlaLink(const WldSocket &src, const WldSocket &link, WlaMessageBuffer::MESSAGE_TYPE dir);
-	virtual ~WlaLink();
+    enum LinkType {
+        REQUEST_LINK,
+        EVENT_LINK
+    };
 
-	void setConnection(WlaConnection *connection)
-	{
-		_connection = connection;
-	}
+    /**
+     * @brief Constructor
+     * @param src The source socket of this link
+     * @param link The endpoint of the link
+     * @param dir Type of messages this link transmits
+     */
+    WlaLink(const WldSocket &src, const WldSocket &link, LinkType type);
+    virtual ~WlaLink();
 
-private:
-	void receiveMessage(ev::io &watcher, int revents);
-	void transmitMessage(ev::io &watcher, int revents);
-
-	WldSocket _endpoint;
-	WlaMessageBuffer::MESSAGE_TYPE _direction;
-	WlaConnection *_connection;
-	std::stack<WlaMessageBuffer *> _messages;
-};
-
-class WlaConnection
-{
-public:
-    WlaConnection(WlaProxyServer *parent, WldMessageSink *dumper = NULL);
-    ~WlaConnection();
-
-    void createConnection(WldSocket client, WldSocket server);
-    void closeConnection();
-    void setDumper(WldMessageSink *dumper);
-
-	void processMessage(WlaMessageBuffer *msg);
+    /**
+     * @brief setConnection
+     * @param connection
+     *
+     * Set the connection this link belongs to.
+     */
+    void setConnection(WlaConnection *connection)
+    {
+        _connection = connection;
+    }
 
     void setSink(const shared_ptr<RawMessageSink> &sink);
 
 private:
-	WlaLink *_client_link;
-	WlaLink *_comp_link;
+    void receiveEvent(ev::io &watcher, int revents);
+    void transmitEvent(ev::io &watcher, int revents);
+    WlaMessageBuffer *receiveMessage();
+    bool sendMessage(WlaMessageBuffer *msg);
+
+    WldSocket _endpoint;
+    LinkType _type;
+    WlaConnection *_connection;
+    std::stack<WlaMessageBuffer *> _messages;
+    WaylandRawSource _msgsource;
+};
+
+/**
+ * @brief The WlaConnection class
+ *
+ * WlaConnection represents a bidirectional connection
+ * between a wayland client and a compositor.
+ * Every connection is attached to a pipeline of
+ * RawMessageSink and RawMessageSource objects with setSink().
+ */
+class WlaConnection
+{
+public:
+    WlaConnection(WlaProxyServer *parent);
+    ~WlaConnection();
+
+    /**
+     * @brief createConnection
+     * @param client
+     * @param server
+     *
+     * Creates a connection from two sockets.
+     */
+    void createConnection(WldSocket client, WldSocket server);
+    void closeConnection();
+
+    /**
+     * @brief setSink
+     * @param sink
+     *
+     * Attaches this connection to a message pipeline.
+     */
+    void setSink(const shared_ptr<RawMessageSink> &sink);
+
+private:
+    WlaLink *_client_link;
+    WlaLink *_comp_link;
 
     bool running;
 
     WlaProxyServer *parent;
-    WldMessageSink *dumper;
-
-    std::stack<WlaMessageBuffer *> events;
-    std::stack<WlaMessageBuffer *> requests;
-
-    WaylandRawSource request_source_;
-    WaylandRawSource event_source_;
 
     shared_ptr<RawMessageSink> sink_;
+
+//    WlaMessageParser _model;
 };
 
 } // namespace WlAnalyzer

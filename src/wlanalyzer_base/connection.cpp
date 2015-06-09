@@ -26,6 +26,7 @@
 
 #include <algorithm>
 #include <cassert>
+#include <sys/time.h>
 
 #include "common.h"
 #include "proxy.h"
@@ -35,14 +36,12 @@ using namespace std;
 
 namespace WlAnalyzer {
 
-WlaConnection::WlaConnection(WlaProxyServer *parent, WldMessageSink *writer) :
-    request_source_(true), event_source_(false)
+WlaConnection::WlaConnection(WlaProxyServer *parent)
 {
-	_comp_link = nullptr;
-	_client_link = nullptr;
+    _comp_link = nullptr;
+    _client_link = nullptr;
     running = false;
     this->parent = parent;
-    this->dumper = writer;
 }
 
 WlaConnection::~WlaConnection()
@@ -53,37 +52,22 @@ WlaConnection::~WlaConnection()
 
 void WlaConnection::createConnection(WldSocket cli, WldSocket server)
 {
-	_client_link = new WlaLink(cli, server, WlaMessageBuffer::REQUEST_TYPE);
-	_comp_link = new WlaLink(server, cli, WlaMessageBuffer::EVENT_TYPE);
-	_client_link->setConnection(this);
-	_comp_link->setConnection(this);
-	_client_link->start(EV_READ);
-	_comp_link->start(EV_READ);
+    _client_link = new WlaLink(cli, server, WlaLink::REQUEST_LINK);
+    _comp_link = new WlaLink(server, cli, WlaLink::EVENT_LINK);
+    _client_link->setConnection(this);
+    _comp_link->setConnection(this);
+    _client_link->start(EV_READ);
+    _comp_link->start(EV_READ);
 
-	DEBUG_LOG("connected %d with %d", cli.getSocketDescriptor(),
-			  server.getSocketDescriptor());
-}
-
-void WlaConnection::setDumper(WldMessageSink *dumper)
-{
-	this->dumper = dumper;
-}
-
-void WlaConnection::processMessage(WlaMessageBuffer *msg)
-{
-	if (msg->getType() == WlaMessageBuffer::REQUEST_TYPE)
-		request_source_.processBuffer(msg->getTimeStamp()->tv_sec, msg->getTimeStamp()->tv_usec,
-									  msg->getMsg(), msg->getMsgSize());
-	else
-		event_source_.processBuffer(msg->getTimeStamp()->tv_sec, msg->getTimeStamp()->tv_usec,
-									  msg->getMsg(), msg->getMsgSize());
+    DEBUG_LOG("connected %d with %d", cli.getSocketDescriptor(),
+              server.getSocketDescriptor());
 }
 
 void WlaConnection::setSink(const shared_ptr<RawMessageSink> &sink)
 {
     sink_ = sink;
-    request_source_.setSink(sink_);
-    event_source_.setSink(sink_);
+    _client_link->setSink(sink);
+    _comp_link->setSink(sink);
 }
 
 void WlaConnection::closeConnection()
@@ -91,69 +75,125 @@ void WlaConnection::closeConnection()
     if (!running)
         return;
 
-	_client_link->stop();
-	_comp_link->stop();
+    _client_link->stop();
+    _comp_link->stop();
+    delete _client_link;
+    delete _comp_link;
 
-    while (!requests.empty())
-    {
-        WlaMessageBuffer *msg = requests.top();
-        delete msg;
-        requests.pop();
-    }
-
-    while (!requests.empty())
-    {
-        WlaMessageBuffer *msg = events.top();
-        delete msg;
-        events.pop();
-    }
-
-	running = false;
+    running = false;
 }
 
-WlaLink::WlaLink(const WldSocket &src, const WldSocket &link, WlaMessageBuffer::MESSAGE_TYPE dir) : WldSocket(src),
-	_endpoint(link), _direction(dir)
+WlaLink::WlaLink(const WldSocket &src, const WldSocket &link, LinkType type) : WldSocket(src),
+    _endpoint(link), _type(type), _msgsource(type == REQUEST_LINK)
 {
-	_connection = nullptr;
+    _connection = nullptr;
 
-	set<WlaLink, &WlaLink::receiveMessage>(this);
-	_endpoint.set<WlaLink, &WlaLink::transmitMessage>(this);
+    set<WlaLink, &WlaLink::receiveEvent>(this);
+    _endpoint.set<WlaLink, &WlaLink::transmitEvent>(this);
 }
 
 WlaLink::~WlaLink()
 {
 }
 
-void WlaLink::receiveMessage(ev::io &watcher, int revents)
+void WlaLink::setSink(const shared_ptr<RawMessageSink> &sink)
 {
-	if (revents & EV_ERROR)
-		return;
-
-	WlaMessageBuffer *msg = WldMessageBufferSocket::receiveMessage(*this);
-	if (msg == nullptr) {
-		return;
-	}
-
-	if (_connection)
-		_connection->processMessage(msg);
-
-	msg->setType(_direction);
-	_messages.push(msg);
-	_endpoint.stop();
-	_endpoint.start(EV_READ | EV_WRITE);
+    _msgsource.setSink(sink);
 }
 
-void WlaLink::transmitMessage(ev::io &watcher, int revents)
+void WlaLink::receiveEvent(ev::io &watcher, int revents)
 {
-	while (!_messages.empty()) {
-		WlaMessageBuffer *msg = _messages.top();
-		WldMessageBufferSocket::sendMessage(msg, _endpoint);
-		_messages.pop();
-		delete msg;
-	}
+    if (revents & EV_ERROR)
+        return;
 
-	_endpoint.stop();
-	_endpoint.start(EV_READ);
+    WlaMessageBuffer *msg = receiveMessage();
+    if (msg == nullptr) {
+        return;
+    }
+
+    _msgsource.processBuffer(msg->timestamp.tv_sec, msg->timestamp.tv_usec, msg->msg, msg->msg_len);
+
+//    msg->setType(_type);
+    _messages.push(msg);
+    _endpoint.stop();
+    _endpoint.start(EV_READ | EV_WRITE);
+}
+
+void WlaLink::transmitEvent(ev::io &watcher, int revents)
+{
+    while (!_messages.empty()) {
+        WlaMessageBuffer *msg = _messages.top();
+        sendMessage(msg);
+        _messages.pop();
+        delete msg;
+    }
+
+    _endpoint.stop();
+    _endpoint.start(EV_READ);
+}
+
+WlaLink::WlaMessageBuffer *WlaLink::receiveMessage()
+{
+    WlaMessageBuffer *buffer = new WlaMessageBuffer;
+    if (!buffer) {
+        Logger::getInstance()->log("Error: Out of memory\n");
+        return nullptr;
+    }
+
+    iovec iov;
+    iov.iov_base = buffer->msg;
+    iov.iov_len = WlaMessageBuffer::MAX_BUF_SIZE;
+
+    msghdr msg;
+    msg.msg_name = nullptr;
+    msg.msg_namelen = 0;
+    msg.msg_iov = &iov;
+    msg.msg_iovlen = 1;
+    msg.msg_control = buffer->cmsg;
+    msg.msg_controllen = CMSG_LEN(WlaMessageBuffer::MAX_FDS * sizeof(int));
+
+    int len = readMsg(&msg);
+    if (len < 0) {
+        Logger::getInstance()->log("Failed to read msg\n");
+        perror(nullptr);
+        delete buffer;
+        return nullptr;
+    } else if (len > 0) {
+        gettimeofday(&buffer->timestamp, nullptr);
+        buffer->msg_len = len;
+        buffer->cmsg_len = msg.msg_controllen;
+    } else {
+        delete buffer;
+        return nullptr;
+    }
+
+    return buffer;
+
+    return nullptr;
+}
+
+bool WlaLink::sendMessage(WlaLink::WlaMessageBuffer *msg)
+{
+    iovec iov;
+    iov.iov_base = msg->msg;
+    iov.iov_len = msg->msg_len;
+
+    msghdr hdr;
+    hdr.msg_name = nullptr;
+    hdr.msg_namelen = 0;
+    hdr.msg_iov = &iov;
+    hdr.msg_iovlen = 1;
+    hdr.msg_control = msg->cmsg;
+    hdr.msg_controllen = msg->cmsg_len;
+
+    int len = _endpoint.writeMsg(&hdr);
+    if (len < 0) {
+        Logger::getInstance()->log("Error: Failed to send message\n");
+        perror(nullptr);
+        return false;
+    }
+
+    return true;
 }
 
 } // namespace WlAnalyzer

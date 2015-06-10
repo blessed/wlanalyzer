@@ -61,11 +61,9 @@ int WlaProxyServer::init(const std::string &socketPath)
     return 0;
 }
 
-int WlaProxyServer::startServer()
+void WlaProxyServer::startServer()
 {
     _loop.run();
-
-    return 0;
 }
 
 void WlaProxyServer::stopServer()

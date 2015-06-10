@@ -31,6 +31,8 @@
 #include <string>
 #include <ev++.h>
 
+namespace WlAnalyzer {
+
 enum SocketDomain
 {
     UNIX_DOMAIN = AF_UNIX,
@@ -123,5 +125,7 @@ public:
 protected:
     SocketError connect(const std::string &path);
 };
+
+} // WlAnalyzer
 
 #endif // SOCKET_H

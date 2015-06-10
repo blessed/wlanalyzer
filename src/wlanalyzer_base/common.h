@@ -32,6 +32,8 @@
 #include <unistd.h>
 #include "logger.h"
 
+namespace WlAnalyzer {
+
 #define WLA_SOCKETNAME "wayland-debug"
 
 void debug_print(const char *buf);
@@ -46,5 +48,7 @@ void UInt32ToByteArr(char arr, uint16_t val);
 
 void set_bit(uint32_t *val, int num, bool bit);
 bool bit_isset(const uint32_t &val, int num);
+
+} // WlAnalyzer
 
 #endif // COMMON_H

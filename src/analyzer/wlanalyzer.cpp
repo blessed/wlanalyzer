@@ -33,6 +33,7 @@
 #include <ev++.h>
 
 using namespace std;
+using namespace WlAnalyzer;
 
 struct options_t
 {

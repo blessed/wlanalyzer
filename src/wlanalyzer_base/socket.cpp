@@ -32,6 +32,8 @@
 #include "socket.h"
 #include "common.h"
 
+namespace WlAnalyzer {
+
 WldSocket::WldSocket() : _fd(-1), _connected(false)
 {
 }
@@ -309,3 +311,5 @@ SocketError WldNetSocket::connect(const std::string &path)
 
     return NoError;
 }
+
+} // WlAnalyzer

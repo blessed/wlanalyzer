@@ -30,13 +30,9 @@
 #include <stdarg.h>
 #include "logger.h"
 
-Logger *Logger::_instance = NULL;
+namespace WlAnalyzer {
 
-Logger::~Logger()
-{
-    if (_instance)
-        delete _instance;
-}
+Logger *Logger::_instance = NULL;
 
 Logger *Logger::getInstance()
 {
@@ -83,3 +79,5 @@ void Logger::close()
     if (_fd != stderr)
         fclose(_fd);
 }
+
+} // WlAnalyzer

@@ -25,6 +25,8 @@
 #include <string.h>
 #include "analyzer.h"
 
+namespace WlAnalyzer {
+
 WldProtocolAnalyzer::WldProtocolAnalyzer() : protocol(NULL)
 {
 }
@@ -287,3 +289,5 @@ WldProtocolAnalyzer::NewId WldProtocolAnalyzer::getNewId(const WldMessage &msg, 
 
     return id;
 }
+
+} // WlAnalyzer

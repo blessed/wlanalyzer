@@ -30,6 +30,8 @@
 #include <queue>
 #include "socket.h"
 
+namespace WlAnalyzer {
+
 class WldServer
 {
 public:
@@ -80,5 +82,7 @@ protected:
     bool bind(const std::string &resource);
     void onNewConnection();
 };
+
+} // WlAnalyzer
 
 #endif // SERVER_SOCKET_H

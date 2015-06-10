@@ -35,10 +35,11 @@
     Logger::getInstance()->log("%s:%d-> " msg "\n", __PRETTY_FUNCTION__, __LINE__, ##__VA_ARGS__)
 #endif // DEBUG_BUILD
 
+namespace WlAnalyzer {
+
 class Logger
 {
 public:
-    ~Logger();
 
     static Logger *getInstance();
 
@@ -46,6 +47,7 @@ public:
 
 private:
     Logger();
+    ~Logger();
 
     void open();
     void close();
@@ -54,5 +56,7 @@ private:
     static Logger *_instance;
     FILE *_fd;
 };
+
+} // WlAnalyzer
 
 #endif // LOGGER_H

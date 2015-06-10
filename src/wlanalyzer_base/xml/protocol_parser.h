@@ -29,6 +29,8 @@
 #include <vector>
 #include <pugixml.hpp>
 
+namespace WlAnalyzer {
+
 typedef int32_t fixed_t;
 
 enum WldArgType
@@ -166,5 +168,7 @@ private:
     static types_t types;
     static bool initialized;
 };
+
+} // WlAnalyzer
 
 #endif // PROTOCOL_PARSER_H

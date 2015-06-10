@@ -28,6 +28,8 @@
 #include <errno.h>
 #include "common.h"
 
+namespace WlAnalyzer {
+
 #ifndef DEBUG_BUILD
 void wld_log(const char *format, ...)
 {
@@ -99,3 +101,5 @@ uint16_t byteArrToUInt16(const char byte[])
 
     return ret;
 }
+
+} // WlAnalyzer

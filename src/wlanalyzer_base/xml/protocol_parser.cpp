@@ -28,6 +28,8 @@
 
 using namespace pugi;
 
+namespace WlAnalyzer {
+
 WldProtocolScanner::types_t WldProtocolScanner::types;
 WldProtocolDefinition::type_size_t WldProtocolDefinition::type_size;
 bool WldProtocolDefinition::initialized = false;
@@ -210,3 +212,5 @@ void WldProtocolDefinition::init()
 
     initialized = true;
 }
+
+} // WlAnalyzer

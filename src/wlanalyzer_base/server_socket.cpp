@@ -37,6 +37,8 @@
 
 using namespace std;
 
+namespace WlAnalyzer {
+
 WldServer::WldServer() : _fd(-1), _maxPendingConnections(1), _serverName(""),
     _listening(false)
 {
@@ -267,3 +269,5 @@ void WldNetServer::onNewConnection()
 
     DEBUG_LOG("");
 }
+
+} // WlAnalyzer

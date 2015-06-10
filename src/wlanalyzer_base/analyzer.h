@@ -30,6 +30,8 @@
 #include "common.h"
 #include "xml/protocol_parser.h"
 
+namespace WlAnalyzer {
+
 class WldProtocolAnalyzer
 {
 public:
@@ -59,5 +61,7 @@ private:
     objects_t objects;
     names_t names;
 };
+
+} // WlAnalyzer
 
 #endif // ANALYZER_H

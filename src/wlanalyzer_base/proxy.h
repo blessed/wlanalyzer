@@ -38,6 +38,14 @@
 
 namespace WlAnalyzer {
 
+/**
+ * @brief The WlaProxyServer class
+ *
+ * This class represents a proxy object that intercepts
+ * connections to the wayland compositor.
+ * The proxy server is able to track multiple connections with
+ * the comppositor.
+ */
 class WlaProxyServer
 {
 public:
@@ -45,9 +53,35 @@ public:
     WlaProxyServer();
     virtual ~WlaProxyServer();
 
+    /**
+     * @brief init
+     * @param socketPath    proxy socket path
+     * @return 0 on succes
+     *         -1 on failure
+     *
+     * Creates a listening socket which intercepted wayland clients
+     * are supposed to connect to to.
+     */
     int init(const std::string &socketPath);
-    int startServer();
+
+    /**
+     * @brief startServer
+     *
+     * Starts listening for incomming wayland clients.
+     */
+    void startServer();
+
+    /**
+     * @brief stopServer
+     *
+     * Stops listening for wayland clients.
+     */
     void stopServer();
+
+    /**
+     * @brief closeConnection
+     * @param conn connection that is being closed
+     */
     void closeConnection(WlaConnection *conn);
     void setSink(const shared_ptr<RawMessageSink> &value);
 

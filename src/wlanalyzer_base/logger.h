@@ -38,14 +38,13 @@
 class Logger
 {
 public:
-    ~Logger();
-
     static Logger *getInstance();
 
     int log(const char *format, ...);
 
 private:
     Logger();
+    ~Logger();
 
     void open();
     void close();

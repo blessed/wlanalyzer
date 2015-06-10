@@ -82,7 +82,7 @@ void WlaConnection::closeConnection()
 }
 
 WlaLink::WlaLink(const WldSocket &src, const WldSocket &link, LinkType type) : WldSocket(src),
-    _endpoint(link), _type(type), _msgsource(type == REQUEST_LINK)
+    _endpoint(link), _msgsource(type == REQUEST_LINK)
 {
     set<WlaLink, &WlaLink::receiveEvent>(this);
     _endpoint.set<WlaLink, &WlaLink::transmitEvent>(this);

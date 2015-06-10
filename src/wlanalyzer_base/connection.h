@@ -35,7 +35,6 @@
 
 namespace WlAnalyzer {
 
-class WldMessageSink;
 class WlaProxyServer;
 class WlaConnection;
 
@@ -73,7 +72,9 @@ class WlaLink : public WldSocket
 
 public:
     enum LinkType {
+        /** Link creates request messages */
         REQUEST_LINK,
+        /** Link creates event messages */
         EVENT_LINK
     };
 
@@ -95,7 +96,6 @@ private:
     bool sendMessage(WlaMessageBuffer *msg);
 
     WldSocket _endpoint;
-    LinkType _type;
     std::stack<WlaMessageBuffer *> _messages;
     WaylandRawSource _msgsource;
 };

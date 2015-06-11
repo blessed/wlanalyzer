@@ -22,29 +22,40 @@
  * SOFTWARE.
  */
 
+#include "logger.h"
+
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
+#include <mutex>
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdarg.h>
-#include "logger.h"
 
-namespace WlAnalyzer {
+Logger *Logger::_instance = nullptr;
 
-Logger *Logger::_instance = NULL;
+Logger::~Logger()
+{
+    close();
+}
 
 Logger *Logger::getInstance()
 {
+    static std::mutex mutex;
+    std::lock_guard<std::mutex> lock{mutex};
     if (!_instance)
+    {
         _instance = new Logger;
-
+    }
     return _instance;
 }
 
 int Logger::log(const char *format, ...)
 {
     int l;
+
+    static std::mutex mutex;
+    std::lock_guard<std::mutex> lock{mutex};
 
     va_list vargs;
     va_start(vargs, format);

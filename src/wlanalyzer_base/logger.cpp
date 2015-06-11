@@ -32,6 +32,8 @@
 #include <stdlib.h>
 #include <stdarg.h>
 
+namespace WlAnalyzer {
+
 Logger *Logger::_instance = nullptr;
 
 Logger::~Logger()

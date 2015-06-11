@@ -40,7 +40,6 @@ namespace WlAnalyzer {
 class Logger
 {
 public:
-
     static Logger *getInstance();
 
     int log(const char *format, ...);

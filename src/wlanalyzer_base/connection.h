@@ -48,7 +48,7 @@ class WlaConnection;
  * either requests or events.
  * Each link should belong to a WlaConnection object.
  */
-class WlaLink : public WldSocket
+class WlaLink
 {
     struct WlaMessageBuffer
     {
@@ -88,6 +88,8 @@ public:
     virtual ~WlaLink();
 
     void setSink(const shared_ptr<RawMessageSink> &sink);
+    void start();
+    void stop();
 
 private:
     void receiveEvent(ev::io &watcher, int revents);
@@ -95,6 +97,7 @@ private:
     WlaMessageBuffer *receiveMessage();
     bool sendMessage(WlaMessageBuffer *msg);
 
+    WldSocket _sourcepoint;
     WldSocket _endpoint;
     std::stack<WlaMessageBuffer *> _messages;
     WaylandRawSource _msgsource;

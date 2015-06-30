@@ -54,8 +54,8 @@ void WlaConnection::createConnection(WldSocket cli, WldSocket server)
 {
     _client_link = new WlaLink(cli, server, WlaLink::REQUEST_LINK);
     _comp_link = new WlaLink(server, cli, WlaLink::EVENT_LINK);
-    _client_link->start(EV_READ);
-    _comp_link->start(EV_READ);
+    _client_link->start();
+    _comp_link->start();
 
     DEBUG_LOG("connected %d with %d", cli.getSocketDescriptor(),
               server.getSocketDescriptor());
@@ -81,10 +81,10 @@ void WlaConnection::closeConnection()
     running = false;
 }
 
-WlaLink::WlaLink(const WldSocket &src, const WldSocket &link, LinkType type) : WldSocket(src),
+WlaLink::WlaLink(const WldSocket &src, const WldSocket &link, LinkType type) : _sourcepoint(src),
     _endpoint(link), _msgsource(type == REQUEST_LINK)
 {
-    set<WlaLink, &WlaLink::receiveEvent>(this);
+    _sourcepoint.set<WlaLink, &WlaLink::receiveEvent>(this);
     _endpoint.set<WlaLink, &WlaLink::transmitEvent>(this);
 }
 
@@ -95,6 +95,16 @@ WlaLink::~WlaLink()
 void WlaLink::setSink(const shared_ptr<RawMessageSink> &sink)
 {
     _msgsource.setSink(sink);
+}
+
+void WlaLink::start()
+{
+    _sourcepoint.start(EV_READ);
+}
+
+void WlaLink::stop()
+{
+    _sourcepoint.stop();
 }
 
 void WlaLink::receiveEvent(ev::io &watcher, int revents)
@@ -147,7 +157,7 @@ WlaLink::WlaMessageBuffer *WlaLink::receiveMessage()
     msg.msg_control = buffer->cmsg;
     msg.msg_controllen = CMSG_LEN(WlaMessageBuffer::MAX_FDS * sizeof(int));
 
-    int len = readMsg(&msg);
+    int len = _sourcepoint.readMsg(&msg);
     if (len < 0) {
         Logger::getInstance()->log("Failed to read msg\n");
         perror(nullptr);

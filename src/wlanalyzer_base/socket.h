@@ -53,78 +53,36 @@ enum SocketError
     NoError
 };
 
-class WldSocket
+class WlaSocketBase
 {
 public:
-    WldSocket();
-    WldSocket(const WldSocket &copy);
-	explicit WldSocket(int fd, bool connected = true);
-    virtual ~WldSocket();
+    WlaSocketBase();
+    virtual ~WlaSocketBase();
 
-    SocketError connectToServer(const char *path);
-    SocketError connectToServer(const std::string &path);
-    SocketError disconnectFromServer();
+    WlaSocketBase &operator=(const WlaSocketBase &other);
 
-    void setSocketDescriptor(int fd, int flags = 0);
-    int getSocketDescriptor() const
+    template<class T, void (T::*method)(ev::io &w, int)>
+    void set(T *object)
     {
-        if (isConnected())
-            return _fd;
-
-        return -1;
+        _watcher.set<T, method>(object);
     }
 
     void start(int eventMask);
     void stop();
 
-    template<class K, void (K::*method)(ev::io &w, int)>
-    void set(K *object)
-    {
-        _watcher.set<K, method>(object);
-    }
+    int getFd() const { return _fd; }
 
-    bool isConnected() const { return _connected; }
-
-    WldSocket &operator=(const WldSocket &copy);
-
-    bool operator==(int fd) { return fd == _fd; }
-    friend bool operator==(int fd, const WldSocket &sock);
-
-    long read(char *data, long max_size) const;
-    bool write(const char *data, size_t c) const;
-
-    size_t readUntil(char *data, size_t max_size) const;
-    bool writeUntil(const char *data, size_t c) const;
-
-    int readMsg(msghdr *msg);
-    int writeMsg(const msghdr *msg);
-
-protected:
-    virtual SocketError connect(const std::string &path);
-
-private:
-    void shutdown();
+    bool operator==(int fd) { return _fd == fd; }
+    friend bool operator==(int fd, const WlaSocketBase &socket);
 
 protected:
     int _fd;
 
 private:
-//    int _fd;
-    bool _connected;
     ev::io _watcher;
 };
-bool operator==(int fd, const WldSocket &sock);
 
-class WldNetSocket : public WldSocket
-{
-public:
-    WldNetSocket() { }
-    WldNetSocket(const WldNetSocket &copy);
-    virtual ~WldNetSocket() { }
-
-protected:
-    SocketError connect(const std::string &path);
-};
+bool operator==(int fd, const WlaSocketBase &socket);
 
 } // WlAnalyzer
 

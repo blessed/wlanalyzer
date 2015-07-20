@@ -29,7 +29,7 @@
 #include <stack>
 #include <vector>
 #include <ev++.h>
-#include "socket.h"
+#include "client_socket.h"
 #include "common.h"
 #include "wayland_raw_source.h"
 
@@ -84,7 +84,7 @@ public:
      * @param link The endpoint of the link
      * @param dir Type of messages this link transmits
      */
-    WlaLink(const WldSocket &src, const WldSocket &link, LinkType type);
+    WlaLink(const WlaClientSocket &src, const WlaClientSocket &link, LinkType type);
     virtual ~WlaLink();
 
     void setSink(const shared_ptr<RawMessageSink> &sink);
@@ -97,8 +97,8 @@ private:
     WlaMessageBuffer *receiveMessage();
     bool sendMessage(WlaMessageBuffer *msg);
 
-    WldSocket _sourcepoint;
-    WldSocket _endpoint;
+    WlaClientSocket _sourcepoint;
+    WlaClientSocket _endpoint;
     std::stack<WlaMessageBuffer *> _messages;
     WaylandRawSource _msgsource;
 };
@@ -118,13 +118,13 @@ public:
     ~WlaConnection();
 
     /**
-     * @brief createConnection
+     * @brief initializeConnection
      * @param client
      * @param server
      *
      * Creates a connection from two sockets.
      */
-    void createConnection(WldSocket client, WldSocket server);
+    void initializeConnection(WlaClientSocket client, WlaClientSocket server);
     void closeConnection();
 
     /**

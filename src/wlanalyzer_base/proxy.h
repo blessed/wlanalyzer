@@ -29,7 +29,7 @@
 #include <string>
 #include <ev++.h>
 #include <set>
-#include "socket.h"
+#include "client_socket.h"
 #include "server_socket.h"
 #include "connection.h"
 #include "analyzer.h"
@@ -37,6 +37,28 @@
 #include "raw_message_sink.h"
 
 namespace WlAnalyzer {
+
+/**
+ * @brief The WlaIConnectionListener class
+ *
+ * Specifies an interface for listening for new connections on
+ * a proxy server.
+ */
+class WlaIConnectionListener
+{
+public:
+    virtual ~WlaIConnectionListener()
+    {
+    }
+
+    /**
+     * @brief notifyOfConnection
+     * @param connection    the connection that has been created
+     *
+     * Notifies the listener of a new connection on the proxy server.
+     */
+    virtual void notifyOfConnection(WlaConnection *connection) = 0;
+};
 
 /**
  * @brief The WlaProxyServer class
@@ -85,15 +107,25 @@ public:
     void closeConnection(WlaConnection *conn);
     void setSink(const shared_ptr<RawMessageSink> &value);
 
+    /**
+     * @brief registerListener
+     * @param listener
+     *
+     * Adds a listener that will get notified of new connections
+     * on this proxy server.
+     */
+    void registerListener(shared_ptr<WlaIConnectionListener> &listener);
+
 private:
     void connectClient(ev::io &watcher, int revents);
 
-    WldServer _serverSocket;
+    WlaServerSocket _serverSocket;
     ev::io _io;
     ev::default_loop _loop;
 
     std::set<WlaConnection *> _connections;
     shared_ptr<RawMessageSink> sink_;
+    std::vector<shared_ptr<WlaIConnectionListener>> _conn_listeners;
 };
 
 } // namespace WlAnalyzer

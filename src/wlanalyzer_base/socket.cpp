@@ -34,282 +34,35 @@
 
 namespace WlAnalyzer {
 
-WldSocket::WldSocket() : _fd(-1), _connected(false)
+WlaSocketBase::WlaSocketBase() : _fd(-1)
 {
 }
 
-WldSocket::WldSocket(const WldSocket &copy)
+WlaSocketBase::~WlaSocketBase()
 {
-    if (copy.isConnected())
-    {
-        _fd = dup(copy._fd);
-        _connected = copy.isConnected();
-	}
 }
 
-WldSocket::WldSocket(int fd, bool connected)
+WlaSocketBase &WlaSocketBase::operator=(const WlaSocketBase &other)
 {
-	_fd = dup(fd);
-	_connected = connected;
-}
-
-WldSocket::~WldSocket()
-{
-    if (isConnected())
-    {
-        DEBUG_LOG("Closed socket %d", _fd);
-        disconnectFromServer();
-    }
-}
-
-SocketError WldSocket::connectToServer(const char *path)
-{
-    std::string strPath(path);
-    return connectToServer(strPath);
-}
-
-SocketError WldSocket::connectToServer(const std::string &path)
-{
-    if (path.empty())
-        return ServerNotFoundError;
-
-    if (isConnected())
-        disconnectFromServer();
-
-    SocketError err = connect(path);
-    if (err != NoError)
-    {
-        disconnectFromServer();
-        return err;
-    }
-
-    Logger::getInstance()->log("Connected to %s\n", path.c_str());
-    _connected = true;
-
-    return NoError;
-}
-
-SocketError WldSocket::disconnectFromServer()
-{
-    if (_connected)
-    {
-        close(_fd);
-        _fd = -1;
-
-        _connected = false;
-    }
-
-    return NoError;
-}
-
-void WldSocket::setSocketDescriptor(int fd, int flags)
-{
-    if (isConnected())
-        disconnectFromServer();
-
-    if (flags)
-    {
-        fcntl(fd, F_SETFL, flags);
-    }
-
-    _fd = fd;
-    _connected = true;
-}
-
-void WldSocket::start(int eventMask)
-{
-    _watcher.start(_fd, eventMask);
-}
-
-void WldSocket::stop()
-{
-    _watcher.stop();
-}
-
-WldSocket &WldSocket::operator=(const WldSocket &copy)
-{
-    _fd = dup(copy._fd);
-    _connected = copy._connected;
+    if (other._fd != -1)
+        _fd = dup(_fd);
 
     return *this;
 }
 
-bool operator==(int fd, const WldSocket &sock)
+void WlaSocketBase::start(int eventMask)
 {
-    return fd == sock.getSocketDescriptor();
+    _watcher.start(_fd, eventMask);
 }
 
-long WldSocket::read(char *data, long max_size) const
+void WlaSocketBase::stop()
 {
-    if (!isConnected())
-        return -1;
-
-    int err;
-    do
-    {
-		err = recv(_fd, data, max_size, MSG_WAITALL);
-	} while (err == -1 && (errno == EWOULDBLOCK || errno == EAGAIN));
-
-    return err;
+    _watcher.stop();
 }
 
-bool WldSocket::write(const char *data, size_t c) const
+bool operator==(int fd, const WlaSocketBase &socket)
 {
-    while (c > 0)
-    {
-		int wrote = send(_fd, data, c, MSG_NOSIGNAL);
-        if (wrote == -1)
-            return false;
-
-        c -= wrote;
-    }
-
-    return true;
-}
-
-size_t WldSocket::readUntil(char *data, size_t max_size) const
-{
-    size_t sz = 0;
-    int r;
-
-    while (max_size > 0)
-    {
-        r = read(data, max_size);
-        if (r <= 0)
-            return r;
-
-        data += r;
-        sz += r;
-        max_size -= r;
-    }
-
-    return sz;
-}
-
-bool WldSocket::writeUntil(const char *data, size_t c) const
-{
-    size_t sz = 0;
-
-    do
-    {
-        int ret;
-        ret = write(data + sz, c);
-        if (ret <= 0)
-            return false;
-
-        sz += ret;
-    } while (sz < c);
-
-    return true;
-}
-
-int WldSocket::readMsg(msghdr *msg)
-{
-    int len;
-    do
-    {
-        len = recvmsg(_fd, msg, 0);
-    } while (len < 0 && errno == EINTR);
-
-    return len;
-}
-
-int WldSocket::writeMsg(const msghdr *msg)
-{
-    int len;
-    do
-    {
-        len = sendmsg(_fd, msg, 0);
-    } while (len < 0 && errno == EINTR);
-
-    return len;
-}
-
-SocketError WldSocket::connect(const std::string &path)
-{
-    DEBUG_LOG("");
-
-    _fd = socket(AF_UNIX, SOCK_STREAM, 0);
-    if (check_error(_fd))
-        return SocketResourceError;
-
-    sockaddr_un address;
-    memset(&address, 0, sizeof(sockaddr_un));
-    address.sun_family = AF_UNIX;
-    strncpy(address.sun_path, path.c_str(), path.size());
-    int err = ::connect(_fd, (sockaddr *)&address, sizeof(sockaddr_un));
-    if (err == -1)
-    {
-        disconnectFromServer();
-
-        switch (errno)
-        {
-        case EINVAL:
-        case ECONNREFUSED:
-            return ConnectionRefusedError;
-        case ENOENT:
-            return ServerNotFoundError;
-        case ETIMEDOUT:
-            return SocketTimeoutError;
-
-        default:
-            return UnknownSocketError;
-        }
-    }
-
-    return NoError;
-}
-
-
-WldNetSocket::WldNetSocket(const WldNetSocket &copy) : WldSocket(copy)
-{
-}
-
-SocketError WldNetSocket::connect(const std::string &path)
-{
-    DEBUG_LOG("");
-
-    _fd = socket(AF_INET, SOCK_STREAM, 0);
-    if (check_error(_fd))
-        return SocketResourceError;
-
-    sockaddr_in addr;
-    memset(&addr, 0, sizeof(sockaddr_in));
-
-    size_t idx = path.find(':');
-    std::string ip = path.substr(0, idx);
-    std::string port = path.substr(idx + 1);
-    if (port.empty())
-        return InvalidServerAddress;
-
-
-    addr.sin_port = htons(atoi(port.c_str()));
-    addr.sin_family = AF_INET;
-    addr.sin_addr.s_addr = inet_addr(ip.c_str());
-
-    int err = ::connect(_fd ,(sockaddr *)&addr, sizeof(sockaddr_in));
-    if (err == -1)
-    {
-        disconnectFromServer();
-
-        DEBUG_LOG("%d", errno);
-
-        switch (errno)
-        {
-        case EINVAL:
-        case ECONNREFUSED:
-            return ConnectionRefusedError;
-        case ENOENT:
-            return ServerNotFoundError;
-        case ETIMEDOUT:
-            return SocketTimeoutError;
-
-        default:
-            return UnknownSocketError;
-        }
-    }
-
-    return NoError;
+    return fd == socket.getFd();
 }
 
 } // WlAnalyzer

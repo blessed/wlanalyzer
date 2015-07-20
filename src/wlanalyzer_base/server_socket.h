@@ -29,16 +29,17 @@
 #include <string>
 #include <queue>
 #include "socket.h"
+#include "client_socket.h"
 
 namespace WlAnalyzer {
 
-class WldServer
+class WlaServerSocket : public WlaSocketBase
 {
 public:
-    WldServer();
-    ~WldServer();
+    WlaServerSocket();
+    ~WlaServerSocket();
 
-    void setMaxPendingConnections(unsigned int num)
+    void setMaxPendingConnections(uint16_t num)
     {
         _maxPendingConnections = num;
     }
@@ -48,13 +49,11 @@ public:
         return _serverName;
     }
 
-    int getFd() const { return _fd; }
-
     bool listen(const std::string &name);
     bool isListening() const { return _listening; }
 
     bool waitForConnection(int ms, bool *timedout);
-    WldSocket *nextPendingConnection();
+    WlaClientSocket *nextPendingConnection();
 
     void close();
 
@@ -62,21 +61,18 @@ protected:
     virtual bool bind(const std::string &resource);
     virtual void onNewConnection();
 
+    std::queue<WlaClientSocket *> _pendingConnections;
+
 private:
     void closeServer();
     void clearPendingConnections();
 
-protected:
-    int _fd;
-    std::queue<WldSocket *> _pendingConnections;
-
-private:
-    unsigned int _maxPendingConnections;
+    uint16_t _maxPendingConnections;
     std::string _serverName;
     bool _listening;
 };
 
-class WldNetServer : public WldServer
+class WlaNetServerSocket : public WlaServerSocket
 {
 protected:
     bool bind(const std::string &resource);

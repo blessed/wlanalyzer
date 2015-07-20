@@ -50,15 +50,15 @@ WlaConnection::~WlaConnection()
     parent->closeConnection(this);
 }
 
-void WlaConnection::createConnection(WldSocket cli, WldSocket server)
+void WlaConnection::initializeConnection(WlaClientSocket cli, WlaClientSocket server)
 {
     _client_link = new WlaLink(cli, server, WlaLink::REQUEST_LINK);
     _comp_link = new WlaLink(server, cli, WlaLink::EVENT_LINK);
     _client_link->start();
     _comp_link->start();
 
-    DEBUG_LOG("connected %d with %d", cli.getSocketDescriptor(),
-              server.getSocketDescriptor());
+    DEBUG_LOG("connected %d with %d", cli.getFd(),
+              server.getFd());
 }
 
 void WlaConnection::setSink(const shared_ptr<RawMessageSink> &sink)
@@ -81,7 +81,7 @@ void WlaConnection::closeConnection()
     running = false;
 }
 
-WlaLink::WlaLink(const WldSocket &src, const WldSocket &link, LinkType type) : _sourcepoint(src),
+WlaLink::WlaLink(const WlaClientSocket &src, const WlaClientSocket &link, LinkType type) : _sourcepoint(src),
     _endpoint(link), _msgsource(type == REQUEST_LINK)
 {
     _sourcepoint.set<WlaLink, &WlaLink::receiveEvent>(this);
@@ -173,8 +173,6 @@ WlaLink::WlaMessageBuffer *WlaLink::receiveMessage()
     }
 
     return buffer;
-
-    return nullptr;
 }
 
 bool WlaLink::sendMessage(WlaLink::WlaMessageBuffer *msg)

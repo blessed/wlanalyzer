@@ -17,8 +17,8 @@ public:
 
     static void setSequence(const uint32_t &sequence) {sequence_ = sequence;}
 
-    explicit WaylandRawSource(bool creates_requests) :
-        creates_requests_(creates_requests), message_complete_(true) {}
+    explicit WaylandRawSource(bool request_source) :
+        creates_requests_(request_source), message_complete_(true) {}
 
     void processBuffer(uint64_t ts_seconds, uint32_t ts_useconds, const char *buffer, size_t size);
 

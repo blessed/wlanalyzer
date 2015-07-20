@@ -22,6 +22,8 @@
  * SOFTWARE.
  */
 
+#include "common.h"
+#include "server_socket.h"
 
 #include <errno.h>
 #include <unistd.h>
@@ -32,55 +34,21 @@
 #include <netinet/ip.h>
 #include <fcntl.h>
 
-#include "common.h"
-#include "server_socket.h"
-
 using namespace std;
 
 namespace WlAnalyzer {
 
-WldServer::WldServer() : _fd(-1), _maxPendingConnections(1), _serverName(""),
+WlaServerSocket::WlaServerSocket() : WlaSocketBase(), _maxPendingConnections(1), _serverName(""),
     _listening(false)
 {
 }
 
-WldServer::~WldServer()
+WlaServerSocket::~WlaServerSocket()
 {
     closeServer();
 }
 
-void WldServer::closeServer()
-{
-    if (!isListening())
-        return;
-
-    clearPendingConnections();
-
-    ::close(_fd);
-    unlink(_serverName.c_str());
-
-    DEBUG_LOG("server closed");
-
-    _listening = false;
-    _serverName.clear();
-}
-
-void WldServer::clearPendingConnections()
-{
-    if (_pendingConnections.empty())
-        return;
-
-    WldSocket *temp;
-
-    while (!_pendingConnections.empty())
-    {
-        temp = _pendingConnections.front();
-        _pendingConnections.pop();
-        delete temp;
-    }
-}
-
-bool WldServer::listen(const string &name)
+bool WlaServerSocket::listen(const string &name)
 {
     if (name.empty())
     {
@@ -110,25 +78,7 @@ bool WldServer::listen(const string &name)
     return true;
 }
 
-void WldServer::onNewConnection()
-{
-    int clientSocket;
-    sockaddr_un addr;
-    socklen_t socklen;
-
-    DEBUG_LOG("new connection");
-
-    socklen = sizeof(sockaddr_un);
-    clientSocket = accept(_fd, (sockaddr *)&addr, &socklen);
-    if (clientSocket == -1)
-        return;
-
-    WldSocket *localSocket = new WldSocket;
-    localSocket->setSocketDescriptor(clientSocket);
-    _pendingConnections.push(localSocket);
-}
-
-bool WldServer::waitForConnection(int ms, bool *timedout)
+bool WlaServerSocket::waitForConnection(int ms, bool *timedout)
 {
     fd_set readfds;
     FD_ZERO(&readfds);
@@ -170,23 +120,23 @@ bool WldServer::waitForConnection(int ms, bool *timedout)
     return true;
 }
 
-WldSocket *WldServer::nextPendingConnection()
+WlaClientSocket *WlaServerSocket::nextPendingConnection()
 {
     if (_pendingConnections.empty())
         return NULL;
 
-    WldSocket *socket = _pendingConnections.back();
+    WlaClientSocket *socket = _pendingConnections.back();
     _pendingConnections.pop();
 
     return socket;
 }
 
-void WldServer::close()
+void WlaServerSocket::close()
 {
     closeServer();
 }
 
-bool WldServer::bind(const string &resource)
+bool WlaServerSocket::bind(const string &resource)
 {
     int err;
 
@@ -216,7 +166,56 @@ bool WldServer::bind(const string &resource)
     return true;
 }
 
-bool WldNetServer::bind(const string &resource)
+void WlaServerSocket::onNewConnection()
+{
+    int clientSocket;
+    sockaddr_un addr;
+    socklen_t socklen;
+
+    DEBUG_LOG("new connection");
+
+    socklen = sizeof(sockaddr_un);
+    clientSocket = accept(_fd, (sockaddr *)&addr, &socklen);
+    if (clientSocket == -1)
+        return;
+
+    WlaClientSocket *localSocket = new WlaClientSocket;
+    localSocket->setFd(clientSocket);
+    _pendingConnections.push(localSocket);
+}
+
+void WlaServerSocket::closeServer()
+{
+    if (!isListening())
+        return;
+
+    clearPendingConnections();
+
+    ::close(_fd);
+    unlink(_serverName.c_str());
+
+    DEBUG_LOG("server closed");
+
+    _listening = false;
+    _serverName.clear();
+}
+
+void WlaServerSocket::clearPendingConnections()
+{
+    if (_pendingConnections.empty())
+        return;
+
+    WlaClientSocket *temp;
+
+    while (!_pendingConnections.empty())
+    {
+        temp = _pendingConnections.front();
+        _pendingConnections.pop();
+        delete temp;
+    }
+}
+
+bool WlaNetServerSocket::bind(const string &resource)
 {
     int err;
 
@@ -250,7 +249,7 @@ bool WldNetServer::bind(const string &resource)
     return true;
 }
 
-void WldNetServer::onNewConnection()
+void WlaNetServerSocket::onNewConnection()
 {
     int clientSocket;
     sockaddr_in addr;
@@ -263,8 +262,8 @@ void WldNetServer::onNewConnection()
     if (clientSocket == -1)
         return;
 
-    WldSocket *localSocket = new WldNetSocket;
-    localSocket->setSocketDescriptor(clientSocket);
+    WlaClientSocket *localSocket = new WlaNetClientSocket;
+    localSocket->setFd(clientSocket);
     _pendingConnections.push(localSocket);
 
     DEBUG_LOG("");

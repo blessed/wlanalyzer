@@ -99,10 +99,10 @@ void WlaProxyServer::connectClient(ev::io &watcher, int revents)
         return;
     }
 
-    WldSocket wayland;
+    WlaClientSocket wayland;
     std::string waylandPath = std::string(getenv("XDG_RUNTIME_DIR")) +
             "/" + std::string(getenv("WAYLAND_DISPLAY"));
-    if (wayland.connectToServer(waylandPath) != NoError)
+    if (wayland.connectTo(waylandPath) != NoError)
     {
         DEBUG_LOG("failed to connect to server");
         stopServer();
@@ -119,8 +119,8 @@ void WlaProxyServer::connectClient(ev::io &watcher, int revents)
         return;
     }
 
-    WldSocket client;
-    client.setSocketDescriptor(fd);
+    WlaClientSocket client;
+    client.setFd(fd);
 
     WlaConnection *connection = new WlaConnection(this);
     if (!connection)
@@ -129,10 +129,14 @@ void WlaProxyServer::connectClient(ev::io &watcher, int revents)
         stopServer();
         return;
     }
-    connection->createConnection(client, wayland);
+    connection->initializeConnection(client, wayland);
     connection->setSink(sink_);
 
     _connections.insert(connection);
+
+    for (auto listener : _conn_listeners) {
+        listener->notifyOfConnection(connection);
+    }
 }
 
 void WlaProxyServer::setSink(const shared_ptr<RawMessageSink> &sink)
@@ -142,5 +146,10 @@ void WlaProxyServer::setSink(const shared_ptr<RawMessageSink> &sink)
     for (it = _connections.begin(); it != _connections.end(); ++it) {
         (*it)->setSink(sink);
     }
+}
+
+void WlaProxyServer::registerListener(shared_ptr<WlaIConnectionListener> &listener)
+{
+    _conn_listeners.push_back(listener);
 }
 

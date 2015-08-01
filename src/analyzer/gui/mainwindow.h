@@ -17,8 +17,11 @@ public:
 
 private slots:
 	void connectSlot();
-	void openSlot();
+	void openDumpFileSlot();
+	void createSessionSlot();
+	void startRecentSessionSlot();
 	void aboutSlot();
+	void clearRecentSlot();
 	void addressSelected(qint64 addr);
 
     // dock widget pin to area logic
@@ -29,6 +32,8 @@ private slots:
 
 private:
     void pinDockToArea(QDockWidget* dock, Qt::DockWidgetArea area);
+    void closeEvent(QCloseEvent *event);
+    void readSettings();
     Ui::MainWindow *ui;
 };
 

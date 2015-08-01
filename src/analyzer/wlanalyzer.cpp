@@ -140,6 +140,11 @@ int main(int argc, char **argv)
     ev::default_loop loop;
 
 	QApplication app(argc, argv);
+    // bootstrap for default QSettings objects
+    app.setOrganizationDomain("wlanalyzer.org");
+    app.setOrganizationName("WlAnalyzer");
+    app.setApplicationName("WlAnalyzerGUI");
+
 	MainWindow window;
 	window.show();
 	return app.exec();

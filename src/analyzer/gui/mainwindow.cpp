@@ -21,6 +21,8 @@ MainWindow::MainWindow(QWidget *parent) :
 
     connect(ui->packetHexEdit, SIGNAL(addressSelected(qint64)),
 			this, SLOT(addressSelected(qint64)));
+
+    readSettings();
 }
 
 MainWindow::~MainWindow()
@@ -41,7 +43,7 @@ void MainWindow::connectSlot()
 	}
 }
 
-void MainWindow::openSlot()
+void MainWindow::openDumpFileSlot()
 {
 	QFileDialog fileDialog;
 
@@ -51,6 +53,16 @@ void MainWindow::openSlot()
 	}
 	else
 		qDebug("Pressed cancel");
+}
+
+void MainWindow::createSessionSlot()
+{
+	qDebug("createSessionSlot");
+}
+
+void MainWindow::startRecentSessionSlot()
+{
+	qDebug("startRecentSessionSlot");
 }
 
 void MainWindow::addressSelected(qint64 addr)
@@ -69,6 +81,11 @@ void MainWindow::aboutSlot()
             tr("This is a GUI analyzer that can analyze acquired wayland traffic.\n"
                "The data can originate either from a pre-recorded file gathered "
                "in offline mode or in online mode by connecting the wldumper"));
+}
+
+void MainWindow::clearRecentSlot()
+{
+    qDebug() << "Clear Recents";
 }
 
 void MainWindow::pinDockToTopSlot()
@@ -101,4 +118,19 @@ void MainWindow::pinDockToArea(QDockWidget* dock, Qt::DockWidgetArea area)
     if(mainWindow->dockWidgetArea(dock) == area)
         return;
     mainWindow->addDockWidget(area, dock);
+}
+
+void MainWindow::closeEvent(QCloseEvent *event)
+{
+    QSettings settings;
+    settings.setValue("gui/geometry", saveGeometry());
+    settings.setValue("gui/windowState", saveState());
+    QMainWindow::closeEvent(event);
+}
+
+void MainWindow::readSettings()
+{
+    QSettings settings;
+    restoreGeometry(settings.value("gui/geometry").toByteArray());
+    restoreState(settings.value("gui/windowState").toByteArray());
 }

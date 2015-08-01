@@ -2,7 +2,9 @@
 #include <QMessageBox>
 #include "gui/mainwindow.h"
 #include "ui_mainwindow.h"
+#include "gui/mainwindow.moc"
 #include "gui/ipdialog.h"
+#include "gui/editsessiondialog.h"
 
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
@@ -58,6 +60,17 @@ void MainWindow::openDumpFileSlot()
 void MainWindow::createSessionSlot()
 {
 	qDebug("createSessionSlot");
+
+	EditSessionDialog sessionDialog;
+	if (sessionDialog.exec())
+	{
+		qDebug("session info:");
+	}
+	else
+	{
+		qDebug("Pressed cancel");
+	}
+
 }
 
 void MainWindow::startRecentSessionSlot()

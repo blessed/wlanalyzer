@@ -367,7 +367,7 @@
   </action>
   <action name="action_OpenSession">
    <property name="text">
-    <string>&amp;Session</string>
+    <string>&amp;Capture</string>
    </property>
   </action>
   <action name="action_OpenDumpFile">

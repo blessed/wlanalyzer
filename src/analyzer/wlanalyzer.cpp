@@ -27,7 +27,6 @@
 #include <string.h>
 #include <QApplication>
 #include "gui/mainwindow.h"
-#include "gui/mainwindow.moc"
 #include "wlanalyzer_base/common.h"
 #include "wlanalyzer_base/analyzer.h"
 #include <ev++.h>

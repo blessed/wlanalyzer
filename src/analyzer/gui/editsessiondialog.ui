@@ -31,6 +31,9 @@
         <property name="text">
          <string>Session Name:</string>
         </property>
+        <property name="buddy">
+         <cstring>sessionName_edit</cstring>
+        </property>
        </widget>
       </item>
       <item row="0" column="1">
@@ -44,6 +47,9 @@
        <widget class="QLabel" name="label_6">
         <property name="text">
          <string>Socket path:</string>
+        </property>
+        <property name="buddy">
+         <cstring>socketpath_edit</cstring>
         </property>
        </widget>
       </item>
@@ -61,8 +67,14 @@
         </item>
         <item>
          <widget class="QPushButton" name="socketPath_browse_button">
+          <property name="focusPolicy">
+           <enum>Qt::TabFocus</enum>
+          </property>
           <property name="text">
            <string>Browse...</string>
+          </property>
+          <property name="autoDefault">
+           <bool>true</bool>
           </property>
          </widget>
         </item>
@@ -88,6 +100,9 @@
         <property name="text">
          <string>Binary location:</string>
         </property>
+        <property name="buddy">
+         <cstring>binaryLocation_edit</cstring>
+        </property>
        </widget>
       </item>
       <item row="1" column="1">
@@ -104,8 +119,14 @@
         </item>
         <item>
          <widget class="QPushButton" name="binaryLocation_browse_button">
+          <property name="focusPolicy">
+           <enum>Qt::TabFocus</enum>
+          </property>
           <property name="text">
            <string>Browse...</string>
+          </property>
+          <property name="autoDefault">
+           <bool>true</bool>
           </property>
          </widget>
         </item>
@@ -115,6 +136,9 @@
        <widget class="QLabel" name="label_3">
         <property name="text">
          <string>Command line:</string>
+        </property>
+        <property name="buddy">
+         <cstring>commandLine_edit</cstring>
         </property>
        </widget>
       </item>
@@ -147,6 +171,9 @@
           <property name="text">
            <string>Core protocol:</string>
           </property>
+          <property name="buddy">
+           <cstring>coreProtocolLocation_edit</cstring>
+          </property>
          </widget>
         </item>
        </layout>
@@ -165,8 +192,14 @@
         </item>
         <item>
          <widget class="QPushButton" name="coreProtocol_browse_button">
+          <property name="focusPolicy">
+           <enum>Qt::TabFocus</enum>
+          </property>
           <property name="text">
            <string>Browse...</string>
+          </property>
+          <property name="autoDefault">
+           <bool>true</bool>
           </property>
          </widget>
         </item>
@@ -176,6 +209,9 @@
        <widget class="QLabel" name="label_4">
         <property name="text">
          <string>Extension specs:</string>
+        </property>
+        <property name="buddy">
+         <cstring>protocolExtensions_edit</cstring>
         </property>
        </widget>
       </item>
@@ -211,8 +247,14 @@
           </item>
           <item>
            <widget class="QPushButton" name="protocolExtensions_browse_button">
+            <property name="focusPolicy">
+             <enum>Qt::TabFocus</enum>
+            </property>
             <property name="text">
              <string>Browse...</string>
+            </property>
+            <property name="autoDefault">
+             <bool>true</bool>
             </property>
            </widget>
           </item>
@@ -255,8 +297,14 @@
          <height>27</height>
         </size>
        </property>
+       <property name="focusPolicy">
+        <enum>Qt::TabFocus</enum>
+       </property>
        <property name="text">
         <string>&amp;Abort</string>
+       </property>
+       <property name="autoDefault">
+        <bool>true</bool>
        </property>
       </widget>
      </item>
@@ -268,8 +316,14 @@
          <verstretch>0</verstretch>
         </sizepolicy>
        </property>
+       <property name="focusPolicy">
+        <enum>Qt::TabFocus</enum>
+       </property>
        <property name="text">
         <string>&amp;Start</string>
+       </property>
+       <property name="autoDefault">
+        <bool>true</bool>
        </property>
       </widget>
      </item>
@@ -277,6 +331,20 @@
    </item>
   </layout>
  </widget>
+ <tabstops>
+  <tabstop>sessionName_edit</tabstop>
+  <tabstop>socketpath_edit</tabstop>
+  <tabstop>socketPath_browse_button</tabstop>
+  <tabstop>binaryLocation_edit</tabstop>
+  <tabstop>binaryLocation_browse_button</tabstop>
+  <tabstop>commandLine_edit</tabstop>
+  <tabstop>coreProtocolLocation_edit</tabstop>
+  <tabstop>coreProtocol_browse_button</tabstop>
+  <tabstop>protocolExtensions_edit</tabstop>
+  <tabstop>protocolExtensions_browse_button</tabstop>
+  <tabstop>abort_button</tabstop>
+  <tabstop>start_button</tabstop>
+ </tabstops>
  <resources/>
  <connections>
   <connection>
@@ -284,12 +352,102 @@
    <signal>clicked()</signal>
    <receiver>EditSessionDialog</receiver>
    <slot>reject()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>598</x>
+     <y>509</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>390</x>
+     <y>230</y>
+    </hint>
+   </hints>
   </connection>
   <connection>
    <sender>start_button</sender>
    <signal>clicked()</signal>
    <receiver>EditSessionDialog</receiver>
    <slot>accept()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>689</x>
+     <y>509</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>367</x>
+     <y>244</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>socketPath_browse_button</sender>
+   <signal>clicked()</signal>
+   <receiver>EditSessionDialog</receiver>
+   <slot>browseSocketPathSlot()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>631</x>
+     <y>86</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>691</x>
+     <y>119</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>binaryLocation_browse_button</sender>
+   <signal>clicked()</signal>
+   <receiver>EditSessionDialog</receiver>
+   <slot>browseBinaryLocationSlot()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>643</x>
+     <y>165</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>694</x>
+     <y>205</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>coreProtocol_browse_button</sender>
+   <signal>clicked()</signal>
+   <receiver>EditSessionDialog</receiver>
+   <slot>browseCoreProtocolSlot()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>643</x>
+     <y>327</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>465</x>
+     <y>281</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>protocolExtensions_browse_button</sender>
+   <signal>clicked()</signal>
+   <receiver>EditSessionDialog</receiver>
+   <slot>browseExtensionsSlot()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>619</x>
+     <y>444</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>409</x>
+     <y>484</y>
+    </hint>
+   </hints>
   </connection>
  </connections>
+ <slots>
+  <slot>browseSocketPathSlot()</slot>
+  <slot>browseBinaryLocationSlot()</slot>
+  <slot>browseCoreProtocolSlot()</slot>
+  <slot>browseExtensionsSlot()</slot>
+ </slots>
 </ui>

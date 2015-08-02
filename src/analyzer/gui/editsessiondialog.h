@@ -15,6 +15,12 @@ public:
     explicit EditSessionDialog(QWidget *parent = 0);
     ~EditSessionDialog();
 
+public slots:
+    void browseSocketPathSlot();
+    void browseBinaryLocationSlot();
+    void browseCoreProtocolSlot();
+    void browseExtensionsSlot();
+
 private:
     Ui::EditSessionDialog *ui;
 };

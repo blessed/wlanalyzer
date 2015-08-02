@@ -1,4 +1,6 @@
 #include <QFileDialog>
+#include <QCompleter>
+#include <QDirModel>
 #include <QDebug>
 #include "gui/editsessiondialog.h"
 #include "ui_editsessiondialog.h"
@@ -10,6 +12,12 @@ EditSessionDialog::EditSessionDialog(QWidget *parent) :
 {
     m_sessionInfo = EditSessionDialog::session_ptr::create();
     ui->setupUi(this);
+    QCompleter *completer = new QCompleter(this);
+    completer->setModel(new QDirModel(completer));
+    completer->setCaseSensitivity(Qt::CaseInsensitive);
+    ui->socketpath_edit->setCompleter(completer);
+    ui->binaryLocation_edit->setCompleter(completer);
+    ui->coreProtocolLocation_edit->setCompleter(completer);
 }
 
 EditSessionDialog::~EditSessionDialog()

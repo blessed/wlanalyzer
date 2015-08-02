@@ -331,8 +331,6 @@
      <property name="title">
       <string>&amp;Recent Sessions</string>
      </property>
-     <addaction name="separator"/>
-     <addaction name="action_RecentSessions_Clear"/>
     </widget>
     <addaction name="menu_Open"/>
     <addaction name="actionConnect"/>
@@ -373,11 +371,6 @@
   <action name="action_OpenDumpFile">
    <property name="text">
     <string>&amp;Dump File</string>
-   </property>
-  </action>
-  <action name="action_RecentSessions_Clear">
-   <property name="text">
-    <string>&amp;Clear Menu</string>
    </property>
   </action>
  </widget>
@@ -516,12 +509,6 @@
    <signal>triggered()</signal>
    <receiver>MainWindow</receiver>
    <slot>pinDockToBottomSlot()</slot>
-  </connection>
-  <connection>
-   <sender>action_RecentSessions_Clear</sender>
-   <signal>triggered()</signal>
-   <receiver>MainWindow</receiver>
-   <slot>clearRecentSlot()</slot>
   </connection>
   <connection>
    <sender>action_OpenSession</sender>

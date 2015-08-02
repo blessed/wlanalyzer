@@ -8,6 +8,7 @@ EditSessionDialog::EditSessionDialog(QWidget *parent) :
     QDialog(parent),
     ui(new Ui::EditSessionDialog)
 {
+    m_sessionInfo = EditSessionDialog::session_ptr::create();
     ui->setupUi(this);
 }
 
@@ -39,6 +40,42 @@ QStringList selectFilePath(const QString& title, const QString& directory,
     return ret;
 }
 
+EditSessionDialog::session_ptr EditSessionDialog::getSessionInfo()
+{
+    m_sessionInfo->m_sessionName = ui->sessionName_edit->text();
+    m_sessionInfo->m_binaryPath = ui->binaryLocation_edit->text();
+
+    m_sessionInfo->m_commandLine = ui->commandLine_edit->toPlainText()
+        .split(QRegExp("\n|\r\n|\r"), QString::SkipEmptyParts);
+
+    m_sessionInfo->m_coreProtocolSpecPath = ui->coreProtocolLocation_edit->text();
+
+    m_sessionInfo->m_protocolExtensionSpecPaths = ui->protocolExtensions_edit->toPlainText()
+        .split(QRegExp("\n|\r\n|\r"), QString::SkipEmptyParts);
+
+    return m_sessionInfo;
+}
+
+void EditSessionDialog::setSessionInfo(EditSessionDialog::session_ptr session)
+{
+    if(!session || session == m_sessionInfo)
+        return;
+
+    m_sessionInfo = session;
+    ui->sessionName_edit->setText(m_sessionInfo->m_sessionName);
+    ui->binaryLocation_edit->setText(m_sessionInfo->m_binaryPath);
+
+    ui->commandLine_edit->setPlainText("");
+    for(auto s: m_sessionInfo->m_commandLine)
+        ui->commandLine_edit->appendPlainText(s);
+
+    ui->coreProtocolLocation_edit->setText(m_sessionInfo->m_coreProtocolSpecPath);
+
+    ui->protocolExtensions_edit->setPlainText("");
+    for(auto s: m_sessionInfo->m_protocolExtensionSpecPaths)
+        ui->protocolExtensions_edit->appendPlainText(s);
+}
+
 void EditSessionDialog::browseSocketPathSlot()
 {
     QStringList ret = selectFilePath(tr("Select Socket Location"),
@@ -48,6 +85,11 @@ void EditSessionDialog::browseSocketPathSlot()
         qDebug() << "selected socket:" << ret[0];
         ui->socketpath_edit->setText(ret[0]);
     }
+
+    QPalette palette = ui->socketpath_edit->palette();
+    palette.setColor(QPalette::Active, QPalette::Text, Qt::red);
+    palette.setColor(QPalette::Active, QPalette::Base, QColor("#FFFFD5"));
+    ui->socketpath_edit->setPalette(palette);
 }
 
 void EditSessionDialog::browseBinaryLocationSlot()

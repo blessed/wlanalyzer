@@ -6,6 +6,7 @@ namespace {
     const QString KEY_SOCKET_PATH("session/socket/path");
     const QString KEY_BINARY_PATH("session/binary/path");
     const QString KEY_BINARY_COMMAND_LINE("session/binary/command_line");
+    const QString KEY_BINARY_ENVIRONMENT("session/binary/environment");
     const QString KEY_CORE_SPEC_PATH("session/protocol/core_spec_path");
     const QString KEY_EXTENSION_SPEC_PATHS("session/protocol/extension_spec_paths");
 };
@@ -24,6 +25,7 @@ void Info::Save(QSettings& settings)
     settings.setValue(KEY_SOCKET_PATH, m_socketPath);
     settings.setValue(KEY_BINARY_PATH, m_binaryPath);
     settings.setValue(KEY_BINARY_COMMAND_LINE, m_commandLine);
+    settings.setValue(KEY_BINARY_ENVIRONMENT, m_environmentVars);
     settings.setValue(KEY_CORE_SPEC_PATH, m_coreProtocolSpecPath);
     settings.setValue(KEY_EXTENSION_SPEC_PATHS, m_protocolExtensionSpecPaths);
 }
@@ -35,6 +37,7 @@ Info::ptr_t Info::FromSettings(QSettings& settings)
     ret->m_socketPath = settings.value(KEY_SOCKET_PATH).toString();
     ret->m_binaryPath = settings.value(KEY_BINARY_PATH).toString();
     ret->m_commandLine = settings.value(KEY_BINARY_COMMAND_LINE).toStringList();
+    ret->m_environmentVars = settings.value(KEY_BINARY_ENVIRONMENT).toStringList();
     ret->m_coreProtocolSpecPath = settings.value(KEY_CORE_SPEC_PATH).toString();
     ret->m_protocolExtensionSpecPaths = settings.value(KEY_EXTENSION_SPEC_PATHS).toStringList();
 

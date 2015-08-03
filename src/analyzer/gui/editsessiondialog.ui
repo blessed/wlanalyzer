@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>700</width>
-    <height>520</height>
+    <height>607</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -144,6 +144,26 @@
       </item>
       <item row="2" column="1">
        <widget class="QPlainTextEdit" name="commandLine_edit">
+        <property name="tabChangesFocus">
+         <bool>true</bool>
+        </property>
+        <property name="plainText">
+         <string notr="true"/>
+        </property>
+       </widget>
+      </item>
+      <item row="3" column="0">
+       <widget class="QLabel" name="label_7">
+        <property name="text">
+         <string>Environment:</string>
+        </property>
+        <property name="buddy">
+         <cstring>environmentVars_edit</cstring>
+        </property>
+       </widget>
+      </item>
+      <item row="3" column="1">
+       <widget class="QPlainTextEdit" name="environmentVars_edit">
         <property name="tabChangesFocus">
          <bool>true</bool>
         </property>
@@ -338,6 +358,7 @@
   <tabstop>binaryLocation_edit</tabstop>
   <tabstop>binaryLocation_browse_button</tabstop>
   <tabstop>commandLine_edit</tabstop>
+  <tabstop>environmentVars_edit</tabstop>
   <tabstop>coreProtocolLocation_edit</tabstop>
   <tabstop>coreProtocol_browse_button</tabstop>
   <tabstop>protocolExtensions_edit</tabstop>
@@ -355,7 +376,7 @@
    <hints>
     <hint type="sourcelabel">
      <x>598</x>
-     <y>509</y>
+     <y>596</y>
     </hint>
     <hint type="destinationlabel">
      <x>390</x>
@@ -371,7 +392,7 @@
    <hints>
     <hint type="sourcelabel">
      <x>689</x>
-     <y>509</y>
+     <y>596</y>
     </hint>
     <hint type="destinationlabel">
      <x>367</x>
@@ -418,8 +439,8 @@
    <slot>browseCoreProtocolSlot()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>643</x>
-     <y>327</y>
+     <x>680</x>
+     <y>426</y>
     </hint>
     <hint type="destinationlabel">
      <x>465</x>
@@ -434,8 +455,8 @@
    <slot>browseExtensionsSlot()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>619</x>
-     <y>444</y>
+     <x>679</x>
+     <y>549</y>
     </hint>
     <hint type="destinationlabel">
      <x>409</x>

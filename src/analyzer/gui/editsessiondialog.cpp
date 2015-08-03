@@ -6,6 +6,21 @@
 #include "ui_editsessiondialog.h"
 #include "gui/editsessiondialog.moc"
 
+namespace {
+    QStringList linesFromTextEdit(const QPlainTextEdit* edit)
+    {
+        static QRegExp reg("\n|\r\n|\r");
+        return edit->toPlainText().split(reg, QString::SkipEmptyParts);
+    }
+
+    void setLinesToTextEdit(QStringList& lines, QPlainTextEdit* edit)
+    {
+        edit->setPlainText("");
+        for(auto s: lines)
+            edit->appendPlainText(s);
+    }
+};
+
 EditSessionDialog::EditSessionDialog(QWidget *parent) :
     QDialog(parent),
     ui(new Ui::EditSessionDialog)
@@ -53,13 +68,10 @@ EditSessionDialog::session_ptr EditSessionDialog::getSessionInfo()
     m_sessionInfo->m_sessionName = ui->sessionName_edit->text();
     m_sessionInfo->m_binaryPath = ui->binaryLocation_edit->text();
 
-    m_sessionInfo->m_commandLine = ui->commandLine_edit->toPlainText()
-        .split(QRegExp("\n|\r\n|\r"), QString::SkipEmptyParts);
-
+    m_sessionInfo->m_commandLine = linesFromTextEdit(ui->commandLine_edit);
+    m_sessionInfo->m_environmentVars = linesFromTextEdit(ui->environmentVars_edit);
     m_sessionInfo->m_coreProtocolSpecPath = ui->coreProtocolLocation_edit->text();
-
-    m_sessionInfo->m_protocolExtensionSpecPaths = ui->protocolExtensions_edit->toPlainText()
-        .split(QRegExp("\n|\r\n|\r"), QString::SkipEmptyParts);
+    m_sessionInfo->m_protocolExtensionSpecPaths = linesFromTextEdit(ui->protocolExtensions_edit);
 
     return m_sessionInfo;
 }
@@ -73,15 +85,12 @@ void EditSessionDialog::setSessionInfo(EditSessionDialog::session_ptr session)
     ui->sessionName_edit->setText(m_sessionInfo->m_sessionName);
     ui->binaryLocation_edit->setText(m_sessionInfo->m_binaryPath);
 
-    ui->commandLine_edit->setPlainText("");
-    for(auto s: m_sessionInfo->m_commandLine)
-        ui->commandLine_edit->appendPlainText(s);
+    setLinesToTextEdit(m_sessionInfo->m_commandLine, ui->commandLine_edit);
+    setLinesToTextEdit(m_sessionInfo->m_environmentVars, ui->environmentVars_edit);
 
     ui->coreProtocolLocation_edit->setText(m_sessionInfo->m_coreProtocolSpecPath);
 
-    ui->protocolExtensions_edit->setPlainText("");
-    for(auto s: m_sessionInfo->m_protocolExtensionSpecPaths)
-        ui->protocolExtensions_edit->appendPlainText(s);
+    setLinesToTextEdit(m_sessionInfo->m_protocolExtensionSpecPaths, ui->protocolExtensions_edit);
 }
 
 void EditSessionDialog::browseSocketPathSlot()

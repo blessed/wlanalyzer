@@ -22,6 +22,7 @@ public:
     QString m_socketPath;
     QString m_binaryPath;
     QStringList m_commandLine;
+    QStringList m_environmentVars;
     QString m_coreProtocolSpecPath;
     QStringList m_protocolExtensionSpecPaths;
 };

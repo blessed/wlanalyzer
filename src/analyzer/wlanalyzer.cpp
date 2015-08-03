@@ -27,7 +27,6 @@
 #include <string.h>
 #include <QApplication>
 #include "gui/mainwindow.h"
-#include "gui/mainwindow.moc"
 #include "wlanalyzer_base/common.h"
 #include "wlanalyzer_base/analyzer.h"
 #include <ev++.h>
@@ -140,6 +139,11 @@ int main(int argc, char **argv)
     ev::default_loop loop;
 
 	QApplication app(argc, argv);
+    // bootstrap for default QSettings objects
+    app.setOrganizationDomain("wlanalyzer.org");
+    app.setOrganizationName("WlAnalyzer");
+    app.setApplicationName("WlAnalyzerGUI");
+
 	MainWindow window;
 	window.show();
 	return app.exec();

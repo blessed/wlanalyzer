@@ -11,7 +11,7 @@
    </rect>
   </property>
   <property name="windowTitle">
-   <string>MainWindow</string>
+   <string>Wlanalyzer</string>
   </property>
   <widget class="QWidget" name="centralwidget">
    <layout class="QVBoxLayout" name="verticalLayout">
@@ -296,15 +296,6 @@
      <height>22</height>
     </rect>
    </property>
-   <widget class="QMenu" name="menuFile">
-    <property name="title">
-     <string>&amp;File</string>
-    </property>
-    <addaction name="actionOpen"/>
-    <addaction name="actionConnect"/>
-    <addaction name="separator"/>
-    <addaction name="actionQuit"/>
-   </widget>
    <widget class="QMenu" name="menuAbout">
     <property name="contextMenuPolicy">
      <enum>Qt::NoContextMenu</enum>
@@ -324,6 +315,28 @@
      </property>
     </widget>
     <addaction name="menu_Logs"/>
+   </widget>
+   <widget class="QMenu" name="menuFile">
+    <property name="title">
+     <string>&amp;File</string>
+    </property>
+    <widget class="QMenu" name="menu_Open">
+     <property name="title">
+      <string>&amp;Open</string>
+     </property>
+     <addaction name="action_OpenSession"/>
+     <addaction name="action_OpenDumpFile"/>
+    </widget>
+    <widget class="QMenu" name="menu_RecentSessions">
+     <property name="title">
+      <string>&amp;Recent Sessions</string>
+     </property>
+    </widget>
+    <addaction name="menu_Open"/>
+    <addaction name="actionConnect"/>
+    <addaction name="separator"/>
+    <addaction name="menu_RecentSessions"/>
+    <addaction name="actionQuit"/>
    </widget>
    <addaction name="menuFile"/>
    <addaction name="menu_View"/>
@@ -350,15 +363,14 @@
     <string>&amp;About</string>
    </property>
   </action>
-  <action name="actionOpen">
+  <action name="action_OpenSession">
    <property name="text">
-    <string>&amp;Open</string>
+    <string>&amp;Capture</string>
    </property>
-   <property name="toolTip">
-    <string>Open file with acquired traffic</string>
-   </property>
-   <property name="shortcut">
-    <string>Ctrl+O</string>
+  </action>
+  <action name="action_OpenDumpFile">
+   <property name="text">
+    <string>&amp;Dump File</string>
    </property>
   </action>
  </widget>
@@ -421,10 +433,10 @@
    </hints>
   </connection>
   <connection>
-   <sender>actionOpen</sender>
+   <sender>action_OpenDumpFile</sender>
    <signal>triggered()</signal>
    <receiver>MainWindow</receiver>
-   <slot>openSlot()</slot>
+   <slot>openDumpFileSlot()</slot>
   </connection>
   <connection>
    <sender>actionDockPacketListPinLeft</sender>
@@ -498,14 +510,23 @@
    <receiver>MainWindow</receiver>
    <slot>pinDockToBottomSlot()</slot>
   </connection>
+  <connection>
+   <sender>action_OpenSession</sender>
+   <signal>triggered()</signal>
+   <receiver>MainWindow</receiver>
+   <slot>createSessionSlot()</slot>
+  </connection>
  </connections>
  <slots>
   <slot>aboutSlot()</slot>
   <slot>connectSlot()</slot>
-  <slot>openSlot()</slot>
+  <slot>openDumpFileSlot()</slot>
   <slot>pinDockToLeftSlot()</slot>
   <slot>pinDockToRightSlot()</slot>
   <slot>pinDockToTopSlot()</slot>
   <slot>pinDockToBottomSlot()</slot>
+  <slot>clearRecentSlot()</slot>
+  <slot>createSessionSlot()</slot>
+  <slot>startRecentSessionSlot()</slot>
  </slots>
 </ui>

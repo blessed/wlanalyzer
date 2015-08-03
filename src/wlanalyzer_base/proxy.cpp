@@ -122,7 +122,7 @@ void WlaProxyServer::connectClient(ev::io &watcher, int revents)
     WlaClientSocket client;
     client.setFd(fd);
 
-    WlaConnection *connection = new WlaConnection(this);
+    WlaConnection *connection = new WlaConnection();
     if (!connection)
     {
         DEBUG_LOG("Failed to create connection between client and compositor");
@@ -130,7 +130,6 @@ void WlaProxyServer::connectClient(ev::io &watcher, int revents)
         return;
     }
     connection->initializeConnection(client, wayland);
-    connection->setSink(sink_);
 
     _connections.insert(connection);
 
@@ -141,11 +140,6 @@ void WlaProxyServer::connectClient(ev::io &watcher, int revents)
 
 void WlaProxyServer::setSink(const shared_ptr<RawMessageSink> &sink)
 {
-    sink_ = sink;
-    std::set<WlaConnection *>::iterator it;
-    for (it = _connections.begin(); it != _connections.end(); ++it) {
-        (*it)->setSink(sink);
-    }
 }
 
 void WlaProxyServer::registerListener(shared_ptr<WlaIConnectionListener> &listener)

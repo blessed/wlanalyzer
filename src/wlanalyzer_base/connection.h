@@ -38,6 +38,28 @@ namespace WlAnalyzer {
 class WlaProxyServer;
 class WlaConnection;
 
+struct WlaMessageBuffer
+{
+    WlaMessageBuffer()
+    {
+        is_request = true;
+        msg_len = 0;
+        cmsg_len = 0;
+        timestamp.tv_sec = 0;
+        timestamp.tv_usec = 0;
+    }
+
+    static const int MAX_BUF_SIZE = 4096;
+    static const int MAX_FDS = 28;
+
+    bool is_request;
+    timeval timestamp;
+    char msg[MAX_BUF_SIZE];
+    uint16_t msg_len;
+    char cmsg[CMSG_LEN(MAX_FDS * sizeof(int))];
+    uint16_t cmsg_len;
+};
+
 /**
  * @brief The WlaLink class
  *
@@ -50,26 +72,6 @@ class WlaConnection;
  */
 class WlaLink
 {
-    struct WlaMessageBuffer
-    {
-        WlaMessageBuffer()
-        {
-            msg_len = 0;
-            cmsg_len = 0;
-            timestamp.tv_sec = 0;
-            timestamp.tv_usec = 0;
-        }
-
-        static const int MAX_BUF_SIZE = 4096;
-        static const int MAX_FDS = 28;
-
-        timeval timestamp;
-        char msg[MAX_BUF_SIZE];
-        uint16_t msg_len;
-        char cmsg[CMSG_LEN(MAX_FDS * sizeof(int))];
-        uint16_t cmsg_len;
-    };
-
 public:
     enum LinkType {
         /** Link creates request messages */
@@ -80,14 +82,26 @@ public:
 
     /**
      * @brief Constructor
+     * @param parent The connection that this link should belong to
      * @param src The source socket of this link
      * @param link The endpoint of the link
      * @param dir Type of messages this link transmits
      */
-    WlaLink(const WlaClientSocket &src, const WlaClientSocket &link, LinkType type);
+    WlaLink(WlaConnection *parent, const WlaClientSocket &src,
+            const WlaClientSocket &link, LinkType type);
     virtual ~WlaLink();
 
-    void setSink(const shared_ptr<RawMessageSink> &sink);
+    LinkType getLinkType() const { return _linkType; }
+
+    WlaMessageBuffer *getLatestMessage() const
+    {
+        if (_messages.empty())
+            return nullptr;
+
+        return _messages.top();
+    }
+
+//    void setSink(const shared_ptr<RawMessageSink> &sink);
     void start();
     void stop();
 
@@ -99,8 +113,9 @@ private:
 
     WlaClientSocket _sourcepoint;
     WlaClientSocket _endpoint;
+    LinkType _linkType;
     std::stack<WlaMessageBuffer *> _messages;
-    WaylandRawSource _msgsource;
+    WlaConnection *_parent;
 };
 
 /**
@@ -114,7 +129,7 @@ private:
 class WlaConnection
 {
 public:
-    WlaConnection(WlaProxyServer *parent);
+    WlaConnection();
     ~WlaConnection();
 
     /**
@@ -122,18 +137,28 @@ public:
      * @param client
      * @param server
      *
-     * Creates a connection from two sockets.
+     * Creates a connection between two sockets.
      */
     void initializeConnection(WlaClientSocket client, WlaClientSocket server);
     void closeConnection();
 
     /**
-     * @brief setSink
-     * @param sink
+     * @brief notifyOfNewMessage
+     * @param msgBuffer
+     * @param is_request
      *
-     * Attaches this connection to a message pipeline.
+     * Notifies the connection of a new message on a WlaLink
      */
-    void setSink(const shared_ptr<RawMessageSink> &sink);
+    void notifyOfNewMessage(const WlaLink *link);
+
+    /**
+     * @brief setWaylandSource
+     * @param waylandSource
+     *
+     * Sets a WaylandRawSource that will get notified everytime there is
+     * a new protocol message, be it a request or an event.
+     */
+    void setWaylandSource(WaylandRawSource *source);
 
 private:
     WlaLink *_client_link;
@@ -141,9 +166,7 @@ private:
 
     bool running;
 
-    WlaProxyServer *parent;
-
-    shared_ptr<RawMessageSink> sink_;
+    WaylandRawSource *m_waylandSource;
 
 //    WlaMessageParser _model;
 };

@@ -36,24 +36,24 @@ using namespace std;
 
 namespace WlAnalyzer {
 
-WlaConnection::WlaConnection(WlaProxyServer *parent)
+WlaConnection::WlaConnection()
 {
     _comp_link = nullptr;
     _client_link = nullptr;
     running = false;
-    this->parent = parent;
+    m_waylandSource = nullptr;
 }
 
 WlaConnection::~WlaConnection()
 {
     closeConnection();
-    parent->closeConnection(this);
+//    parent->closeConnection(this);
 }
 
 void WlaConnection::initializeConnection(WlaClientSocket cli, WlaClientSocket server)
 {
-    _client_link = new WlaLink(cli, server, WlaLink::REQUEST_LINK);
-    _comp_link = new WlaLink(server, cli, WlaLink::EVENT_LINK);
+    _client_link = new WlaLink(this, cli, server, WlaLink::REQUEST_LINK);
+    _comp_link = new WlaLink(this, server, cli, WlaLink::EVENT_LINK);
     _client_link->start();
     _comp_link->start();
 
@@ -61,11 +61,11 @@ void WlaConnection::initializeConnection(WlaClientSocket cli, WlaClientSocket se
               server.getFd());
 }
 
-void WlaConnection::setSink(const shared_ptr<RawMessageSink> &sink)
+void WlaConnection::setWaylandSource(WaylandRawSource *source)
 {
-    sink_ = sink;
-    _client_link->setSink(sink);
-    _comp_link->setSink(sink);
+    m_waylandSource = source;
+//    _client_link->setSink(sink);
+//    _comp_link->setSink(sink);
 }
 
 void WlaConnection::closeConnection()
@@ -81,8 +81,17 @@ void WlaConnection::closeConnection()
     running = false;
 }
 
-WlaLink::WlaLink(const WlaClientSocket &src, const WlaClientSocket &link, LinkType type) : _sourcepoint(src),
-    _endpoint(link), _msgsource(type == REQUEST_LINK)
+void WlaConnection::notifyOfNewMessage(const WlaLink *link)
+{
+    if (!link || !m_waylandSource)
+        return;
+
+    WlaMessageBuffer *msg = link->getLatestMessage();
+    m_waylandSource->processBuffer(msg->is_request, msg->timestamp.tv_sec, msg->timestamp.tv_usec, msg->msg, msg->msg_len);
+}
+
+WlaLink::WlaLink(WlaConnection *parent, const WlaClientSocket &src, const WlaClientSocket &link, LinkType type) : _sourcepoint(src),
+    _endpoint(link), _linkType(type), _parent(parent)
 {
     _sourcepoint.set<WlaLink, &WlaLink::receiveEvent>(this);
     _endpoint.set<WlaLink, &WlaLink::transmitEvent>(this);
@@ -90,11 +99,6 @@ WlaLink::WlaLink(const WlaClientSocket &src, const WlaClientSocket &link, LinkTy
 
 WlaLink::~WlaLink()
 {
-}
-
-void WlaLink::setSink(const shared_ptr<RawMessageSink> &sink)
-{
-    _msgsource.setSink(sink);
 }
 
 void WlaLink::start()
@@ -117,11 +121,10 @@ void WlaLink::receiveEvent(ev::io &watcher, int revents)
         return;
     }
 
-    _msgsource.processBuffer(msg->timestamp.tv_sec, msg->timestamp.tv_usec, msg->msg, msg->msg_len);
-
     _messages.push(msg);
     _endpoint.stop();
     _endpoint.start(EV_READ | EV_WRITE);
+    _parent->notifyOfNewMessage(this);
 }
 
 void WlaLink::transmitEvent(ev::io &watcher, int revents)
@@ -137,7 +140,7 @@ void WlaLink::transmitEvent(ev::io &watcher, int revents)
     _endpoint.start(EV_READ);
 }
 
-WlaLink::WlaMessageBuffer *WlaLink::receiveMessage()
+WlaMessageBuffer *WlaLink::receiveMessage()
 {
     WlaMessageBuffer *buffer = new WlaMessageBuffer;
     if (!buffer) {
@@ -156,6 +159,7 @@ WlaLink::WlaMessageBuffer *WlaLink::receiveMessage()
     msg.msg_iovlen = 1;
     msg.msg_control = buffer->cmsg;
     msg.msg_controllen = CMSG_LEN(WlaMessageBuffer::MAX_FDS * sizeof(int));
+    buffer->is_request = _linkType == REQUEST_LINK ? true : false;
 
     int len = _sourcepoint.readMsg(&msg);
     if (len < 0) {
@@ -175,7 +179,7 @@ WlaLink::WlaMessageBuffer *WlaLink::receiveMessage()
     return buffer;
 }
 
-bool WlaLink::sendMessage(WlaLink::WlaMessageBuffer *msg)
+bool WlaLink::sendMessage(WlaMessageBuffer *msg)
 {
     iovec iov;
     iov.iov_base = msg->msg;

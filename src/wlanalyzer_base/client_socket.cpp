@@ -75,8 +75,9 @@ SocketError WlaClientSocket::connectTo(const std::string &path)
         return err;
     }
 
-    Logger::getInstance()->log("Connected to %s\n", path.c_str());
+    DEBUG_LOG("Connected to %s", path.c_str());
     _connected = true;
+    _connectionUrl = path;
 
     return NoError;
 }

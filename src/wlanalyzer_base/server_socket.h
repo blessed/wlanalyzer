@@ -76,7 +76,7 @@ class WlaNetServerSocket : public WlaServerSocket
 {
 protected:
     bool bind(const std::string &resource);
-    void onNewConnection();
+    void onNewConnection() override;
 };
 
 } // WlAnalyzer

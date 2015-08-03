@@ -73,6 +73,7 @@ public:
     int getFd() const { return _fd; }
 
     bool operator==(int fd) { return _fd == fd; }
+    bool operator==(const ev::io &watcher) { return _fd == watcher.fd; }
     friend bool operator==(int fd, const WlaSocketBase &socket);
 
 protected:

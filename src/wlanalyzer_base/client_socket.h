@@ -19,6 +19,7 @@ public:
 
     SocketError connectTo(const char *path);
     SocketError connectTo(const std::string &path);
+    std::string getConnectionUrl() const { return _connectionUrl; }
     SocketError disconnect();
 
     bool isConnected() const { return _connected; }
@@ -34,6 +35,7 @@ protected:
 
 private:
     bool _connected;
+    std::string _connectionUrl;
 };
 
 class WlaNetClientSocket : public WlaClientSocket

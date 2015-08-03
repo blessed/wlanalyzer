@@ -17,15 +17,14 @@ public:
 
     static void setSequence(const uint32_t &sequence) {sequence_ = sequence;}
 
-    explicit WaylandRawSource(bool request_source) :
-        creates_requests_(request_source), message_complete_(true) {}
+    explicit WaylandRawSource() : message_complete_(true) {}
 
-    void processBuffer(uint64_t ts_seconds, uint32_t ts_useconds, const char *buffer, size_t size);
+    void processBuffer(bool is_request, uint64_t ts_seconds, uint32_t ts_useconds, const char *buffer, size_t size);
 
 private:
     static uint32_t sequence_;
-    bool creates_requests_;
     bool message_complete_;
+    bool message_is_request_;
     size_t message_index_;
     size_t message_length_;
     size_t message_sequence_;

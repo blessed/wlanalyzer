@@ -38,6 +38,7 @@
 #include "../wlanalyzer_base/logger.h"
 #include "../wlanalyzer_base/xml/protocol_parser.h"
 
+#include "../wlanalyzer_base/proxy_source.h"
 #include "../wlanalyzer_base/dummy_sink.h"
 #include "../wlanalyzer_base/raw_composite_sink.h"
 #include "../wlanalyzer_base/raw_fd_sink.h"
@@ -210,17 +211,13 @@ int main(int argc, char *argv[])
     }
 
     verify_runtime();
-    WlaProxyServer proxy;
-    proxy.init(WLA_SOCKETNAME);
-    // set sink
-    shared_ptr<RawCompositeSink> composite(new RawCompositeSink());
-    proxy.setSink(composite);
-    shared_ptr<RawMessageSink> dummysink(new DummySink());
-    composite->AddSink(dummysink);
+
+    WlaProxySource proxySource;
+    proxySource.initialize(WLA_SOCKETNAME);
+    shared_ptr<RawCompositeSink> composite(new RawCompositeSink);
+    proxySource.setSink(composite);
     shared_ptr<RawMessageSink> file1sink(new RawFdSink(open("file1.wldump", O_WRONLY | O_CREAT | O_TRUNC, S_IRUSR | S_IWUSR)));
     composite->AddSink(file1sink);
-    shared_ptr<RawMessageSink> parserSink(new RawMessageParser());
-    composite->AddSink(parserSink);
 
     if (options.coreProtocol.size())
     {
@@ -256,7 +253,7 @@ int main(int argc, char *argv[])
         }
     }
 
-    proxy.startServer();
+    proxySource.start();
 
     kill(ppid, SIGTERM);
 

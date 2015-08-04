@@ -164,6 +164,12 @@
       </item>
       <item row="3" column="1">
        <widget class="QPlainTextEdit" name="environmentVars_edit">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
         <property name="tabChangesFocus">
          <bool>true</bool>
         </property>
@@ -231,52 +237,81 @@
          <string>Extension specs:</string>
         </property>
         <property name="buddy">
-         <cstring>protocolExtensions_edit</cstring>
+         <cstring>protocolExtensions_listView</cstring>
         </property>
        </widget>
       </item>
       <item row="1" column="1">
        <layout class="QVBoxLayout" name="verticalLayout_4">
         <item>
-         <widget class="QPlainTextEdit" name="protocolExtensions_edit">
-          <property name="tabChangesFocus">
-           <bool>true</bool>
-          </property>
-          <property name="plainText">
-           <string notr="true"/>
-          </property>
-          <property name="textInteractionFlags">
-           <set>Qt::TextEditorInteraction</set>
-          </property>
-         </widget>
-        </item>
-        <item>
          <layout class="QHBoxLayout" name="horizontalLayout_8">
           <item>
-           <spacer name="horizontalSpacer_2">
-            <property name="orientation">
-             <enum>Qt::Horizontal</enum>
+           <widget class="QListView" name="protocolExtensions_listView">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
             </property>
-            <property name="sizeHint" stdset="0">
+            <property name="minimumSize">
              <size>
-              <width>40</width>
-              <height>20</height>
+              <width>0</width>
+              <height>120</height>
              </size>
             </property>
-           </spacer>
+           </widget>
           </item>
           <item>
-           <widget class="QPushButton" name="protocolExtensions_browse_button">
-            <property name="focusPolicy">
-             <enum>Qt::TabFocus</enum>
+           <layout class="QVBoxLayout" name="verticalLayout">
+            <property name="spacing">
+             <number>4</number>
             </property>
-            <property name="text">
-             <string>Browse...</string>
-            </property>
-            <property name="autoDefault">
-             <bool>true</bool>
-            </property>
-           </widget>
+            <item>
+             <widget class="QToolButton" name="protocolExtensionsAdd_button">
+              <property name="focusPolicy">
+               <enum>Qt::TabFocus</enum>
+              </property>
+              <property name="toolTip">
+               <string>Add items</string>
+              </property>
+              <property name="text">
+               <string>Add</string>
+              </property>
+              <property name="icon">
+               <iconset theme="list-add"/>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QToolButton" name="protocolExtensionsRemove_button">
+              <property name="focusPolicy">
+               <enum>Qt::TabFocus</enum>
+              </property>
+              <property name="toolTip">
+               <string>Remove items</string>
+              </property>
+              <property name="text">
+               <string>Remove</string>
+              </property>
+              <property name="icon">
+               <iconset theme="list-remove"/>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <spacer name="verticalSpacer">
+              <property name="orientation">
+               <enum>Qt::Vertical</enum>
+              </property>
+              <property name="sizeHint" stdset="0">
+               <size>
+                <width>20</width>
+                <height>40</height>
+               </size>
+              </property>
+             </spacer>
+            </item>
+           </layout>
           </item>
          </layout>
         </item>
@@ -361,8 +396,9 @@
   <tabstop>environmentVars_edit</tabstop>
   <tabstop>coreProtocolLocation_edit</tabstop>
   <tabstop>coreProtocol_browse_button</tabstop>
-  <tabstop>protocolExtensions_edit</tabstop>
-  <tabstop>protocolExtensions_browse_button</tabstop>
+  <tabstop>protocolExtensions_listView</tabstop>
+  <tabstop>protocolExtensionsAdd_button</tabstop>
+  <tabstop>protocolExtensionsRemove_button</tabstop>
   <tabstop>abort_button</tabstop>
   <tabstop>start_button</tabstop>
  </tabstops>
@@ -440,7 +476,7 @@
    <hints>
     <hint type="sourcelabel">
      <x>680</x>
-     <y>426</y>
+     <y>459</y>
     </hint>
     <hint type="destinationlabel">
      <x>465</x>
@@ -449,18 +485,34 @@
    </hints>
   </connection>
   <connection>
-   <sender>protocolExtensions_browse_button</sender>
+   <sender>protocolExtensionsAdd_button</sender>
    <signal>clicked()</signal>
    <receiver>EditSessionDialog</receiver>
-   <slot>browseExtensionsSlot()</slot>
+   <slot>addExtensionsSlot()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>679</x>
-     <y>549</y>
+     <x>663</x>
+     <y>488</y>
     </hint>
     <hint type="destinationlabel">
      <x>409</x>
      <y>484</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>protocolExtensionsRemove_button</sender>
+   <signal>clicked()</signal>
+   <receiver>EditSessionDialog</receiver>
+   <slot>removeExtensionsSlot()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>663</x>
+     <y>529</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>349</x>
+     <y>303</y>
     </hint>
    </hints>
   </connection>
@@ -469,6 +521,7 @@
   <slot>browseSocketPathSlot()</slot>
   <slot>browseBinaryLocationSlot()</slot>
   <slot>browseCoreProtocolSlot()</slot>
-  <slot>browseExtensionsSlot()</slot>
+  <slot>addExtensionsSlot()</slot>
+  <slot>removeExtensionsSlot()</slot>
  </slots>
 </ui>

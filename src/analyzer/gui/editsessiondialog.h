@@ -8,6 +8,8 @@ namespace Ui {
 class EditSessionDialog;
 }
 
+class QStringListModel;
+
 class EditSessionDialog : public QDialog
 {
     Q_OBJECT
@@ -24,11 +26,13 @@ public slots:
     void browseSocketPathSlot();
     void browseBinaryLocationSlot();
     void browseCoreProtocolSlot();
-    void browseExtensionsSlot();
+    void addExtensionsSlot();
+    void removeExtensionsSlot();
 
 private:
     Ui::EditSessionDialog *ui;
     session_ptr m_sessionInfo;
+    QStringListModel *m_extensions;
 };
 
 #endif // EDITSESSIONDIALOG_H

@@ -116,6 +116,7 @@ void MainWindow::startRecentSessionSlot()
 		qDebug("session info:");
         // TODO REORDER recent sessions addRecentSession(info);
         //TODO start the session here
+        //TODO update items edited tafter selection with recents
 	}
 }
 

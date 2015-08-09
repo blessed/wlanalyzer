@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>700</width>
-    <height>520</height>
+    <height>607</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -37,9 +37,23 @@
        </widget>
       </item>
       <item row="0" column="1">
-       <widget class="QLineEdit" name="sessionName_edit">
+       <widget class="ValidatedLineEdit" name="sessionName_edit">
         <property name="placeholderText">
          <string>Capture session name</string>
+        </property>
+        <property name="errorColor" stdset="0">
+         <color>
+          <red>255</red>
+          <green>0</green>
+          <blue>0</blue>
+         </color>
+        </property>
+        <property name="errorBgColor" stdset="0">
+         <color>
+          <red>255</red>
+          <green>255</green>
+          <blue>156</blue>
+         </color>
         </property>
        </widget>
       </item>
@@ -56,12 +70,26 @@
       <item row="1" column="1">
        <layout class="QHBoxLayout" name="horizontalLayout_9">
         <item>
-         <widget class="QLineEdit" name="socketpath_edit">
+         <widget class="ValidatedLineEdit" name="socketpath_edit">
           <property name="text">
            <string notr="true">/run/user/1000/wayland-0</string>
           </property>
           <property name="placeholderText">
            <string notr="true"/>
+          </property>
+          <property name="errorColor" stdset="0">
+           <color>
+            <red>255</red>
+            <green>0</green>
+            <blue>0</blue>
+           </color>
+          </property>
+          <property name="errorBgColor" stdset="0">
+           <color>
+            <red>255</red>
+            <green>255</green>
+            <blue>156</blue>
+           </color>
           </property>
          </widget>
         </item>
@@ -108,12 +136,26 @@
       <item row="1" column="1">
        <layout class="QHBoxLayout" name="horizontalLayout_3">
         <item>
-         <widget class="QLineEdit" name="binaryLocation_edit">
+         <widget class="ValidatedLineEdit" name="binaryLocation_edit">
           <property name="text">
            <string notr="true"/>
           </property>
           <property name="placeholderText">
            <string notr="true"/>
+          </property>
+          <property name="errorColor" stdset="0">
+           <color>
+            <red>255</red>
+            <green>0</green>
+            <blue>0</blue>
+           </color>
+          </property>
+          <property name="errorBgColor" stdset="0">
+           <color>
+            <red>255</red>
+            <green>255</green>
+            <blue>156</blue>
+           </color>
           </property>
          </widget>
         </item>
@@ -152,6 +194,32 @@
         </property>
        </widget>
       </item>
+      <item row="3" column="0">
+       <widget class="QLabel" name="label_7">
+        <property name="text">
+         <string>Environment:</string>
+        </property>
+        <property name="buddy">
+         <cstring>environmentVars_edit</cstring>
+        </property>
+       </widget>
+      </item>
+      <item row="3" column="1">
+       <widget class="QPlainTextEdit" name="environmentVars_edit">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+        <property name="tabChangesFocus">
+         <bool>true</bool>
+        </property>
+        <property name="plainText">
+         <string notr="true"/>
+        </property>
+       </widget>
+      </item>
      </layout>
     </widget>
    </item>
@@ -181,12 +249,26 @@
       <item row="0" column="1">
        <layout class="QHBoxLayout" name="horizontalLayout_6">
         <item>
-         <widget class="QLineEdit" name="coreProtocolLocation_edit">
+         <widget class="ValidatedLineEdit" name="coreProtocolLocation_edit">
           <property name="text">
            <string notr="true"/>
           </property>
           <property name="placeholderText">
            <string notr="true"/>
+          </property>
+          <property name="errorColor" stdset="0">
+           <color>
+            <red>255</red>
+            <green>0</green>
+            <blue>0</blue>
+           </color>
+          </property>
+          <property name="errorBgColor" stdset="0">
+           <color>
+            <red>255</red>
+            <green>255</green>
+            <blue>156</blue>
+           </color>
           </property>
          </widget>
         </item>
@@ -211,52 +293,84 @@
          <string>Extension specs:</string>
         </property>
         <property name="buddy">
-         <cstring>protocolExtensions_edit</cstring>
+         <cstring>protocolExtensions_listView</cstring>
         </property>
        </widget>
       </item>
       <item row="1" column="1">
        <layout class="QVBoxLayout" name="verticalLayout_4">
         <item>
-         <widget class="QPlainTextEdit" name="protocolExtensions_edit">
-          <property name="tabChangesFocus">
-           <bool>true</bool>
-          </property>
-          <property name="plainText">
-           <string notr="true"/>
-          </property>
-          <property name="textInteractionFlags">
-           <set>Qt::TextEditorInteraction</set>
-          </property>
-         </widget>
-        </item>
-        <item>
          <layout class="QHBoxLayout" name="horizontalLayout_8">
           <item>
-           <spacer name="horizontalSpacer_2">
-            <property name="orientation">
-             <enum>Qt::Horizontal</enum>
+           <widget class="QListView" name="protocolExtensions_listView">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
             </property>
-            <property name="sizeHint" stdset="0">
+            <property name="minimumSize">
              <size>
-              <width>40</width>
-              <height>20</height>
+              <width>0</width>
+              <height>120</height>
              </size>
             </property>
-           </spacer>
-          </item>
-          <item>
-           <widget class="QPushButton" name="protocolExtensions_browse_button">
-            <property name="focusPolicy">
-             <enum>Qt::TabFocus</enum>
-            </property>
-            <property name="text">
-             <string>Browse...</string>
-            </property>
-            <property name="autoDefault">
-             <bool>true</bool>
+            <property name="selectionMode">
+             <enum>QAbstractItemView::ExtendedSelection</enum>
             </property>
            </widget>
+          </item>
+          <item>
+           <layout class="QVBoxLayout" name="verticalLayout">
+            <property name="spacing">
+             <number>4</number>
+            </property>
+            <item>
+             <widget class="QToolButton" name="protocolExtensionsAdd_button">
+              <property name="focusPolicy">
+               <enum>Qt::TabFocus</enum>
+              </property>
+              <property name="toolTip">
+               <string>Add items</string>
+              </property>
+              <property name="text">
+               <string>Add</string>
+              </property>
+              <property name="icon">
+               <iconset theme="list-add"/>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QToolButton" name="protocolExtensionsRemove_button">
+              <property name="focusPolicy">
+               <enum>Qt::TabFocus</enum>
+              </property>
+              <property name="toolTip">
+               <string>Remove items</string>
+              </property>
+              <property name="text">
+               <string>Remove</string>
+              </property>
+              <property name="icon">
+               <iconset theme="list-remove"/>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <spacer name="verticalSpacer">
+              <property name="orientation">
+               <enum>Qt::Vertical</enum>
+              </property>
+              <property name="sizeHint" stdset="0">
+               <size>
+                <width>20</width>
+                <height>40</height>
+               </size>
+              </property>
+             </spacer>
+            </item>
+           </layout>
           </item>
          </layout>
         </item>
@@ -331,6 +445,16 @@
    </item>
   </layout>
  </widget>
+ <customwidgets>
+  <customwidget>
+   <class>ValidatedLineEdit</class>
+   <extends>QLineEdit</extends>
+   <header>gui/validatedlineedit.h</header>
+   <slots>
+    <signal>validityChanged(bool)</signal>
+   </slots>
+  </customwidget>
+ </customwidgets>
  <tabstops>
   <tabstop>sessionName_edit</tabstop>
   <tabstop>socketpath_edit</tabstop>
@@ -338,10 +462,12 @@
   <tabstop>binaryLocation_edit</tabstop>
   <tabstop>binaryLocation_browse_button</tabstop>
   <tabstop>commandLine_edit</tabstop>
+  <tabstop>environmentVars_edit</tabstop>
   <tabstop>coreProtocolLocation_edit</tabstop>
   <tabstop>coreProtocol_browse_button</tabstop>
-  <tabstop>protocolExtensions_edit</tabstop>
-  <tabstop>protocolExtensions_browse_button</tabstop>
+  <tabstop>protocolExtensions_listView</tabstop>
+  <tabstop>protocolExtensionsAdd_button</tabstop>
+  <tabstop>protocolExtensionsRemove_button</tabstop>
   <tabstop>abort_button</tabstop>
   <tabstop>start_button</tabstop>
  </tabstops>
@@ -355,7 +481,7 @@
    <hints>
     <hint type="sourcelabel">
      <x>598</x>
-     <y>509</y>
+     <y>596</y>
     </hint>
     <hint type="destinationlabel">
      <x>390</x>
@@ -371,7 +497,7 @@
    <hints>
     <hint type="sourcelabel">
      <x>689</x>
-     <y>509</y>
+     <y>596</y>
     </hint>
     <hint type="destinationlabel">
      <x>367</x>
@@ -418,8 +544,8 @@
    <slot>browseCoreProtocolSlot()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>643</x>
-     <y>327</y>
+     <x>680</x>
+     <y>459</y>
     </hint>
     <hint type="destinationlabel">
      <x>465</x>
@@ -428,18 +554,34 @@
    </hints>
   </connection>
   <connection>
-   <sender>protocolExtensions_browse_button</sender>
+   <sender>protocolExtensionsAdd_button</sender>
    <signal>clicked()</signal>
    <receiver>EditSessionDialog</receiver>
-   <slot>browseExtensionsSlot()</slot>
+   <slot>addExtensionsSlot()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>619</x>
-     <y>444</y>
+     <x>663</x>
+     <y>488</y>
     </hint>
     <hint type="destinationlabel">
      <x>409</x>
      <y>484</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>protocolExtensionsRemove_button</sender>
+   <signal>clicked()</signal>
+   <receiver>EditSessionDialog</receiver>
+   <slot>removeExtensionsSlot()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>663</x>
+     <y>529</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>349</x>
+     <y>303</y>
     </hint>
    </hints>
   </connection>
@@ -448,6 +590,7 @@
   <slot>browseSocketPathSlot()</slot>
   <slot>browseBinaryLocationSlot()</slot>
   <slot>browseCoreProtocolSlot()</slot>
-  <slot>browseExtensionsSlot()</slot>
+  <slot>addExtensionsSlot()</slot>
+  <slot>removeExtensionsSlot()</slot>
  </slots>
 </ui>

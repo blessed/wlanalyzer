@@ -320,19 +320,13 @@
     <property name="title">
      <string>&amp;File</string>
     </property>
-    <widget class="QMenu" name="menu_Open">
-     <property name="title">
-      <string>&amp;Open</string>
-     </property>
-     <addaction name="action_OpenSession"/>
-     <addaction name="action_OpenDumpFile"/>
-    </widget>
     <widget class="QMenu" name="menu_RecentSessions">
      <property name="title">
       <string>&amp;Recent Sessions</string>
      </property>
     </widget>
-    <addaction name="menu_Open"/>
+    <addaction name="action_OpenSession"/>
+    <addaction name="action_OpenDumpFile"/>
     <addaction name="actionConnect"/>
     <addaction name="separator"/>
     <addaction name="menu_RecentSessions"/>
@@ -344,7 +338,7 @@
   </widget>
   <action name="actionConnect">
    <property name="text">
-    <string>&amp;Connect</string>
+    <string>&amp;Remote Connection</string>
    </property>
    <property name="shortcut">
     <string>Ctrl+N</string>
@@ -365,12 +359,12 @@
   </action>
   <action name="action_OpenSession">
    <property name="text">
-    <string>&amp;Capture</string>
+    <string>&amp;Capture Session</string>
    </property>
   </action>
   <action name="action_OpenDumpFile">
    <property name="text">
-    <string>&amp;Dump File</string>
+    <string>&amp;Open Dump File</string>
    </property>
   </action>
  </widget>

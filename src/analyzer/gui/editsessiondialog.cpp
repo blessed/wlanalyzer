@@ -1,16 +1,34 @@
 #include <QFileDialog>
 #include <QCompleter>
 #include <QDirModel>
+#include <QStringListModel>
 #include <QDebug>
 #include "gui/editsessiondialog.h"
 #include "ui_editsessiondialog.h"
 #include "gui/editsessiondialog.moc"
+
+namespace {
+    QStringList linesFromTextEdit(const QPlainTextEdit* edit)
+    {
+        static QRegExp reg("\n|\r\n|\r");
+        return edit->toPlainText().split(reg, QString::SkipEmptyParts);
+    }
+
+    void setLinesToTextEdit(QStringList& lines, QPlainTextEdit* edit)
+    {
+        edit->setPlainText("");
+        for(auto s: lines)
+            edit->appendPlainText(s);
+    }
+};
 
 EditSessionDialog::EditSessionDialog(QWidget *parent) :
     QDialog(parent),
     ui(new Ui::EditSessionDialog)
 {
     m_sessionInfo = EditSessionDialog::session_ptr::create();
+    m_extensions = new QStringListModel(this);
+
     ui->setupUi(this);
     QCompleter *completer = new QCompleter(this);
     completer->setModel(new QDirModel(completer));
@@ -18,6 +36,7 @@ EditSessionDialog::EditSessionDialog(QWidget *parent) :
     ui->socketpath_edit->setCompleter(completer);
     ui->binaryLocation_edit->setCompleter(completer);
     ui->coreProtocolLocation_edit->setCompleter(completer);
+    ui->protocolExtensions_listView->setModel(m_extensions);
 }
 
 EditSessionDialog::~EditSessionDialog()
@@ -53,13 +72,10 @@ EditSessionDialog::session_ptr EditSessionDialog::getSessionInfo()
     m_sessionInfo->m_sessionName = ui->sessionName_edit->text();
     m_sessionInfo->m_binaryPath = ui->binaryLocation_edit->text();
 
-    m_sessionInfo->m_commandLine = ui->commandLine_edit->toPlainText()
-        .split(QRegExp("\n|\r\n|\r"), QString::SkipEmptyParts);
-
+    m_sessionInfo->m_commandLine = linesFromTextEdit(ui->commandLine_edit);
+    m_sessionInfo->m_environmentVars = linesFromTextEdit(ui->environmentVars_edit);
     m_sessionInfo->m_coreProtocolSpecPath = ui->coreProtocolLocation_edit->text();
-
-    m_sessionInfo->m_protocolExtensionSpecPaths = ui->protocolExtensions_edit->toPlainText()
-        .split(QRegExp("\n|\r\n|\r"), QString::SkipEmptyParts);
+    m_sessionInfo->m_protocolExtensionSpecPaths = m_extensions->stringList();
 
     return m_sessionInfo;
 }
@@ -73,15 +89,13 @@ void EditSessionDialog::setSessionInfo(EditSessionDialog::session_ptr session)
     ui->sessionName_edit->setText(m_sessionInfo->m_sessionName);
     ui->binaryLocation_edit->setText(m_sessionInfo->m_binaryPath);
 
-    ui->commandLine_edit->setPlainText("");
-    for(auto s: m_sessionInfo->m_commandLine)
-        ui->commandLine_edit->appendPlainText(s);
+    setLinesToTextEdit(m_sessionInfo->m_commandLine, ui->commandLine_edit);
+    setLinesToTextEdit(m_sessionInfo->m_environmentVars, ui->environmentVars_edit);
 
     ui->coreProtocolLocation_edit->setText(m_sessionInfo->m_coreProtocolSpecPath);
 
-    ui->protocolExtensions_edit->setPlainText("");
-    for(auto s: m_sessionInfo->m_protocolExtensionSpecPaths)
-        ui->protocolExtensions_edit->appendPlainText(s);
+
+    m_extensions->setStringList(m_sessionInfo->m_protocolExtensionSpecPaths);
 }
 
 void EditSessionDialog::browseSocketPathSlot()
@@ -122,15 +136,29 @@ void EditSessionDialog::browseCoreProtocolSlot()
     }
 }
 
-void EditSessionDialog::browseExtensionsSlot()
+void EditSessionDialog::addExtensionsSlot()
 {
     QStringList ret = selectFilePath(tr("Select Protocol Extensions"),
             ui->coreProtocolLocation_edit->text(), "*.xml", true);
     if(!ret.empty())
     {
         qDebug() << "selected extensions:" << ret;
-        ui->protocolExtensions_edit->setPlainText("");
-        for(auto s: ret)
-            ui->protocolExtensions_edit->appendPlainText(s);
+        int num_rows = m_extensions->rowCount();
+        m_extensions->insertRows(num_rows, ret.length());
+        for(int i=0; i < ret.length(); ++i)
+        {
+            m_extensions->setData(m_extensions->index(num_rows + i), ret[i]);
+        }
+    }
+}
+
+void EditSessionDialog::removeExtensionsSlot()
+{
+    auto selection_model = ui->protocolExtensions_listView->selectionModel();
+    auto indexes = selection_model->selectedIndexes();
+    while(!indexes.isEmpty())
+    {
+        m_extensions->removeRow(indexes.first().row());
+        indexes = selection_model->selectedIndexes();
     }
 }

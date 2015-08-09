@@ -37,9 +37,23 @@
        </widget>
       </item>
       <item row="0" column="1">
-       <widget class="QLineEdit" name="sessionName_edit">
+       <widget class="ValidatedLineEdit" name="sessionName_edit">
         <property name="placeholderText">
          <string>Capture session name</string>
+        </property>
+        <property name="errorColor" stdset="0">
+         <color>
+          <red>255</red>
+          <green>0</green>
+          <blue>0</blue>
+         </color>
+        </property>
+        <property name="errorBgColor" stdset="0">
+         <color>
+          <red>255</red>
+          <green>255</green>
+          <blue>156</blue>
+         </color>
         </property>
        </widget>
       </item>
@@ -56,12 +70,26 @@
       <item row="1" column="1">
        <layout class="QHBoxLayout" name="horizontalLayout_9">
         <item>
-         <widget class="QLineEdit" name="socketpath_edit">
+         <widget class="ValidatedLineEdit" name="socketpath_edit">
           <property name="text">
            <string notr="true">/run/user/1000/wayland-0</string>
           </property>
           <property name="placeholderText">
            <string notr="true"/>
+          </property>
+          <property name="errorColor" stdset="0">
+           <color>
+            <red>255</red>
+            <green>0</green>
+            <blue>0</blue>
+           </color>
+          </property>
+          <property name="errorBgColor" stdset="0">
+           <color>
+            <red>255</red>
+            <green>255</green>
+            <blue>156</blue>
+           </color>
           </property>
          </widget>
         </item>
@@ -108,12 +136,26 @@
       <item row="1" column="1">
        <layout class="QHBoxLayout" name="horizontalLayout_3">
         <item>
-         <widget class="QLineEdit" name="binaryLocation_edit">
+         <widget class="ValidatedLineEdit" name="binaryLocation_edit">
           <property name="text">
            <string notr="true"/>
           </property>
           <property name="placeholderText">
            <string notr="true"/>
+          </property>
+          <property name="errorColor" stdset="0">
+           <color>
+            <red>255</red>
+            <green>0</green>
+            <blue>0</blue>
+           </color>
+          </property>
+          <property name="errorBgColor" stdset="0">
+           <color>
+            <red>255</red>
+            <green>255</green>
+            <blue>156</blue>
+           </color>
           </property>
          </widget>
         </item>
@@ -207,12 +249,26 @@
       <item row="0" column="1">
        <layout class="QHBoxLayout" name="horizontalLayout_6">
         <item>
-         <widget class="QLineEdit" name="coreProtocolLocation_edit">
+         <widget class="ValidatedLineEdit" name="coreProtocolLocation_edit">
           <property name="text">
            <string notr="true"/>
           </property>
           <property name="placeholderText">
            <string notr="true"/>
+          </property>
+          <property name="errorColor" stdset="0">
+           <color>
+            <red>255</red>
+            <green>0</green>
+            <blue>0</blue>
+           </color>
+          </property>
+          <property name="errorBgColor" stdset="0">
+           <color>
+            <red>255</red>
+            <green>255</green>
+            <blue>156</blue>
+           </color>
           </property>
          </widget>
         </item>
@@ -258,6 +314,9 @@
               <width>0</width>
               <height>120</height>
              </size>
+            </property>
+            <property name="selectionMode">
+             <enum>QAbstractItemView::ExtendedSelection</enum>
             </property>
            </widget>
           </item>
@@ -386,6 +445,16 @@
    </item>
   </layout>
  </widget>
+ <customwidgets>
+  <customwidget>
+   <class>ValidatedLineEdit</class>
+   <extends>QLineEdit</extends>
+   <header>gui/validatedlineedit.h</header>
+   <slots>
+    <signal>validityChanged(bool)</signal>
+   </slots>
+  </customwidget>
+ </customwidgets>
  <tabstops>
   <tabstop>sessionName_edit</tabstop>
   <tabstop>socketpath_edit</tabstop>

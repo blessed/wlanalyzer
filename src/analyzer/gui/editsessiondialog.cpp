@@ -37,7 +37,6 @@ EditSessionDialog::EditSessionDialog(QWidget *parent) :
     ui->binaryLocation_edit->setCompleter(completer);
     ui->coreProtocolLocation_edit->setCompleter(completer);
     ui->protocolExtensions_listView->setModel(m_extensions);
-    ui->protocolExtensions_listView->setSelectionMode(QAbstractItemView::ExtendedSelection);
 }
 
 EditSessionDialog::~EditSessionDialog()

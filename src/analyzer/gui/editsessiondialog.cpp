@@ -35,15 +35,42 @@ EditSessionDialog::EditSessionDialog(QWidget *parent) :
     completer->setCaseSensitivity(Qt::CaseInsensitive);
     ui->sessionName_edit->setValidateFunction([](const QString &text, QString &error)
     {
-        bool text_empty = text.isEmpty();
-        if(text_empty)
-            error = QString("Session name cannot be empty").arg(text);
-        return !text_empty;
+        bool valid = !text.trimmed().isEmpty();
+        if(!valid)
+            error = QString(tr("Session name cannot be empty"));
+        return valid;
     });
     ui->socketpath_edit->setCompleter(completer);
     ui->binaryLocation_edit->setCompleter(completer);
     ui->coreProtocolLocation_edit->setCompleter(completer);
     ui->protocolExtensions_listView->setModel(m_extensions);
+
+    ui->socketpath_edit->setValidateFunction([](const QString &text, QString &error)
+    {
+        auto fi = QFileInfo(text.trimmed());
+        bool valid = fi.isReadable() && fi.isWritable() && fi.isFile();
+        if(!valid)
+            error = QString(tr("<b>%1</b> is not an RW socket")).arg(text.trimmed());
+        return valid;
+    });
+
+    ui->binaryLocation_edit->setValidateFunction([](const QString &text, QString &error)
+    {
+        auto fi = QFileInfo(text.trimmed());
+        bool valid = fi.isExecutable() && fi.isFile();
+        if(!valid)
+            error = QString(tr("<b>%1</b> is not an executable file")).arg(text.trimmed());
+        return valid;
+    });
+
+    ui->coreProtocolLocation_edit->setValidateFunction([](const QString &text, QString &error)
+    {
+        auto fi = QFileInfo(text.trimmed());
+        bool valid = fi.isReadable() && fi.isFile() && fi.suffix().toLower() == "xml";
+        if(!valid)
+            error = QString(tr("<b>%1</b> is not a readable xml file")).arg(text.trimmed());
+        return valid;
+    });
 }
 
 EditSessionDialog::~EditSessionDialog()
@@ -77,6 +104,7 @@ QStringList selectFilePath(const QString& title, const QString& directory,
 EditSessionDialog::session_ptr EditSessionDialog::getSessionInfo()
 {
     m_sessionInfo->m_sessionName = ui->sessionName_edit->text();
+    m_sessionInfo->m_socketPath = ui->socketpath_edit->text();
     m_sessionInfo->m_binaryPath = ui->binaryLocation_edit->text();
 
     m_sessionInfo->m_commandLine = linesFromTextEdit(ui->commandLine_edit);
@@ -94,6 +122,7 @@ void EditSessionDialog::setSessionInfo(EditSessionDialog::session_ptr session)
 
     m_sessionInfo = session;
     ui->sessionName_edit->setText(m_sessionInfo->m_sessionName);
+    ui->socketpath_edit->setText(m_sessionInfo->m_socketPath);
     ui->binaryLocation_edit->setText(m_sessionInfo->m_binaryPath);
 
     setLinesToTextEdit(m_sessionInfo->m_commandLine, ui->commandLine_edit);
@@ -101,8 +130,16 @@ void EditSessionDialog::setSessionInfo(EditSessionDialog::session_ptr session)
 
     ui->coreProtocolLocation_edit->setText(m_sessionInfo->m_coreProtocolSpecPath);
 
-
     m_extensions->setStringList(m_sessionInfo->m_protocolExtensionSpecPaths);
+}
+
+bool EditSessionDialog::isValid()
+{
+    return ui->sessionName_edit->isValid()
+        && ui->socketpath_edit->isValid()
+        && ui->binaryLocation_edit->isValid()
+        && ui->coreProtocolLocation_edit->isValid();
+        // TODO add validation for ui->protocolExtensions_listView;
 }
 
 void EditSessionDialog::browseSocketPathSlot()
@@ -114,11 +151,6 @@ void EditSessionDialog::browseSocketPathSlot()
         qDebug() << "selected socket:" << ret[0];
         ui->socketpath_edit->setText(ret[0]);
     }
-
-    QPalette palette = ui->socketpath_edit->palette();
-    palette.setColor(QPalette::Active, QPalette::Text, Qt::red);
-    palette.setColor(QPalette::Active, QPalette::Base, QColor("#FFFFD5"));
-    ui->socketpath_edit->setPalette(palette);
 }
 
 void EditSessionDialog::browseBinaryLocationSlot()
@@ -168,4 +200,9 @@ void EditSessionDialog::removeExtensionsSlot()
         m_extensions->removeRow(indexes.first().row());
         indexes = selection_model->selectedIndexes();
     }
+}
+
+void EditSessionDialog::validityChangedSlot()
+{
+    ui->start_button->setEnabled(isValid());
 }

@@ -13,6 +13,8 @@ ValidatedLineEdit::ValidatedLineEdit(QWidget* parent)
     m_validateFn(validateFallback())
 {
     connect(this, &QLineEdit::textChanged, this, &ValidatedLineEdit::onTextChanged);
+    // trigger validation on startup
+    emit textChanged(text());
 }
 
 ValidatedLineEdit::~ValidatedLineEdit()

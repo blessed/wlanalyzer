@@ -21,6 +21,7 @@ public:
 
     session_ptr getSessionInfo();
     void setSessionInfo(session_ptr session);
+    bool isValid();
 
 public slots:
     void browseSocketPathSlot();
@@ -28,6 +29,7 @@ public slots:
     void browseCoreProtocolSlot();
     void addExtensionsSlot();
     void removeExtensionsSlot();
+    void validityChangedSlot();
 
 private:
     Ui::EditSessionDialog *ui;

@@ -33,6 +33,13 @@ EditSessionDialog::EditSessionDialog(QWidget *parent) :
     QCompleter *completer = new QCompleter(this);
     completer->setModel(new QDirModel(completer));
     completer->setCaseSensitivity(Qt::CaseInsensitive);
+    ui->sessionName_edit->setValidateFunction([](const QString &text, QString &error)
+    {
+        bool text_empty = text.isEmpty();
+        if(text_empty)
+            error = QString("Session name cannot be empty").arg(text);
+        return !text_empty;
+    });
     ui->socketpath_edit->setCompleter(completer);
     ui->binaryLocation_edit->setCompleter(completer);
     ui->coreProtocolLocation_edit->setCompleter(completer);

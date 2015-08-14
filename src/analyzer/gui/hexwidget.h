@@ -72,15 +72,15 @@ protected:
     int printableByteDisplayWidth() const;
 
     // show our context menu with display format options
-    void contextMenuEvent(QContextMenuEvent *event);
-    void scrollContentsBy(int dx, int dy);
+    void contextMenuEvent(QContextMenuEvent *event) override;
+    void scrollContentsBy(int dx, int dy) override;
     // draw the data contents of the widget
-    void paintEvent(QPaintEvent *event);
-    void wheelEvent(QWheelEvent *event);
-    void resizeEvent(QResizeEvent *event);
-    void mousePressEvent(QMouseEvent *e);
+    void paintEvent(QPaintEvent *event) override;
+    void wheelEvent(QWheelEvent *event) override;
+    void resizeEvent(QResizeEvent *event) override;
+    void mousePressEvent(QMouseEvent *e) override;
     // mostly for debugging purposes
-    void mouseMoveEvent(QMouseEvent *e);
+    void mouseMoveEvent(QMouseEvent *e) override;
     void ensureMonospacedFont();
     void drawDebug(QPainter& painter) const;
 

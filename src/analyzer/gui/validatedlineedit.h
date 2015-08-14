@@ -2,6 +2,7 @@
 #define VALIDATED_LINEEDIT_H
 
 #include <QLineEdit>
+#include "validation.h"
 
 class ValidatedLineEdit : public QLineEdit
 {
@@ -11,11 +12,14 @@ class ValidatedLineEdit : public QLineEdit
     Q_PROPERTY(QColor errorBgColor READ errorBgColor WRITE setErrorBgColor DESIGNABLE true)
 
 public:
-    enum InputState {Empty, Invalid, Valid};
+    typedef validation::StrCheckFn_t ValidateFunction_t;
 
     explicit ValidatedLineEdit(QWidget *parent = 0);
     virtual ~ValidatedLineEdit();
     bool isValid() const;
+
+    // validation
+    void setValidateFunction(const ValidateFunction_t &fn);
 
     // properties
     QColor errorColor() const;
@@ -30,15 +34,16 @@ private:
     QColor backgroundColor();
     void setBackgroundColor(const QColor &color);
 
-    // overrides for inherited classes
-    virtual bool validate(const QString &text) const;
-    virtual QString toolTipText(const QString &input) const;
+    ValidateFunction_t validateFallback();
+    bool validateWithQValidator(const QString &input, QString &error) const;
 
     QColor m_errorTextColor;
     QColor m_errorBgColor;
     QColor m_normalTextColor;
     QColor m_normalBgColor;
-    InputState m_state;
+    validation::State_t m_state;
+    ValidateFunction_t m_validateFn;
+    QString m_toolTipText;
 
 signals:
     void validityChanged(bool);

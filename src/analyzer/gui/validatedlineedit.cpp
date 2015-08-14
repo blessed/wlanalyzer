@@ -1,4 +1,5 @@
 #include <QDebug>
+#include <QValidator>
 #include "gui/validatedlineedit.h"
 #include "gui/validatedlineedit.moc"
 
@@ -8,9 +9,12 @@ ValidatedLineEdit::ValidatedLineEdit(QWidget* parent)
     m_errorBgColor(QColor("#FFFFD5")),
     m_normalTextColor(textColor()),
     m_normalBgColor(backgroundColor()),
-    m_state(Empty)
+    m_state(validation::Empty),
+    m_validateFn(validateFallback())
 {
     connect(this, &QLineEdit::textChanged, this, &ValidatedLineEdit::onTextChanged);
+    // trigger validation on startup
+    emit textChanged(text());
 }
 
 ValidatedLineEdit::~ValidatedLineEdit()
@@ -18,49 +22,49 @@ ValidatedLineEdit::~ValidatedLineEdit()
 
 bool ValidatedLineEdit::isValid() const
 {
-    return m_state == Valid;
+    return m_state == validation::Valid;
 }
 
 void ValidatedLineEdit::onTextChanged(const QString &text)
 {
-    InputState newstate = Invalid;
-    if(text.isEmpty())
-        newstate = Empty;
-    else
-        newstate = validate(text) ? Valid : Invalid;
+    validation::State_t newstate = validation::Invalid;
+    m_toolTipText.clear();
+
+    newstate = m_validateFn(text, m_toolTipText) ? validation::Valid : validation::Invalid;
 
     if(newstate != m_state)
     {
         m_state = newstate;
-        setTextColor(m_state != Invalid ? m_normalTextColor : m_errorTextColor);
-        setBackgroundColor(m_state != Invalid ? m_normalBgColor : m_errorBgColor);
+        setTextColor(m_state != validation::Invalid ? m_normalTextColor : m_errorTextColor);
+        setBackgroundColor(m_state != validation::Invalid ? m_normalBgColor : m_errorBgColor);
         emit validityChanged(isValid());
     }
-    setToolTip(toolTipText(text));
+    setToolTip(m_toolTipText);
 }
 
-bool ValidatedLineEdit::validate(const QString &input) const
+void ValidatedLineEdit::setValidateFunction(const ValidateFunction_t &fn)
 {
-    return true;
+    m_validateFn = fn;
+    // trigger validation on new validator
+    emit textChanged(text());
 }
 
-QString ValidatedLineEdit::toolTipText(const QString &input) const
+ValidatedLineEdit::ValidateFunction_t ValidatedLineEdit::validateFallback()
 {
-    QString ret;
-    //TODO implement properly XXX FIXME
-    switch(m_state) {
-    case Empty:
-        ret = tr("Please insert ...");
-        break;
-    case Valid:
-        ret = QString();
-        break;
-    case Invalid:
-        ret = QString("Input <b>%1</b> is not valid!").arg(input);
-        break;
-    }
+    using namespace std::placeholders;
+    return std::bind(&ValidatedLineEdit::validateWithQValidator, this, _1, _2);
+}
 
-    return ret;
+bool ValidatedLineEdit::validateWithQValidator(const QString &input, QString &error) const
+{
+    Q_UNUSED(error);
+    if(!this->validator())
+        return true;
+
+    auto v = this->validator();
+    int pos = this->cursorPosition();
+    QString tmp = input;
+    return v->validate(tmp, pos) == QValidator::Acceptable;
 }
 
 QColor ValidatedLineEdit::textColor()

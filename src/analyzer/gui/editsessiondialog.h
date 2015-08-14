@@ -9,6 +9,7 @@ class EditSessionDialog;
 }
 
 class QStringListModel;
+class ValidatingProxyModel;
 
 class EditSessionDialog : public QDialog
 {
@@ -21,6 +22,7 @@ public:
 
     session_ptr getSessionInfo();
     void setSessionInfo(session_ptr session);
+    bool isValid();
 
 public slots:
     void browseSocketPathSlot();
@@ -28,11 +30,13 @@ public slots:
     void browseCoreProtocolSlot();
     void addExtensionsSlot();
     void removeExtensionsSlot();
+    void validityChangedSlot();
 
 private:
     Ui::EditSessionDialog *ui;
     session_ptr m_sessionInfo;
-    QStringListModel *m_extensions;
+    QStringListModel *m_extensions_model;
+    ValidatingProxyModel *m_validatorProxy_model;
 };
 
 #endif // EDITSESSIONDIALOG_H

@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>700</width>
-    <height>607</height>
+    <height>613</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -337,7 +337,9 @@
                <string>Add</string>
               </property>
               <property name="icon">
-               <iconset theme="list-add"/>
+               <iconset theme="list-add">
+                <normaloff/>
+               </iconset>
               </property>
              </widget>
             </item>
@@ -353,7 +355,9 @@
                <string>Remove</string>
               </property>
               <property name="icon">
-               <iconset theme="list-remove"/>
+               <iconset theme="list-remove">
+                <normaloff/>
+               </iconset>
               </property>
              </widget>
             </item>
@@ -545,7 +549,7 @@
    <hints>
     <hint type="sourcelabel">
      <x>680</x>
-     <y>459</y>
+     <y>426</y>
     </hint>
     <hint type="destinationlabel">
      <x>465</x>
@@ -560,8 +564,8 @@
    <slot>addExtensionsSlot()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>663</x>
-     <y>488</y>
+     <x>678</x>
+     <y>468</y>
     </hint>
     <hint type="destinationlabel">
      <x>409</x>
@@ -576,12 +580,76 @@
    <slot>removeExtensionsSlot()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>663</x>
-     <y>529</y>
+     <x>678</x>
+     <y>504</y>
     </hint>
     <hint type="destinationlabel">
      <x>349</x>
      <y>303</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>sessionName_edit</sender>
+   <signal>validityChanged(bool)</signal>
+   <receiver>EditSessionDialog</receiver>
+   <slot>validityChangedSlot()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>310</x>
+     <y>48</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>393</x>
+     <y>3</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>socketpath_edit</sender>
+   <signal>validityChanged(bool)</signal>
+   <receiver>EditSessionDialog</receiver>
+   <slot>validityChangedSlot()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>196</x>
+     <y>86</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>230</x>
+     <y>120</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>binaryLocation_edit</sender>
+   <signal>validityChanged(bool)</signal>
+   <receiver>EditSessionDialog</receiver>
+   <slot>validityChangedSlot()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>145</x>
+     <y>166</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>66</x>
+     <y>116</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>coreProtocolLocation_edit</sender>
+   <signal>validityChanged(bool)</signal>
+   <receiver>EditSessionDialog</receiver>
+   <slot>validityChangedSlot()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>242</x>
+     <y>411</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>255</x>
+     <y>372</y>
     </hint>
    </hints>
   </connection>
@@ -592,5 +660,6 @@
   <slot>browseCoreProtocolSlot()</slot>
   <slot>addExtensionsSlot()</slot>
   <slot>removeExtensionsSlot()</slot>
+  <slot>validityChangedSlot()</slot>
  </slots>
 </ui>

@@ -9,6 +9,7 @@ class EditSessionDialog;
 }
 
 class QStringListModel;
+class ValidatingProxyModel;
 
 class EditSessionDialog : public QDialog
 {
@@ -34,7 +35,8 @@ public slots:
 private:
     Ui::EditSessionDialog *ui;
     session_ptr m_sessionInfo;
-    QStringListModel *m_extensions;
+    QStringListModel *m_extensions_model;
+    ValidatingProxyModel *m_validatorProxy_model;
 };
 
 #endif // EDITSESSIONDIALOG_H

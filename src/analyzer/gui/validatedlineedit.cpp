@@ -9,7 +9,7 @@ ValidatedLineEdit::ValidatedLineEdit(QWidget* parent)
     m_errorBgColor(QColor("#FFFFD5")),
     m_normalTextColor(textColor()),
     m_normalBgColor(backgroundColor()),
-    m_state(Empty),
+    m_state(validation::Empty),
     m_validateFn(validateFallback())
 {
     connect(this, &QLineEdit::textChanged, this, &ValidatedLineEdit::onTextChanged);
@@ -22,21 +22,21 @@ ValidatedLineEdit::~ValidatedLineEdit()
 
 bool ValidatedLineEdit::isValid() const
 {
-    return m_state == Valid;
+    return m_state == validation::Valid;
 }
 
 void ValidatedLineEdit::onTextChanged(const QString &text)
 {
-    InputState newstate = Invalid;
+    validation::State_t newstate = validation::Invalid;
     m_toolTipText.clear();
 
-    newstate = m_validateFn(text, m_toolTipText) ? Valid : Invalid;
+    newstate = m_validateFn(text, m_toolTipText) ? validation::Valid : validation::Invalid;
 
     if(newstate != m_state)
     {
         m_state = newstate;
-        setTextColor(m_state != Invalid ? m_normalTextColor : m_errorTextColor);
-        setBackgroundColor(m_state != Invalid ? m_normalBgColor : m_errorBgColor);
+        setTextColor(m_state != validation::Invalid ? m_normalTextColor : m_errorTextColor);
+        setBackgroundColor(m_state != validation::Invalid ? m_normalBgColor : m_errorBgColor);
         emit validityChanged(isValid());
     }
     setToolTip(m_toolTipText);

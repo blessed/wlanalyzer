@@ -2,9 +2,11 @@
 #include <QCompleter>
 #include <QDirModel>
 #include <QStringListModel>
-#include <QDebug>
 #include "gui/editsessiondialog.h"
 #include "ui_editsessiondialog.h"
+#include "gui/validateddelegate.h"
+#include "validatingproxymodel.h"
+
 #include "gui/editsessiondialog.moc"
 
 namespace {
@@ -27,12 +29,16 @@ EditSessionDialog::EditSessionDialog(QWidget *parent) :
     ui(new Ui::EditSessionDialog)
 {
     m_sessionInfo = EditSessionDialog::session_ptr::create();
-    m_extensions = new QStringListModel(this);
 
+    // extension list model validation
+    m_extensions_model = new QStringListModel(this);
+    m_validatorProxy_model = new ValidatingProxyModel(this);
+    m_validatorProxy_model->setSourceModel(m_extensions_model);
+
+    connect(m_validatorProxy_model, SIGNAL(validityChanged()), this, SLOT(validityChangedSlot()));
+
+    // gui setup and other element validation
     ui->setupUi(this);
-    QCompleter *completer = new QCompleter(this);
-    completer->setModel(new QDirModel(completer));
-    completer->setCaseSensitivity(Qt::CaseInsensitive);
     ui->sessionName_edit->setValidateFunction([](const QString &text, QString &error)
     {
         bool valid = !text.trimmed().isEmpty();
@@ -40,10 +46,6 @@ EditSessionDialog::EditSessionDialog(QWidget *parent) :
             error = QString(tr("Session name cannot be empty"));
         return valid;
     });
-    ui->socketpath_edit->setCompleter(completer);
-    ui->binaryLocation_edit->setCompleter(completer);
-    ui->coreProtocolLocation_edit->setCompleter(completer);
-    ui->protocolExtensions_listView->setModel(m_extensions);
 
     ui->socketpath_edit->setValidateFunction([](const QString &text, QString &error)
     {
@@ -63,14 +65,36 @@ EditSessionDialog::EditSessionDialog(QWidget *parent) :
         return valid;
     });
 
-    ui->coreProtocolLocation_edit->setValidateFunction([](const QString &text, QString &error)
+    auto xmlValidate_fn = [](const QString &text, QString &error)
     {
         auto fi = QFileInfo(text.trimmed());
         bool valid = fi.isReadable() && fi.isFile() && fi.suffix().toLower() == "xml";
         if(!valid)
             error = QString(tr("<b>%1</b> is not a readable xml file")).arg(text.trimmed());
         return valid;
-    });
+    };
+
+    ui->coreProtocolLocation_edit->setValidateFunction(xmlValidate_fn);
+
+    ValidatedDelegate *delegate = new ValidatedDelegate(this, xmlValidate_fn);
+    delegate->setErrorColor(ui->coreProtocolLocation_edit->errorColor());
+    delegate->setErrorBgColor(ui->coreProtocolLocation_edit->errorBgColor());
+    ui->protocolExtensions_listView->setItemDelegate(delegate);
+
+    m_validatorProxy_model->setValidateFunction(xmlValidate_fn);
+    m_validatorProxy_model->setErrorColor(ui->coreProtocolLocation_edit->errorColor());
+    m_validatorProxy_model->setErrorBgColor(ui->coreProtocolLocation_edit->errorBgColor());
+    ui->protocolExtensions_listView->setModel(m_validatorProxy_model);
+
+    // completion support
+    QCompleter *completer = new QCompleter(this);
+    completer->setModel(new QDirModel(completer));
+    completer->setCaseSensitivity(Qt::CaseInsensitive);
+
+    ui->socketpath_edit->setCompleter(completer);
+    ui->binaryLocation_edit->setCompleter(completer);
+    ui->coreProtocolLocation_edit->setCompleter(completer);
+    delegate->setCompleter(completer);
 }
 
 EditSessionDialog::~EditSessionDialog()
@@ -110,7 +134,7 @@ EditSessionDialog::session_ptr EditSessionDialog::getSessionInfo()
     m_sessionInfo->m_commandLine = linesFromTextEdit(ui->commandLine_edit);
     m_sessionInfo->m_environmentVars = linesFromTextEdit(ui->environmentVars_edit);
     m_sessionInfo->m_coreProtocolSpecPath = ui->coreProtocolLocation_edit->text();
-    m_sessionInfo->m_protocolExtensionSpecPaths = m_extensions->stringList();
+    m_sessionInfo->m_protocolExtensionSpecPaths = m_extensions_model->stringList();
 
     return m_sessionInfo;
 }
@@ -130,7 +154,7 @@ void EditSessionDialog::setSessionInfo(EditSessionDialog::session_ptr session)
 
     ui->coreProtocolLocation_edit->setText(m_sessionInfo->m_coreProtocolSpecPath);
 
-    m_extensions->setStringList(m_sessionInfo->m_protocolExtensionSpecPaths);
+    m_extensions_model->setStringList(m_sessionInfo->m_protocolExtensionSpecPaths);
 }
 
 bool EditSessionDialog::isValid()
@@ -138,8 +162,8 @@ bool EditSessionDialog::isValid()
     return ui->sessionName_edit->isValid()
         && ui->socketpath_edit->isValid()
         && ui->binaryLocation_edit->isValid()
-        && ui->coreProtocolLocation_edit->isValid();
-        // TODO add validation for ui->protocolExtensions_listView;
+        && ui->coreProtocolLocation_edit->isValid()
+        && m_validatorProxy_model->isValid();
 }
 
 void EditSessionDialog::browseSocketPathSlot()
@@ -148,7 +172,6 @@ void EditSessionDialog::browseSocketPathSlot()
             ui->socketpath_edit->text());
     if(!ret.empty())
     {
-        qDebug() << "selected socket:" << ret[0];
         ui->socketpath_edit->setText(ret[0]);
     }
 }
@@ -159,7 +182,6 @@ void EditSessionDialog::browseBinaryLocationSlot()
             ui->binaryLocation_edit->text());
     if(!ret.empty())
     {
-        qDebug() << "selected application:" << ret[0];
         ui->binaryLocation_edit->setText(ret[0]);
     }
 }
@@ -170,7 +192,6 @@ void EditSessionDialog::browseCoreProtocolSlot()
             ui->coreProtocolLocation_edit->text(), "*.xml");
     if(!ret.empty())
     {
-        qDebug() << "selected core:" << ret[0];
         ui->coreProtocolLocation_edit->setText(ret[0]);
     }
 }
@@ -181,12 +202,11 @@ void EditSessionDialog::addExtensionsSlot()
             ui->coreProtocolLocation_edit->text(), "*.xml", true);
     if(!ret.empty())
     {
-        qDebug() << "selected extensions:" << ret;
-        int num_rows = m_extensions->rowCount();
-        m_extensions->insertRows(num_rows, ret.length());
+        int num_rows = m_extensions_model->rowCount();
+        m_extensions_model->insertRows(num_rows, ret.length());
         for(int i=0; i < ret.length(); ++i)
         {
-            m_extensions->setData(m_extensions->index(num_rows + i), ret[i]);
+            m_extensions_model->setData(m_extensions_model->index(num_rows + i), ret[i]);
         }
     }
 }
@@ -197,7 +217,7 @@ void EditSessionDialog::removeExtensionsSlot()
     auto indexes = selection_model->selectedIndexes();
     while(!indexes.isEmpty())
     {
-        m_extensions->removeRow(indexes.first().row());
+        m_extensions_model->removeRow(indexes.first().row());
         indexes = selection_model->selectedIndexes();
     }
 }
